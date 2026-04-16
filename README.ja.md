@@ -15,10 +15,12 @@ clerk は Claude Code の `SessionEnd` イベントにフックする CLI ツー
 ## 機能
 
 - **自動要約** — Claude Code セッション終了時に自動的に要約を生成
+- **増分マージ** — 各セッションは同日同プロジェクトの単一要約ファイルにマージ、重複なし
 - **会話フィルタリング** — tool call を除去し、ユーザーと AI の会話テキストのみを保持
 - **日付整理** — 要約は `~/.clerk/YYYYMMDD/<プロジェクト-slug>.md` に保存
-- **追記モード** — 同日同プロジェクトの複数セッションは同一ファイルに追記
-- **設定可能** — 出力ディレクトリ、言語、モデルをカスタマイズ可能
+- **カーソル追跡** — 前回以降の新しいメッセージのみを処理し、トークンと時間を節約
+- **プロセス管理** — アクティブな feed の監視、強制終了、中断されたものの再試行
+- **設定可能** — 出力ディレクトリ、言語、モデル、ログ保持日数をカスタマイズ可能
 - **ワンコマンド設定** — `clerk hook install` で全自動セットアップ
 - **再帰防止** — clerk が `claude -p` を呼び出す際の無限ループを防止
 - クロスプラットフォーム：macOS、Linux、Windows
@@ -28,10 +30,11 @@ clerk は Claude Code の `SessionEnd` イベントにフックする CLI ツー
 
 Claude Code セッションが終了すると、`SessionEnd` フックが `clerk feed` をトリガーします：
 
-1. セッションのトランスクリプト（JSONL）を読み取り
-2. tool call を除去し、会話テキストのみを保持
-3. `claude -p` を呼び出して要約を生成
-4. 日付別の markdown ファイルに追記
+1. バックグラウンドにフォーク（フックは即座に返る）
+2. 前回以降の新しいメッセージのみをトランスクリプト（JSONL）から読み取り
+3. プロジェクトの既存の日次要約を読み込み（存在する場合）
+4. `claude -p` を呼び出してマージされた要約を生成
+5. 要約ファイルを更新版で上書き
 
 ```
 ~/.clerk/
@@ -98,9 +101,17 @@ clerk hook install
 | コマンド | 説明 |
 |----------|------|
 | `feed` | セッションのトランスクリプトを処理し要約を生成（フックから呼び出し） |
+| `config` | 現在の設定を表示（`config show` のエイリアス） |
 | `config show` | 現在の設定と設定ファイルのパスを表示 |
+| `config set <key> <value>` | 設定値を変更（キーはタブ補完対応） |
 | `hook install` | clerk を Claude Code SessionEnd フックとしてインストール |
 | `hook uninstall` | Claude Code SessionEnd フックから clerk を削除 |
+| `status` | アクティブな feed プロセスと中断されたセッションを表示 |
+| `status --watch` | ステータスをリアルタイム更新（毎秒） |
+| `retry <slug>` | 指定した中断セッションを再試行 |
+| `retry --all` | すべての中断セッションを再試行 |
+| `kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
+| `kill --all` | すべてのアクティブ feed プロセスを強制終了 |
 
 ## 設定
 
@@ -114,6 +125,9 @@ clerk hook install
   },
   "summary": {
     "model": ""
+  },
+  "log": {
+    "retention_days": 30
   }
 }
 ```
@@ -123,25 +137,58 @@ clerk hook install
 | `output.dir` | `~/.clerk/` | 要約の保存ルートディレクトリ |
 | `output.language` | `zh-TW` | 要約の出力言語 |
 | `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
+| `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
+
+`clerk config set` で設定：
+
+```bash
+clerk config set output.language en
+clerk config set summary.model haiku
+clerk config set log.retention_days 14
+```
 
 設定ファイルはオプションです — 存在しない場合、clerk はデフォルト値を使用します。
 
 ## 要約フォーマット
 
-各要約はタイムスタンプ付きで追記されます：
+各プロジェクトは1日1ファイル、増分的にマージされます：
 
 ```markdown
----
-### 14:30:25
+# projects-my-app
 
-## ユーザー入力の要約
-- auth.ts の認証バグ修正を依頼
-- 新しいログインページコンポーネントの作成を依頼
+> Last updated: 14:30:25
 
-## AI 応答の要約
-- トークン検証の問題を発見・修正
-- フォーム処理付きの LoginPage コンポーネントを作成
+### コア作業
+- JWT トークンによるユーザー認証を実装
+- WebSocket ハンドラーの競合状態を修正
+
+### サポート作業
+- GitHub Actions CI パイプラインを追加
+- README の API ドキュメントを更新
+
+### 主要な決定と理由
+- **決定**：セッションではなく JWT を使用 → **理由**：マルチリージョンデプロイのためのステートレススケーリング
+
+### ユーザーノート
+- 最小限の抽象化を好み、フレームワークよりも直接コードを書くスタイル
+
+### バージョンログ
+- v1.0.0 — 認証と WebSocket サポートを含む初回リリース
 ```
+
+## トラブルシューティング
+
+ログは `~/.clerk/.log/YYYYMMDD-clerk.log` に保存されます。要約が生成されない場合に確認：
+
+```bash
+cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
+```
+
+よくある問題：
+
+- **要約が生成されない** — `claude` が PATH にあるか確認
+- **Hook cancelled** — clerk はバックグラウンドフォークで対応済み。最新版にアップデート
+- **内容が重複** — 旧バージョンの動作。現在は増分マージを使用
 
 ## シェル補完
 

@@ -5,6 +5,9 @@ import "github.com/spf13/cobra"
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage clerk configuration",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return configShowCmd.RunE(cmd, args)
+	},
 }
 
 func init() {

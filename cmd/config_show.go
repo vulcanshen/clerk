@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
+	"github.com/vulcanshen/clerk/internal/logger"
 )
 
 var configShowCmd = &cobra.Command{
@@ -17,7 +18,8 @@ var configShowCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Config path: %s\n\n", config.ConfigPath())
+		fmt.Printf("Config path: %s\n", config.ConfigPath())
+		fmt.Printf("Log path:    %s\n\n", logger.LogPath(cfg))
 
 		data, err := json.MarshalIndent(cfg, "", "  ")
 		if err != nil {

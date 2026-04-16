@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type HookCommand struct {
@@ -42,21 +43,8 @@ func clerkCommand() (string, error) {
 	return exe + " feed", nil
 }
 
-func isClerkHook(cmd HookCommand) bool {
-	return cmd.Type == "command" && len(cmd.Command) > 0 && contains(cmd.Command, "clerk") && contains(cmd.Command, "feed")
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
-}
-
-func containsStr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+func isClerkCommand(cmd string) bool {
+	return strings.Contains(cmd, "clerk") && strings.Contains(cmd, "feed")
 }
 
 func readSettings() (map[string]interface{}, error) {
@@ -119,8 +107,10 @@ func Install() error {
 				continue
 			}
 			cmd, _ := hMap["command"].(string)
-			if containsStr(cmd, "clerk") && containsStr(cmd, "feed") {
-				return fmt.Errorf("clerk hook is already installed")
+			if isClerkCommand(cmd) {
+				fmt.Println("Clerk hook is already installed.")
+				fmt.Printf("Settings file: %s\n", settingsPath())
+				return nil
 			}
 		}
 	}
@@ -184,7 +174,7 @@ func Uninstall() error {
 				continue
 			}
 			cmd, _ := hMap["command"].(string)
-			if containsStr(cmd, "clerk") && containsStr(cmd, "feed") {
+			if isClerkCommand(cmd) {
 				removed = true
 				continue
 			}

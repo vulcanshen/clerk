@@ -15,10 +15,12 @@ clerk is a CLI tool that hooks into Claude Code's `SessionEnd` event, automatica
 ## Features
 
 - **Auto-summarize** — generates a summary when your Claude Code session ends
+- **Incremental merge** — each session merges into a single daily summary per project, no duplicates
 - **Conversation filtering** — strips tool calls, keeps only user/assistant text
 - **Date-organized** — summaries saved to `~/.clerk/YYYYMMDD/<project-slug>.md`
-- **Append mode** — multiple sessions on the same project append to the same daily file
-- **Configurable** — output directory, language, and model are all customizable
+- **Cursor tracking** — only processes new messages since the last run, saving tokens and time
+- **Process management** — monitor active feeds, kill stuck processes, retry interrupted ones
+- **Configurable** — output directory, language, model, and log retention are all customizable
 - **One-command setup** — `clerk hook install` wires everything up
 - **Recursion guard** — prevents infinite loops when clerk calls `claude -p`
 - Cross-platform: macOS, Linux, Windows
@@ -28,10 +30,11 @@ clerk is a CLI tool that hooks into Claude Code's `SessionEnd` event, automatica
 
 When a Claude Code session ends, the `SessionEnd` hook triggers `clerk feed`, which:
 
-1. Reads the session transcript (JSONL)
-2. Filters out tool calls, keeping only conversation text
-3. Calls `claude -p` to generate a summary
-4. Appends the summary to a date-organized markdown file
+1. Forks to background (so the hook returns immediately)
+2. Reads only new messages from the transcript (JSONL) since the last run
+3. Loads the existing daily summary for the project (if any)
+4. Calls `claude -p` to produce a merged summary
+5. Overwrites the daily summary file with the updated version
 
 ```
 ~/.clerk/
@@ -98,9 +101,17 @@ That's it. Once the hook is installed, clerk runs completely in the background �
 | Command | Description |
 |---------|-------------|
 | `feed` | Process a session transcript and generate a summary (called by hook) |
+| `config` | Show current configuration (alias for `config show`) |
 | `config show` | Show current configuration and config file path |
+| `config set <key> <value>` | Set a configuration value (tab-completable keys) |
 | `hook install` | Install clerk as a Claude Code SessionEnd hook |
 | `hook uninstall` | Remove clerk from Claude Code SessionEnd hooks |
+| `status` | Show active feed processes and interrupted sessions |
+| `status --watch` | Live-refresh status every second |
+| `retry <slug>` | Retry a specific interrupted session |
+| `retry --all` | Retry all interrupted sessions |
+| `kill <slug>` | Kill a specific active feed process |
+| `kill --all` | Kill all active feed processes |
 
 ## Configuration
 
@@ -114,6 +125,9 @@ Config file: `~/.config/clerk/config.json`
   },
   "summary": {
     "model": ""
+  },
+  "log": {
+    "retention_days": 30
   }
 }
 ```
@@ -123,25 +137,58 @@ Config file: `~/.config/clerk/config.json`
 | `output.dir` | `~/.clerk/` | Root directory for summaries |
 | `output.language` | `zh-TW` | Summary output language |
 | `summary.model` | `""` (claude default) | Model to use for `claude -p` |
+| `log.retention_days` | `30` | Days to keep log and cursor files |
+
+Set values with `clerk config set`:
+
+```bash
+clerk config set output.language en
+clerk config set summary.model haiku
+clerk config set log.retention_days 14
+```
 
 The config file is optional — clerk uses sensible defaults when it doesn't exist.
 
 ## Summary Format
 
-Each summary is appended with a timestamp separator:
+Each project gets one summary file per day, incrementally merged:
 
 ```markdown
----
-### 14:30:25
+# projects-my-app
 
-## 使用者輸入摘要
-- Asked to fix the authentication bug in auth.ts
-- Requested a new login page component
+> Last updated: 14:30:25
 
-## AI 回應摘要
-- Found and fixed token validation issue
-- Created LoginPage component with form handling
+### Core Work
+- Implemented user authentication with JWT tokens
+- Fixed race condition in WebSocket handler
+
+### Supporting Work
+- Added CI pipeline with GitHub Actions
+- Updated README with API documentation
+
+### Key Decisions & Rationale
+- **Decision**: Use JWT over sessions → **Rationale**: Stateless scaling for multi-region deploy
+
+### User Notes
+- Prefers minimal abstractions, direct code over frameworks
+
+### Version Log
+- v1.0.0 — Initial release with auth and WebSocket support
 ```
+
+## Troubleshooting
+
+Logs are stored at `~/.clerk/.log/YYYYMMDD-clerk.log`. Check them if summaries aren't appearing:
+
+```bash
+cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
+```
+
+Common issues:
+
+- **No summary generated** — Check if `claude` is in your PATH
+- **Hook cancelled** — clerk forks to background to avoid this; update to latest version
+- **Duplicate content** — Old behavior; current version uses incremental merge
 
 ## Shell Completion
 
