@@ -8,7 +8,7 @@
 
 [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-The Claude Code Clerk — auto-summarize your sessions, recover context, search by keyword.
+Your Claude Code sessions disappear when you close the terminal. clerk makes sure you never lose track of what you did.
 
 ## The Problem
 
@@ -38,6 +38,8 @@ That's it. clerk hooks into Claude Code and works silently in the background:
 
 clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away.
 
+> **Note:** clerk is not an AI memory tool. Tools like claude-mem store context for AI to recall. clerk stores summaries for *you* to read — organized by date, searchable by keyword, ready for your weekly review.
+
 ## Features
 
 - **Auto-summarize** — generates an incremental summary when your Claude Code session ends
@@ -53,14 +55,6 @@ clerk is a **set-and-forget** tool. Install once, and every session is automatic
 - Shell completion (bash, zsh, fish, powershell)
 
 ## How It Works
-
-```
-clerk install
-```
-
-That's it. Once installed, clerk runs completely in the background — no manual steps, no extra commands. Every time you exit a Claude Code session, a summary is automatically generated and saved. You can forget about it.
-
-When you need context from a previous session, use `/clerk-resume` in Claude Code. When you need to find past work, use `/clerk-search`.
 
 ### What gets installed
 
