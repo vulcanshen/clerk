@@ -1,98 +1,105 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+# clerk installer for macOS / Linux / Git Bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/install.sh | sh
 
-# ── Check dependencies ──────────────────────────────────────────
-if ! command -v jq &>/dev/null; then
-  echo "Error: jq is required but not installed."
-  echo "  brew install jq    # macOS"
-  echo "  apt install jq     # Debian/Ubuntu"
-  exit 1
-fi
+set -e
 
-if ! command -v claude &>/dev/null; then
-  echo "Error: claude CLI is required but not installed."
-  echo "  See https://docs.anthropic.com/en/docs/claude-code"
-  exit 1
-fi
+REPO="vulcanshen/clerk"
 
-# ── Resolve wrap-up.sh path ──────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOOK_SCRIPT="$SCRIPT_DIR/wrap-up.sh"
+# Detect OS
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+case "$OS" in
+  linux*)  OS="linux" ;;
+  darwin*) OS="darwin" ;;
+  mingw*|msys*|cygwin*) OS="windows" ;;
+  *) echo "Error: unsupported OS: $OS"; exit 1 ;;
+esac
 
-if [[ ! -x "$HOOK_SCRIPT" ]]; then
-  echo "Error: $HOOK_SCRIPT not found or not executable."
-  exit 1
-fi
+# Detect architecture
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64|amd64) ARCH="amd64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) echo "Error: unsupported architecture: $ARCH"; exit 1 ;;
+esac
 
-# ── Ask for CLAUDE_AUTO_DIGEST_ROOT ──────────────────────────────────────────
-DEFAULT_ROOT="$HOME/.claude/claude-auto-digest"
-read -rp "Digest output directory [$DEFAULT_ROOT]: " CLAUDE_AUTO_DIGEST_ROOT
-CLAUDE_AUTO_DIGEST_ROOT="${CLAUDE_AUTO_DIGEST_ROOT:-$DEFAULT_ROOT}"
-CLAUDE_AUTO_DIGEST_ROOT="${CLAUDE_AUTO_DIGEST_ROOT/#\~/$HOME}"
+# Get latest version
+echo "Fetching latest release..."
+VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+echo "Latest version: $VERSION"
 
-mkdir -p "$CLAUDE_AUTO_DIGEST_ROOT"
-
-# ── Ask for settings scope ───────────────────────────────────────
-echo ""
-echo "Where to install the hook?"
-echo "  1) User-level   (~/.claude/settings.json)"
-echo "  2) Project-level (.claude/settings.json)"
-read -rp "Choice [1]: " SCOPE_CHOICE
-SCOPE_CHOICE="${SCOPE_CHOICE:-1}"
-
-if [[ "$SCOPE_CHOICE" == "2" ]]; then
-  SETTINGS_FILE="$PWD/.claude/settings.json"
+# Set file extension and install dir
+if [ "$OS" = "windows" ]; then
+  EXT="zip"
+  INSTALL_DIR="$HOME/bin"
 else
-  SETTINGS_FILE="$HOME/.claude/settings.json"
+  EXT="tar.gz"
+  if [ "$(id -u)" = "0" ]; then
+    INSTALL_DIR="/usr/local/bin"
+  else
+    INSTALL_DIR="$HOME/.local/bin"
+  fi
 fi
 
-# Ensure settings file exists
-mkdir -p "$(dirname "$SETTINGS_FILE")"
-if [[ ! -f "$SETTINGS_FILE" ]]; then
-  echo '{}' > "$SETTINGS_FILE"
+FILENAME="clerk_${VERSION}_${OS}_${ARCH}.${EXT}"
+DOWNLOAD_URL="https://github.com/$REPO/releases/download/v${VERSION}/$FILENAME"
+
+# Download
+TMPDIR=$(mktemp -d)
+echo "Downloading $FILENAME..."
+curl -fsSL "$DOWNLOAD_URL" -o "$TMPDIR/$FILENAME"
+
+# Extract
+echo "Extracting..."
+if [ "$EXT" = "zip" ]; then
+  unzip -o "$TMPDIR/$FILENAME" -d "$TMPDIR" > /dev/null
+else
+  tar xzf "$TMPDIR/$FILENAME" -C "$TMPDIR"
 fi
 
-# Check if hook is already installed
-if jq -e ".hooks.SessionEnd[]?.hooks[]? | select(.command == \"$HOOK_SCRIPT\")" "$SETTINGS_FILE" &>/dev/null; then
-  echo ""
-  echo "Hook is already installed in $SETTINGS_FILE, skipping."
-  exit 0
+# Install
+mkdir -p "$INSTALL_DIR"
+if [ "$OS" = "windows" ]; then
+  cp "$TMPDIR/clerk.exe" "$INSTALL_DIR/clerk.exe"
+else
+  cp "$TMPDIR/clerk" "$INSTALL_DIR/clerk"
+  chmod +x "$INSTALL_DIR/clerk"
 fi
 
-# Build new config to merge
-jq -n --arg cmd "$HOOK_SCRIPT" --arg root "$CLAUDE_AUTO_DIGEST_ROOT" '{
-  env: {
-    CLAUDE_AUTO_DIGEST_ROOT: $root
-  },
-  hooks: {
-    SessionEnd: [
-      {
-        hooks: [
-          {
-            type: "command",
-            command: $cmd,
-            timeout: 120
-          }
-        ]
-      }
-    ]
-  }
-}' > /tmp/wrapup-config.json
+# Install man pages (Unix only, skip on Git Bash)
+if [ "$OS" != "windows" ]; then
+  if [ -d "$TMPDIR/docs/man" ]; then
+    if [ "$(id -u)" = "0" ]; then
+      MAN_DIR="/usr/local/share/man/man1"
+    else
+      MAN_DIR="$HOME/.local/share/man/man1"
+    fi
+    mkdir -p "$MAN_DIR"
+    cp "$TMPDIR"/docs/man/*.1 "$MAN_DIR/" 2>/dev/null || true
+  fi
+fi
 
-# Merge: set env.CLAUDE_AUTO_DIGEST_ROOT, append to SessionEnd array (skip if already present)
-jq --argjson new "$(cat /tmp/wrapup-config.json)" '
-  .env //= {} |
-  .env.CLAUDE_AUTO_DIGEST_ROOT = $new.env.CLAUDE_AUTO_DIGEST_ROOT |
-  .hooks //= {} |
-  .hooks.SessionEnd //= [] |
-  (if (.hooks.SessionEnd | map(.hooks[]?.command) | index($new.hooks.SessionEnd[0].hooks[0].command))
-   then .
-   else .hooks.SessionEnd += $new.hooks.SessionEnd
-   end)
-' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
-rm -f /tmp/wrapup-config.json
+# Cleanup
+rm -rf "$TMPDIR"
 
 echo ""
-echo "✓ Installed in $SETTINGS_FILE"
-echo "  Hook:  $HOOK_SCRIPT"
-echo "  Root:  $CLAUDE_AUTO_DIGEST_ROOT"
+echo "clerk $VERSION installed to $INSTALL_DIR"
+
+# Check if install dir is in PATH
+case ":$PATH:" in
+  *":$INSTALL_DIR:"*) ;;
+  *)
+    echo ""
+    echo "WARNING: $INSTALL_DIR is not in your PATH."
+    echo "Add it by running:"
+    echo ""
+    if [ "$OS" = "windows" ]; then
+      echo "  echo 'export PATH=\"\$HOME/bin:\$PATH\"' >> ~/.bashrc && source ~/.bashrc"
+    else
+      echo "  echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> ~/.$(basename "$SHELL")rc && source ~/.$(basename "$SHELL")rc"
+    fi
+    ;;
+esac
+
+echo ""
+echo "Run 'clerk --help' to get started."

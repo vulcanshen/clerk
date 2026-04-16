@@ -1,0 +1,67 @@
+version: 2
+
+project_name: clerk
+
+builds:
+  - main: .
+    binary: clerk
+    ldflags:
+      - -s -w -X github.com/vulcanshen/clerk/cmd.Version={{.Version}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - docs/man/*.1
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  disable: true
+
+release:
+  extra_files: []
+
+nfpms:
+  - package_name: clerk
+    homepage: "https://github.com/vulcanshen/clerk"
+    maintainer: "vulcanshen <vulcanshen@users.noreply.github.com>"
+    description: "The Claude Code Clerk — auto-summarize your sessions"
+    license: GPL-3.0
+    formats:
+      - deb
+      - rpm
+    contents:
+      - src: docs/man/*.1
+        dst: /usr/share/man/man1/
+
+brews:
+  - repository:
+      owner: vulcanshen
+      name: homebrew-tap
+      token: "{{ .Env.ACTION_TOKEN }}"
+    homepage: "https://github.com/vulcanshen/clerk"
+    description: "The Claude Code Clerk — auto-summarize your sessions"
+    extra_install: |
+      man1.install Dir["docs/man/*.1"]
+
+scoops:
+  - repository:
+      owner: vulcanshen
+      name: scoop-bucket
+      token: "{{ .Env.ACTION_TOKEN }}"
+    homepage: "https://github.com/vulcanshen/clerk"
+    description: "The Claude Code Clerk — auto-summarize your sessions"

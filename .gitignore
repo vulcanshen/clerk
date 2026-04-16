@@ -1,2 +1,32 @@
+# Binary
+clerk
+clerk.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+
+# Coverage
+coverage.out
+
+# GoReleaser
+dist/
+RELEASE_NOTES.md
+
+# Drafts
+.draft/
+
+# Project private
+idea.md
 .claude/
-*.err.log
+CLAUDE.md
+docs/man/

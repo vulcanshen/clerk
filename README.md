@@ -1,90 +1,168 @@
-# claude-auto-digest
+# clerk
 
-Claude Code session 結束時自動產生對話摘要，存成按日期組織的 markdown 檔案。
+[![GitHub Release](https://img.shields.io/github/v/release/vulcanshen/clerk)](https://github.com/vulcanshen/clerk/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/vulcanshen/clerk)](https://go.dev/)
+[![CI](https://img.shields.io/github/actions/workflow/status/vulcanshen/clerk/ci.yml?label=CI)](https://github.com/vulcanshen/clerk/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vulcanshen/clerk)](https://goreportcard.com/report/github.com/vulcanshen/clerk)
+[![License](https://img.shields.io/github/license/vulcanshen/clerk)](LICENSE)
 
-讓你以「某一天」為單位回顧工作內容，而不用逐 session 翻閱。
+[繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-## 安裝
+The Claude Code Clerk — auto-summarize your sessions.
+
+clerk is a CLI tool that hooks into Claude Code's `SessionEnd` event, automatically generating conversation summaries and saving them as organized markdown files.
+
+## Features
+
+- **Auto-summarize** — generates a summary when your Claude Code session ends
+- **Conversation filtering** — strips tool calls, keeps only user/assistant text
+- **Date-organized** — summaries saved to `~/.clerk/YYYYMMDD/<project-slug>.md`
+- **Append mode** — multiple sessions on the same project append to the same daily file
+- **Configurable** — output directory, language, and model are all customizable
+- **One-command setup** — `clerk hook install` wires everything up
+- **Recursion guard** — prevents infinite loops when clerk calls `claude -p`
+- Cross-platform: macOS, Linux, Windows
+- Shell completion (bash, zsh, fish, powershell)
+
+## How It Works
+
+When a Claude Code session ends, the `SessionEnd` hook triggers `clerk feed`, which:
+
+1. Reads the session transcript (JSONL)
+2. Filters out tool calls, keeping only conversation text
+3. Calls `claude -p` to generate a summary
+4. Appends the summary to a date-organized markdown file
+
+```
+~/.clerk/
+└── 20260416/
+    ├── projects-my-app.md
+    ├── projects-api-server.md
+    └── work-frontend.md
+```
+
+## Installation
+
+### Quick Install
+
+macOS / Linux / Git Bash:
 
 ```bash
-git clone https://github.com/anthropics/claude-auto-digest.git
-cd claude-auto-digest
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/install.sh | sh
 ```
 
-`install.sh` 會：
-1. 檢查 `jq` 和 `claude` CLI 是否已安裝
-2. 詢問摘要儲存目錄（`CLAUDE_AUTO_DIGEST_ROOT`）
-3. 詢問安裝範圍（user-level 或 project-level）
-4. 將 SessionEnd hook 設定合併到 `settings.json`
+Windows (PowerShell):
 
-### 前置需求
-
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
-- [jq](https://jqlang.github.io/jq/) — `brew install jq`
-
-## 使用方式
-
-安裝後無需任何操作。每次 Claude Code session 結束時，會自動在背景產生摘要。
-
-### 產出結構
-
-```
-$CLAUDE_AUTO_DIGEST_ROOT/
-  20260415/
-    sideproj-claude-auto-digest.md
-    work-backend-api.md
-  20260416/
-    sideproj-claude-auto-digest.md
+```powershell
+irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-每個檔案依時段分隔，內容範例：
+To update, run the same command again. To uninstall:
 
-```markdown
-## 14:30 session-abc123
-
-_duration: 45m | branch: feature/foo | reason: user_exit_
-
-- 建立了 `wrap-up.sh` 核心腳本，實作 SessionEnd hook 自動摘要功能
-- 決定使用 shell script 而非 Go，因為核心邏輯只是 JSON 處理 + 呼叫 claude -p
-- 產出檔案：`wrap-up.sh`、`install.sh`、`README.md`
-
-## 16:45 session-def456
-
-- 修復了 slug 產生邏輯的 edge case
-- 加入 transcript 檔案不存在時的錯誤處理
+```bash
+curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.sh | sh
 ```
 
-## 設定
+```powershell
+irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
+```
 
-安裝時會要求指定摘要儲存目錄，寫入 `~/.claude/settings.json` 的 `env` 欄位：
+### Package Managers
+
+| Platform | Command |
+|----------|---------|
+| Homebrew (macOS / Linux) | `brew install vulcanshen/tap/clerk` |
+| Scoop (Windows) | `scoop bucket add vulcanshen https://github.com/vulcanshen/scoop-bucket && scoop install clerk` |
+| Debian / Ubuntu | `sudo dpkg -i clerk_<version>_linux_amd64.deb` |
+| RHEL / Fedora | `sudo rpm -i clerk_<version>_linux_amd64.rpm` |
+
+`.deb` and `.rpm` packages can be downloaded from the [Releases page](https://github.com/vulcanshen/clerk/releases).
+
+### Build from Source
+
+```bash
+go install github.com/vulcanshen/clerk@latest
+```
+
+## Quick Start
+
+```bash
+# Install the SessionEnd hook
+clerk hook install
+```
+
+That's it. Once the hook is installed, clerk runs completely in the background — no manual steps, no extra commands. Every time you exit a Claude Code session, a summary is automatically generated and saved. You can forget about it.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `feed` | Process a session transcript and generate a summary (called by hook) |
+| `config show` | Show current configuration and config file path |
+| `hook install` | Install clerk as a Claude Code SessionEnd hook |
+| `hook uninstall` | Remove clerk from Claude Code SessionEnd hooks |
+
+## Configuration
+
+Config file: `~/.config/clerk/config.json`
 
 ```json
 {
-  "env": {
-    "CLAUDE_AUTO_DIGEST_ROOT": "/Users/you/Documents/digests"
+  "output": {
+    "dir": "~/.clerk/",
+    "language": "zh-TW"
+  },
+  "summary": {
+    "model": ""
   }
 }
 ```
 
-如需修改，直接編輯 `~/.claude/settings.json` 中的 `CLAUDE_AUTO_DIGEST_ROOT` 即可。
+| Key | Default | Description |
+|-----|---------|-------------|
+| `output.dir` | `~/.clerk/` | Root directory for summaries |
+| `output.language` | `zh-TW` | Summary output language |
+| `summary.model` | `""` (claude default) | Model to use for `claude -p` |
 
-## 運作原理
+The config file is optional — clerk uses sensible defaults when it doesn't exist.
 
-1. Claude Code session 結束時觸發 `SessionEnd` hook
-2. `wrap-up.sh` 前景讀取 hook stdin 並寫入暫存檔，印出 `=== CLAUDE DIGESTING ===` 佔位符後立即 fork 背景程序退出（前景約 10-20ms）
-3. 背景程序從暫存檔讀取 `transcript_path` 和 `cwd`
-4. `cwd` 取最後兩層目錄轉為 slug（如 `sideproj-claude-auto-digest`）
-5. 用 `jq` 精簡 transcript JSONL 為純文字對話（每則限 2000 字元）
-6. 呼叫 `claude -p` 產生中文摘要
-7. 移除佔位符，將摘要追加到 `$CLAUDE_AUTO_DIGEST_ROOT/YYYYMMDD/<slug>.md`
+## Summary Format
 
-遞迴防護：背景 `claude -p` 啟動時設定 `WRAPUP_RUNNING=1`，防止其 SessionEnd 再次觸發摘要。
+Each summary is appended with a timestamp separator:
 
-## 手動卸載
+```markdown
+---
+### 14:30:25
 
-從 `~/.claude/settings.json` 移除 `hooks.SessionEnd` 中包含 `wrap-up.sh` 的項目，以及 `env.CLAUDE_AUTO_DIGEST_ROOT` 即可。
+## 使用者輸入摘要
+- Asked to fix the authentication bug in auth.ts
+- Requested a new login page component
+
+## AI 回應摘要
+- Found and fixed token validation issue
+- Created LoginPage component with form handling
+```
+
+## Shell Completion
+
+```bash
+# Zsh
+mkdir -p ~/.zsh/completions
+clerk completion zsh > ~/.zsh/completions/_clerk
+echo 'fpath=(~/.zsh/completions $fpath)' >> ~/.zshrc
+echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
+source ~/.zshrc
+
+# Bash
+clerk completion bash > /etc/bash_completion.d/clerk
+
+# Fish
+clerk completion fish > ~/.config/fish/completions/clerk.fish
+
+# PowerShell
+clerk completion powershell > clerk.ps1
+```
 
 ## License
 
-GPL-3.0
+[GPL-3.0](LICENSE)
