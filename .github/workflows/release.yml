@@ -32,6 +32,7 @@ jobs:
         run: |
           go get github.com/spf13/cobra/doc@v1.10.2
           go run docs/generate.go
+          git checkout go.mod go.sum
       - name: Extract release notes from CHANGELOG
         run: |
           VERSION=${GITHUB_REF_NAME}
