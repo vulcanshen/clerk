@@ -78,6 +78,23 @@ When you need context from a previous session, use `/clerk-resume` in Claude Cod
 4. Loads existing daily summary, calls `claude -p` to merge
 5. Saves updated summary + extracts tags for search indexing
 
+### Resume flow
+
+1. You type `/clerk-resume` in Claude Code
+2. Claude calls the `clerk-resume` MCP tool with your project's working directory
+3. clerk returns file paths: daily summaries + full transcript files
+4. Claude reads the summaries first for a quick overview
+5. If more detail is needed, Claude reads the transcript files
+6. Claude summarizes what was previously done and confirms context is restored
+
+### Search flow
+
+1. You type `/clerk-search` in Claude Code
+2. Claude asks what keyword you're looking for (or you provide it as an argument)
+3. Claude calls the `clerk-search` MCP tool with the keyword
+4. clerk matches against tag index, returns paths to matching summaries and transcripts
+5. Claude reads the files and presents the relevant context
+
 ```
 ~/.clerk/
 ├── 20260416/

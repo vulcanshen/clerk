@@ -78,6 +78,23 @@ clerk install
 4. 載入現有的每日摘要，呼叫 `claude -p` 進行合併
 5. 儲存更新後的摘要 + 擷取標籤供搜尋索引使用
 
+### 恢復流程
+
+1. 你在 Claude Code 中輸入 `/clerk-resume`
+2. Claude 以你專案的工作目錄呼叫 `clerk-resume` MCP 工具
+3. clerk 回傳檔案路徑：每日摘要 + 完整 transcript 檔案
+4. Claude 先讀取摘要以快速了解概況
+5. 如需更多細節，Claude 會讀取 transcript 檔案
+6. Claude 總結之前完成的工作，並確認上下文已恢復
+
+### 搜尋流程
+
+1. 你在 Claude Code 中輸入 `/clerk-search`
+2. Claude 詢問你要搜尋的關鍵字（或你以參數直接提供）
+3. Claude 以該關鍵字呼叫 `clerk-search` MCP 工具
+4. clerk 比對標籤索引，回傳符合的摘要和 transcript 路徑
+5. Claude 讀取這些檔案並呈現相關的上下文
+
 ```
 ~/.clerk/
 ├── 20260416/

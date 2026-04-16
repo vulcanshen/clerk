@@ -78,6 +78,23 @@ clerk install
 4. 기존 일일 요약을 로드하고, `claude -p`를 호출하여 병합
 5. 업데이트된 요약 저장 + 검색 인덱스용 태그 추출
 
+### 복원 흐름
+
+1. Claude Code에서 `/clerk-resume`을 입력
+2. Claude가 프로젝트의 작업 디렉토리를 지정하여 `clerk-resume` MCP 도구를 호출
+3. clerk가 파일 경로를 반환: 일일 요약 + 전체 transcript 파일
+4. Claude가 먼저 요약을 읽어 빠른 개요 파악
+5. 더 자세한 내용이 필요하면 Claude가 transcript 파일을 읽음
+6. Claude가 이전에 수행한 작업을 요약하고, 컨텍스트가 복원되었음을 확인
+
+### 검색 흐름
+
+1. Claude Code에서 `/clerk-search`를 입력
+2. Claude가 검색할 키워드를 물어봄 (또는 인수로 직접 제공)
+3. Claude가 해당 키워드로 `clerk-search` MCP 도구를 호출
+4. clerk가 태그 인덱스와 대조하여 일치하는 요약 및 transcript 경로를 반환
+5. Claude가 해당 파일을 읽고 관련 컨텍스트를 제시
+
 ```
 ~/.clerk/
 ├── 20260416/
