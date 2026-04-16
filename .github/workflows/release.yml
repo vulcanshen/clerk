@@ -29,7 +29,9 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Generate man pages
-        run: go run docs/generate.go
+        run: |
+          go get github.com/spf13/cobra/doc@v1.10.2
+          go run docs/generate.go
       - name: Extract release notes from CHANGELOG
         run: |
           VERSION=${GITHUB_REF_NAME}
