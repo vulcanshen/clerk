@@ -11,7 +11,7 @@
   - 存檔至 `<output_dir>/YYYYMMDD/<slug>.md`。
 - [ ] **clerk config show**：印出目前生效的配置與配置路徑。
   - 配置路徑：`~/.config/clerk/config.json`。
-  - 預設值：`output_dir: ~/.clerk/`, `output_language: zh-TW`。
+  - 預設值：`output_dir: ~/.clerk/`, `output_language: en`。
 - [ ] **clerk hook install/uninstall**：
   - `install`: 自動獲取 `clerk` 絕對路徑並寫入 `~/.claude/settings.json` 的 `hooks.SessionEnd`。
   - `uninstall`: 從 `settings.json` 移除該 hook 設定。

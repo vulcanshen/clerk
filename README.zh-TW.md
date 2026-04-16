@@ -202,7 +202,7 @@ go install github.com/vulcanshen/clerk@latest
 | 設定項 | 預設值 | 說明 |
 |--------|--------|------|
 | `output.dir` | `~/.clerk/` | 摘要存放根目錄 |
-| `output.language` | `zh-TW` | 摘要輸出語言 |
+| `output.language` | `en` | 摘要輸出語言 |
 | `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
 | `feed.enabled` | `true` | 啟用/停用此專案的 feed |

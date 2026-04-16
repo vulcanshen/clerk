@@ -202,7 +202,7 @@ Internal commands (called by hooks, not by users):
 | Key | Default | Description |
 |-----|---------|-------------|
 | `output.dir` | `~/.clerk/` | Root directory for summaries |
-| `output.language` | `zh-TW` | Summary output language |
+| `output.language` | `en` | Summary output language |
 | `summary.model` | `""` (claude default) | Model to use for `claude -p` |
 | `log.retention_days` | `30` | Days to keep log and cursor files |
 | `feed.enabled` | `true` | Enable/disable feed for this project |

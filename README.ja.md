@@ -202,7 +202,7 @@ go install github.com/vulcanshen/clerk@latest
 | 設定項目 | デフォルト値 | 説明 |
 |----------|-------------|------|
 | `output.dir` | `~/.clerk/` | 要約の保存ルートディレクトリ |
-| `output.language` | `zh-TW` | 要約の出力言語 |
+| `output.language` | `en` | 要約の出力言語 |
 | `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
 | `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
