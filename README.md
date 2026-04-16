@@ -8,40 +8,66 @@
 
 [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-The Claude Code Clerk — auto-summarize your sessions.
+The Claude Code Clerk — auto-summarize your sessions, recover context, search by keyword.
 
-clerk is a CLI tool that hooks into Claude Code's `SessionEnd` event, automatically generating conversation summaries and saving them as organized markdown files.
+clerk is a CLI tool that hooks into Claude Code, automatically generating conversation summaries, tracking sessions, and providing MCP tools to recover context and search past work.
 
 ## Features
 
-- **Auto-summarize** — generates a summary when your Claude Code session ends
-- **Incremental merge** — each session merges into a single daily summary per project, no duplicates
-- **Conversation filtering** — strips tool calls, keeps only user/assistant text
-- **Date-organized** — summaries saved to `~/.clerk/YYYYMMDD/<project-slug>.md`
+- **Auto-summarize** — generates an incremental summary when your Claude Code session ends
+- **Context recovery** — `/clerk-resume` to rebuild context from previous sessions
+- **Keyword search** — `/clerk-search` to find past work by tag
+- **Session tracking** — records every session start for history lookup
+- **Tag system** — auto-extracts keywords from summaries for searchable indexing
 - **Cursor tracking** — only processes new messages since the last run, saving tokens and time
 - **Process management** — monitor active feeds, kill stuck processes, retry interrupted ones
-- **Configurable** — output directory, language, model, and log retention are all customizable
-- **One-command setup** — `clerk hook install` wires everything up
-- **Recursion guard** — prevents infinite loops when clerk calls `claude -p`
+- **Project-level config** — disable feed per-project, override global settings
+- **One-command setup** — `clerk install` wires up hooks, MCP server, and skills
 - Cross-platform: macOS, Linux, Windows
 - Shell completion (bash, zsh, fish, powershell)
 
 ## How It Works
 
-When a Claude Code session ends, the `SessionEnd` hook triggers `clerk feed`, which:
+```
+clerk install
+```
 
-1. Forks to background (so the hook returns immediately)
-2. Reads only new messages from the transcript (JSONL) since the last run
-3. Loads the existing daily summary for the project (if any)
-4. Calls `claude -p` to produce a merged summary
-5. Overwrites the daily summary file with the updated version
+That's it. Once installed, clerk runs completely in the background — no manual steps, no extra commands. Every time you exit a Claude Code session, a summary is automatically generated and saved. You can forget about it.
+
+When you need context from a previous session, use `/clerk-resume` in Claude Code. When you need to find past work, use `/clerk-search`.
+
+### What gets installed
+
+| Component | What it does |
+|-----------|-------------|
+| **hook** | SessionStart records session ID, SessionEnd triggers summary generation |
+| **mcp** | MCP stdio server providing `clerk-resume` and `clerk-search` tools |
+| **skills** | `/clerk-resume` and `/clerk-search` slash commands for Claude Code |
+
+### Summary flow
+
+1. Session ends → hook triggers `clerk feed`
+2. Feed forks to background (hook returns immediately)
+3. Reads only new messages since last run (cursor tracking)
+4. Loads existing daily summary, calls `claude -p` to merge
+5. Saves updated summary + extracts tags for search indexing
 
 ```
 ~/.clerk/
-└── 20260416/
-    ├── projects-my-app.md
-    ├── projects-api-server.md
-    └── work-frontend.md
+├── 20260416/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .sessions/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .tags/
+│   ├── mcp.md
+│   ├── refactor.md
+│   └── auth.md
+├── .log/
+│   └── 20260416-clerk.log
+├── .running/
+└── .cursor/
 ```
 
 ## Installation
@@ -60,14 +86,10 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-To update, run the same command again. To uninstall:
+Then set up the hooks, MCP server, and skills:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.sh | sh
-```
-
-```powershell
-irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
+clerk install
 ```
 
 ### Package Managers
@@ -79,33 +101,25 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
 | Debian / Ubuntu | `sudo dpkg -i clerk_<version>_linux_amd64.deb` |
 | RHEL / Fedora | `sudo rpm -i clerk_<version>_linux_amd64.rpm` |
 
-`.deb` and `.rpm` packages can be downloaded from the [Releases page](https://github.com/vulcanshen/clerk/releases).
-
 ### Build from Source
 
 ```bash
 go install github.com/vulcanshen/clerk@latest
 ```
 
-## Quick Start
-
-```bash
-# Install the SessionEnd hook
-clerk hook install
-```
-
-That's it. Once the hook is installed, clerk runs completely in the background — no manual steps, no extra commands. Every time you exit a Claude Code session, a summary is automatically generated and saved. You can forget about it.
-
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `feed` | Process a session transcript and generate a summary (called by hook) |
+| `install` | Install all components (hook + mcp + skills) |
+| `install hook` | Install SessionStart/SessionEnd hooks only |
+| `install mcp` | Register MCP server only |
+| `install skills` | Install slash command skills only |
+| `uninstall` | Remove all components |
 | `config` | Show current configuration (alias for `config show`) |
-| `config show` | Show current configuration and config file path |
-| `config set <key> <value>` | Set a configuration value (tab-completable keys) |
-| `hook install` | Install clerk as a Claude Code SessionEnd hook |
-| `hook uninstall` | Remove clerk from Claude Code SessionEnd hooks |
+| `config show` | Show merged configuration and file paths |
+| `config set <key> <value>` | Set project-level config value |
+| `config set -g <key> <value>` | Set global config value |
 | `status` | Show active feed processes and interrupted sessions |
 | `status --watch` | Live-refresh status every second |
 | `retry <slug>` | Retry a specific interrupted session |
@@ -113,21 +127,37 @@ That's it. Once the hook is installed, clerk runs completely in the background �
 | `kill <slug>` | Kill a specific active feed process |
 | `kill --all` | Kill all active feed processes |
 
+Internal commands (called by hooks, not by users):
+
+| Command | Description |
+|---------|-------------|
+| `feed` | Process session transcript and generate summary |
+| `punch` | Record session ID on session start |
+| `mcp` | Start MCP stdio server |
+
 ## Configuration
 
-Config file: `~/.config/clerk/config.json`
+### Config files
+
+- Global: `~/.config/clerk/.clerk.json`
+- Project: `<cwd>/.clerk.json` (overrides global)
+
+### Available settings
 
 ```json
 {
   "output": {
     "dir": "~/.clerk/",
-    "language": "zh-TW"
+    "language": "en"
   },
   "summary": {
     "model": ""
   },
   "log": {
     "retention_days": 30
+  },
+  "feed": {
+    "enabled": true
   }
 }
 ```
@@ -138,47 +168,43 @@ Config file: `~/.config/clerk/config.json`
 | `output.language` | `zh-TW` | Summary output language |
 | `summary.model` | `""` (claude default) | Model to use for `claude -p` |
 | `log.retention_days` | `30` | Days to keep log and cursor files |
+| `feed.enabled` | `true` | Enable/disable feed for this project |
 
-Set values with `clerk config set`:
+### Examples
 
 ```bash
-clerk config set output.language en
-clerk config set summary.model haiku
-clerk config set log.retention_days 14
+# Disable feed for a specific project
+cd /path/to/unimportant-project
+clerk config set feed.enabled false
+
+# Use a cheaper model globally
+clerk config set -g summary.model haiku
+
+# Change output language globally
+clerk config set -g output.language en
 ```
 
-The config file is optional — clerk uses sensible defaults when it doesn't exist.
+## MCP Tools
 
-## Summary Format
+Available when MCP server is installed (`clerk install mcp`):
 
-Each project gets one summary file per day, incrementally merged:
+| Tool | Description |
+|------|-------------|
+| `clerk-resume` | Returns summary + transcript file paths for context recovery |
+| `clerk-search` | Search previous sessions by keyword/tag |
 
-```markdown
-# projects-my-app
+## Skills
 
-> Last updated: 14:30:25
+Available when skills are installed (`clerk install skills`):
 
-### Core Work
-- Implemented user authentication with JWT tokens
-- Fixed race condition in WebSocket handler
-
-### Supporting Work
-- Added CI pipeline with GitHub Actions
-- Updated README with API documentation
-
-### Key Decisions & Rationale
-- **Decision**: Use JWT over sessions → **Rationale**: Stateless scaling for multi-region deploy
-
-### User Notes
-- Prefers minimal abstractions, direct code over frameworks
-
-### Version Log
-- v1.0.0 — Initial release with auth and WebSocket support
-```
+| Skill | Description |
+|-------|-------------|
+| `/clerk-resume` | Recover context from previous sessions — calls MCP tool, reads files, rebuilds context |
+| `/clerk-search` | Search past sessions by keyword — calls MCP tool, reads matching files |
 
 ## Troubleshooting
 
-Logs are stored at `~/.clerk/.log/YYYYMMDD-clerk.log`. Check them if summaries aren't appearing:
+Logs are stored at `~/.clerk/.log/YYYYMMDD-clerk.log`:
 
 ```bash
 cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
@@ -188,7 +214,7 @@ Common issues:
 
 - **No summary generated** — Check if `claude` is in your PATH
 - **Hook cancelled** — clerk forks to background to avoid this; update to latest version
-- **Duplicate content** — Old behavior; current version uses incremental merge
+- **MCP tool not found** — Run `clerk install mcp` and restart the session
 
 ## Shell Completion
 

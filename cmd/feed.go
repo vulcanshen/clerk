@@ -45,9 +45,19 @@ var feedCmd = &cobra.Command{
 			os.Remove(feedInputFlag)
 		}
 
-		cfg, err := config.Load()
+		// parse hook input to get cwd for project-level config
+		hookInput, err := feed.ParseHookInput(data)
 		if err != nil {
 			return err
+		}
+
+		cfg, err := config.LoadWithCwd(hookInput.Cwd)
+		if err != nil {
+			return err
+		}
+
+		if !config.IsFeedEnabled(cfg) {
+			return nil
 		}
 
 		return feed.Run(data, cfg)

@@ -165,19 +165,15 @@ func Install() error {
 	punchExists := hasHook(hooks, "SessionStart", "punch")
 
 	if feedExists && punchExists {
-		fmt.Println("Clerk hooks are already installed.")
-		fmt.Printf("Settings file: %s\n", settingsPath())
+		fmt.Println("  hook: already installed")
 		return nil
 	}
 
 	if !feedExists {
 		addHook(hooks, "SessionEnd", feedCmd)
-		fmt.Printf("Installed SessionEnd hook: %s\n", feedCmd)
 	}
-
 	if !punchExists {
 		addHook(hooks, "SessionStart", punchCmd)
-		fmt.Printf("Installed SessionStart hook: %s\n", punchCmd)
 	}
 
 	settings["hooks"] = hooks
@@ -186,7 +182,7 @@ func Install() error {
 		return err
 	}
 
-	fmt.Printf("Settings file: %s\n", settingsPath())
+	fmt.Println("  hook: installed (SessionStart + SessionEnd)")
 	return nil
 }
 
@@ -198,7 +194,7 @@ func Uninstall() error {
 
 	hooks, _ := settings["hooks"].(map[string]interface{})
 	if hooks == nil {
-		fmt.Println("No hooks found, nothing to uninstall.")
+		fmt.Println("  hook: not installed")
 		return nil
 	}
 
@@ -206,7 +202,7 @@ func Uninstall() error {
 	punchRemoved := removeHook(hooks, "SessionStart", "punch")
 
 	if !feedRemoved && !punchRemoved {
-		fmt.Println("No clerk hooks found, nothing to uninstall.")
+		fmt.Println("  hook: not installed")
 		return nil
 	}
 
@@ -220,12 +216,6 @@ func Uninstall() error {
 		return err
 	}
 
-	if feedRemoved {
-		fmt.Println("Removed SessionEnd hook (feed).")
-	}
-	if punchRemoved {
-		fmt.Println("Removed SessionStart hook (punch).")
-	}
-	fmt.Printf("Settings file: %s\n", settingsPath())
+	fmt.Println("  hook: removed (SessionStart + SessionEnd)")
 	return nil
 }

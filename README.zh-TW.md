@@ -8,40 +8,66 @@
 
 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Claude Code 的書記官 — 自動摘要你的對話。
+Claude Code 的書記官 — 自動摘要你的 session，恢復上下文，按關鍵字搜尋。
 
-clerk 是一個 CLI 工具，掛載在 Claude Code 的 `SessionEnd` 事件上，在對話結束時自動產生摘要並存成有組織的 markdown 檔案。
+clerk 是一個 CLI 工具，掛載在 Claude Code 上，自動產生對話摘要、追蹤 session，並提供 MCP 工具來恢復上下文和搜尋過去的工作記錄。
 
 ## 功能特色
 
-- **自動摘要** — Claude Code session 結束時自動產生摘要
-- **增量合併** — 每次 session 合併到同一天同專案的單一摘要檔，不重複
-- **對話過濾** — 過濾掉 tool call，只保留使用者與 AI 的對話文字
-- **按日期整理** — 摘要存放在 `~/.clerk/YYYYMMDD/<專案-slug>.md`
+- **自動摘要** — Claude Code session 結束時自動產生增量摘要
+- **上下文恢復** — `/clerk-resume` 從之前的 session 重建上下文
+- **關鍵字搜尋** — `/clerk-search` 透過標籤搜尋過去的工作記錄
+- **Session 追蹤** — 記錄每次 session 開始，供歷史查詢
+- **標籤系統** — 自動從摘要中擷取關鍵字，建立可搜尋的索引
 - **游標追蹤** — 只處理上次之後的新訊息，節省 token 和時間
 - **Process 管理** — 監控進行中的 feed、強制終止、重試中斷的摘要
-- **可設定** — 輸出目錄、語言、模型、log 保留天數皆可自訂
-- **一鍵設定** — `clerk hook install` 自動完成所有配置
-- **遞迴防護** — 防止 clerk 呼叫 `claude -p` 時觸發無限循環
+- **專案層級設定** — 按專案停用 feed，覆蓋全域設定
+- **一鍵設定** — `clerk install` 自動配置 hook、MCP server 和 skills
 - 跨平台：macOS、Linux、Windows
 - Shell 自動補全（bash、zsh、fish、powershell）
 
 ## 運作原理
 
-當 Claude Code session 結束時，`SessionEnd` hook 觸發 `clerk feed`，流程如下：
+```
+clerk install
+```
 
-1. Fork 到背景執行（hook 立刻返回）
-2. 只讀取上次之後的新訊息（JSONL）
-3. 載入該專案現有的當日摘要（如果有的話）
-4. 呼叫 `claude -p` 產生合併後的摘要
-5. 覆寫摘要檔為更新版本
+就這樣。安裝完成後，clerk 會完全在背景運作 — 不需要手動操作，不需要額外指令。每次你結束 Claude Code session，摘要就會自動產生並存檔。裝完就可以忘了它。
+
+當你需要之前 session 的上下文時，在 Claude Code 中使用 `/clerk-resume`。當你需要搜尋過去的工作記錄時，使用 `/clerk-search`。
+
+### 安裝了什麼
+
+| 元件 | 功能 |
+|------|------|
+| **hook** | SessionStart 記錄 session ID，SessionEnd 觸發摘要產生 |
+| **mcp** | MCP stdio server，提供 `clerk-resume` 和 `clerk-search` 工具 |
+| **skills** | `/clerk-resume` 和 `/clerk-search` 斜線指令供 Claude Code 使用 |
+
+### 摘要流程
+
+1. Session 結束 → hook 觸發 `clerk feed`
+2. Feed fork 到背景執行（hook 立刻返回）
+3. 只讀取上次之後的新訊息（游標追蹤）
+4. 載入現有的每日摘要，呼叫 `claude -p` 進行合併
+5. 儲存更新後的摘要 + 擷取標籤供搜尋索引使用
 
 ```
 ~/.clerk/
-└── 20260416/
-    ├── projects-my-app.md
-    ├── projects-api-server.md
-    └── work-frontend.md
+├── 20260416/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .sessions/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .tags/
+│   ├── mcp.md
+│   ├── refactor.md
+│   └── auth.md
+├── .log/
+│   └── 20260416-clerk.log
+├── .running/
+└── .cursor/
 ```
 
 ## 安裝
@@ -60,14 +86,10 @@ Windows（PowerShell）：
 irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-更新只需重新執行相同指令。解除安裝：
+然後設定 hook、MCP server 和 skills：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.sh | sh
-```
-
-```powershell
-irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
+clerk install
 ```
 
 ### 套件管理器
@@ -79,33 +101,25 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
 | Debian / Ubuntu | `sudo dpkg -i clerk_<version>_linux_amd64.deb` |
 | RHEL / Fedora | `sudo rpm -i clerk_<version>_linux_amd64.rpm` |
 
-`.deb` 和 `.rpm` 套件可從 [Releases 頁面](https://github.com/vulcanshen/clerk/releases)下載。
-
 ### 從原始碼安裝
 
 ```bash
 go install github.com/vulcanshen/clerk@latest
 ```
 
-## 快速開始
-
-```bash
-# 安裝 SessionEnd hook
-clerk hook install
-```
-
-就這樣。安裝完 hook 之後，clerk 會完全在背景運作 — 不需要手動操作，不需要額外指令。每次你結束 Claude Code session，摘要就會自動產生並存檔。裝完就可以忘了它。
-
 ## 指令
 
 | 指令 | 說明 |
 |------|------|
-| `feed` | 處理 session 對話記錄並產生摘要（由 hook 呼叫） |
+| `install` | 安裝所有元件（hook + mcp + skills） |
+| `install hook` | 僅安裝 SessionStart/SessionEnd hook |
+| `install mcp` | 僅註冊 MCP server |
+| `install skills` | 僅安裝斜線指令 skills |
+| `uninstall` | 移除所有元件 |
 | `config` | 顯示目前的設定（等同 `config show`） |
-| `config show` | 顯示目前的設定與設定檔路徑 |
-| `config set <key> <value>` | 設定配置值（key 可 tab 補全） |
-| `hook install` | 將 clerk 安裝為 Claude Code SessionEnd hook |
-| `hook uninstall` | 從 Claude Code SessionEnd hook 中移除 clerk |
+| `config show` | 顯示合併後的設定與檔案路徑 |
+| `config set <key> <value>` | 設定專案層級的配置值 |
+| `config set -g <key> <value>` | 設定全域配置值 |
 | `status` | 顯示進行中的 feed process 和中斷的 session |
 | `status --watch` | 即時重新整理狀態（每秒更新） |
 | `retry <slug>` | 重試指定的中斷 session |
@@ -113,21 +127,37 @@ clerk hook install
 | `kill <slug>` | 強制終止指定的 feed process |
 | `kill --all` | 強制終止所有 feed process |
 
+內部指令（由 hook 呼叫，非使用者直接使用）：
+
+| 指令 | 說明 |
+|------|------|
+| `feed` | 處理 session 對話記錄並產生摘要 |
+| `punch` | 在 session 開始時記錄 session ID |
+| `mcp` | 啟動 MCP stdio server |
+
 ## 設定
 
-設定檔路徑：`~/.config/clerk/config.json`
+### 設定檔
+
+- 全域：`~/.config/clerk/.clerk.json`
+- 專案：`<cwd>/.clerk.json`（覆蓋全域設定）
+
+### 可用設定
 
 ```json
 {
   "output": {
     "dir": "~/.clerk/",
-    "language": "zh-TW"
+    "language": "en"
   },
   "summary": {
     "model": ""
   },
   "log": {
     "retention_days": 30
+  },
+  "feed": {
+    "enabled": true
   }
 }
 ```
@@ -138,47 +168,43 @@ clerk hook install
 | `output.language` | `zh-TW` | 摘要輸出語言 |
 | `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
+| `feed.enabled` | `true` | 啟用/停用此專案的 feed |
 
-用 `clerk config set` 設定：
+### 範例
 
 ```bash
-clerk config set output.language en
-clerk config set summary.model haiku
-clerk config set log.retention_days 14
+# 停用特定專案的 feed
+cd /path/to/unimportant-project
+clerk config set feed.enabled false
+
+# 全域使用較便宜的模型
+clerk config set -g summary.model haiku
+
+# 全域變更輸出語言
+clerk config set -g output.language en
 ```
 
-設定檔是選用的 — 不存在時 clerk 會使用預設值。
+## MCP 工具
 
-## 摘要格式
+安裝 MCP server 後可用（`clerk install mcp`）：
 
-每個專案每天一份摘要檔，持續增量合併：
+| 工具 | 說明 |
+|------|------|
+| `clerk-resume` | 回傳摘要 + transcript 檔案路徑，用於恢復上下文 |
+| `clerk-search` | 透過關鍵字/標籤搜尋之前的 session |
 
-```markdown
-# projects-my-app
+## Skills
 
-> Last updated: 14:30:25
+安裝 skills 後可用（`clerk install skills`）：
 
-### 核心工作
-- 實作 JWT token 的使用者認證
-- 修復 WebSocket handler 的 race condition
-
-### 輔助工作
-- 新增 GitHub Actions CI pipeline
-- 更新 README 的 API 文件
-
-### 關鍵決策與理由
-- **決策**：使用 JWT 而非 session → **理由**：多區域部署需要無狀態擴展
-
-### 使用者備註
-- 偏好最小抽象化，直接寫 code 而非依賴框架
-
-### 版本紀錄
-- v1.0.0 — 初始版本，包含認證和 WebSocket 支援
-```
+| Skill | 說明 |
+|-------|------|
+| `/clerk-resume` | 從之前的 session 恢復上下文 — 呼叫 MCP 工具、讀取檔案、重建上下文 |
+| `/clerk-search` | 透過關鍵字搜尋過去的 session — 呼叫 MCP 工具、讀取符合的檔案 |
 
 ## 疑難排解
 
-Log 存放在 `~/.clerk/.log/YYYYMMDD-clerk.log`，摘要沒出現時可以查看：
+Log 存放在 `~/.clerk/.log/YYYYMMDD-clerk.log`：
 
 ```bash
 cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
@@ -188,7 +214,7 @@ cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
 
 - **沒有產生摘要** — 確認 `claude` 是否在 PATH 中
 - **Hook cancelled** — clerk 已改為 fork 背景執行來避免此問題，更新到最新版
-- **內容重複** — 舊版行為；目前版本使用增量合併
+- **MCP 工具找不到** — 執行 `clerk install mcp` 並重新啟動 session
 
 ## Shell 自動補全
 

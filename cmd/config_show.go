@@ -18,8 +18,9 @@ var configShowCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Config path: %s\n", config.ConfigPath())
-		fmt.Printf("Log path:    %s\n\n", logger.LogPath(cfg))
+		fmt.Printf("Global config: %s\n", config.GlobalConfigPath())
+		fmt.Printf("Project config: %s\n", config.ProjectConfigPath(""))
+		fmt.Printf("Log path:      %s\n\n", logger.LogPath(cfg))
 
 		data, err := json.MarshalIndent(cfg, "", "  ")
 		if err != nil {

@@ -8,45 +8,71 @@
 
 [English](README.md) | [繁體中文](README.zh-TW.md) | [한국어](README.ko.md)
 
-Claude Code の書記官 — セッションを自動要約。
+Claude Code の書記官 — セッションを自動要約し、コンテキストを復元し、キーワードで検索。
 
-clerk は Claude Code の `SessionEnd` イベントにフックする CLI ツールで、会話終了時に自動的に要約を生成し、整理された markdown ファイルとして保存します。
+clerk は Claude Code に連携する CLI ツールで、会話の要約を自動生成し、セッションを追跡し、コンテキストの復元や過去の作業検索のための MCP ツールを提供します。
 
 ## 機能
 
-- **自動要約** — Claude Code セッション終了時に自動的に要約を生成
-- **増分マージ** — 各セッションは同日同プロジェクトの単一要約ファイルにマージ、重複なし
-- **会話フィルタリング** — tool call を除去し、ユーザーと AI の会話テキストのみを保持
-- **日付整理** — 要約は `~/.clerk/YYYYMMDD/<プロジェクト-slug>.md` に保存
+- **自動要約** — Claude Code セッション終了時に増分要約を自動生成
+- **コンテキスト復元** — `/clerk-resume` で前回のセッションからコンテキストを再構築
+- **キーワード検索** — `/clerk-search` でタグによる過去の作業検索
+- **セッション追跡** — 履歴検索のためにすべてのセッション開始を記録
+- **タグシステム** — 要約からキーワードを自動抽出し、検索可能なインデックスを構築
 - **カーソル追跡** — 前回以降の新しいメッセージのみを処理し、トークンと時間を節約
 - **プロセス管理** — アクティブな feed の監視、強制終了、中断されたものの再試行
-- **設定可能** — 出力ディレクトリ、言語、モデル、ログ保持日数をカスタマイズ可能
-- **ワンコマンド設定** — `clerk hook install` で全自動セットアップ
-- **再帰防止** — clerk が `claude -p` を呼び出す際の無限ループを防止
+- **プロジェクトレベル設定** — プロジェクトごとに feed を無効化、グローバル設定を上書き
+- **ワンコマンド設定** — `clerk install` でフック、MCP サーバー、スキルを一括設定
 - クロスプラットフォーム：macOS、Linux、Windows
 - シェル補完（bash、zsh、fish、powershell）
 
 ## 仕組み
 
-Claude Code セッションが終了すると、`SessionEnd` フックが `clerk feed` をトリガーします：
+```
+clerk install
+```
 
-1. バックグラウンドにフォーク（フックは即座に返る）
-2. 前回以降の新しいメッセージのみをトランスクリプト（JSONL）から読み取り
-3. プロジェクトの既存の日次要約を読み込み（存在する場合）
-4. `claude -p` を呼び出してマージされた要約を生成
-5. 要約ファイルを更新版で上書き
+以上です。インストール後、clerk は完全にバックグラウンドで動作します — 手動操作も追加コマンドも不要です。Claude Code セッションを終了するたびに、要約が自動的に生成・保存されます。インストールしたら忘れて大丈夫です。
+
+前回のセッションのコンテキストが必要な場合は、Claude Code で `/clerk-resume` を使用します。過去の作業を検索したい場合は、`/clerk-search` を使用します。
+
+### インストールされるもの
+
+| コンポーネント | 機能 |
+|----------------|------|
+| **hook** | SessionStart でセッション ID を記録、SessionEnd で要約生成をトリガー |
+| **mcp** | `clerk-resume` と `clerk-search` ツールを提供する MCP stdio サーバー |
+| **skills** | Claude Code 用の `/clerk-resume` と `/clerk-search` スラッシュコマンド |
+
+### 要約フロー
+
+1. セッション終了 → フックが `clerk feed` をトリガー
+2. Feed がバックグラウンドにフォーク（フックは即座に返る）
+3. 前回以降の新しいメッセージのみを読み取り（カーソル追跡）
+4. 既存の日次要約を読み込み、`claude -p` を呼び出してマージ
+5. 更新された要約を保存 + 検索インデックス用のタグを抽出
 
 ```
 ~/.clerk/
-└── 20260416/
-    ├── projects-my-app.md
-    ├── projects-api-server.md
-    └── work-frontend.md
+├── 20260416/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .sessions/
+│   ├── projects-my-app.md
+│   └── work-frontend.md
+├── .tags/
+│   ├── mcp.md
+│   ├── refactor.md
+│   └── auth.md
+├── .log/
+│   └── 20260416-clerk.log
+├── .running/
+└── .cursor/
 ```
 
 ## インストール
 
-### ワンライナーインストール
+### クイックインストール
 
 macOS / Linux / Git Bash：
 
@@ -60,26 +86,20 @@ Windows（PowerShell）：
 irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-アップデートは同じコマンドを再実行するだけです。アンインストール：
+次にフック、MCP サーバー、スキルを設定します：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.sh | sh
-```
-
-```powershell
-irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
+clerk install
 ```
 
 ### パッケージマネージャー
 
 | プラットフォーム | コマンド |
 |------------------|----------|
-| Homebrew (macOS / Linux) | `brew install vulcanshen/tap/clerk` |
-| Scoop (Windows) | `scoop bucket add vulcanshen https://github.com/vulcanshen/scoop-bucket && scoop install clerk` |
+| Homebrew（macOS / Linux） | `brew install vulcanshen/tap/clerk` |
+| Scoop（Windows） | `scoop bucket add vulcanshen https://github.com/vulcanshen/scoop-bucket && scoop install clerk` |
 | Debian / Ubuntu | `sudo dpkg -i clerk_<version>_linux_amd64.deb` |
 | RHEL / Fedora | `sudo rpm -i clerk_<version>_linux_amd64.rpm` |
-
-`.deb` と `.rpm` パッケージは [Releases ページ](https://github.com/vulcanshen/clerk/releases) からダウンロードできます。
 
 ### ソースからビルド
 
@@ -87,25 +107,19 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/uninstall.ps1 | iex
 go install github.com/vulcanshen/clerk@latest
 ```
 
-## クイックスタート
-
-```bash
-# SessionEnd フックをインストール
-clerk hook install
-```
-
-以上です。フックをインストールしたら、clerk は完全にバックグラウンドで動作します — 手動操作も追加コマンドも不要です。Claude Code セッションを終了するたびに、要約が自動的に生成・保存されます。インストールしたら忘れて大丈夫です。
-
 ## コマンド一覧
 
 | コマンド | 説明 |
 |----------|------|
-| `feed` | セッションのトランスクリプトを処理し要約を生成（フックから呼び出し） |
+| `install` | すべてのコンポーネントをインストール（hook + mcp + skills） |
+| `install hook` | SessionStart/SessionEnd フックのみをインストール |
+| `install mcp` | MCP サーバーのみを登録 |
+| `install skills` | スラッシュコマンドスキルのみをインストール |
+| `uninstall` | すべてのコンポーネントを削除 |
 | `config` | 現在の設定を表示（`config show` のエイリアス） |
-| `config show` | 現在の設定と設定ファイルのパスを表示 |
-| `config set <key> <value>` | 設定値を変更（キーはタブ補完対応） |
-| `hook install` | clerk を Claude Code SessionEnd フックとしてインストール |
-| `hook uninstall` | Claude Code SessionEnd フックから clerk を削除 |
+| `config show` | マージされた設定とファイルパスを表示 |
+| `config set <key> <value>` | プロジェクトレベルの設定値を変更 |
+| `config set -g <key> <value>` | グローバル設定値を変更 |
 | `status` | アクティブな feed プロセスと中断されたセッションを表示 |
 | `status --watch` | ステータスをリアルタイム更新（毎秒） |
 | `retry <slug>` | 指定した中断セッションを再試行 |
@@ -113,21 +127,37 @@ clerk hook install
 | `kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
 | `kill --all` | すべてのアクティブ feed プロセスを強制終了 |
 
+内部コマンド（フックから呼び出されるもので、ユーザーが直接使用するものではありません）：
+
+| コマンド | 説明 |
+|----------|------|
+| `feed` | セッションのトランスクリプトを処理し要約を生成 |
+| `punch` | セッション開始時にセッション ID を記録 |
+| `mcp` | MCP stdio サーバーを起動 |
+
 ## 設定
 
-設定ファイル：`~/.config/clerk/config.json`
+### 設定ファイル
+
+- グローバル：`~/.config/clerk/.clerk.json`
+- プロジェクト：`<cwd>/.clerk.json`（グローバル設定を上書き）
+
+### 利用可能な設定
 
 ```json
 {
   "output": {
     "dir": "~/.clerk/",
-    "language": "zh-TW"
+    "language": "en"
   },
   "summary": {
     "model": ""
   },
   "log": {
     "retention_days": 30
+  },
+  "feed": {
+    "enabled": true
   }
 }
 ```
@@ -138,47 +168,43 @@ clerk hook install
 | `output.language` | `zh-TW` | 要約の出力言語 |
 | `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
+| `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
 
-`clerk config set` で設定：
+### 使用例
 
 ```bash
-clerk config set output.language en
-clerk config set summary.model haiku
-clerk config set log.retention_days 14
+# 特定のプロジェクトで feed を無効化
+cd /path/to/unimportant-project
+clerk config set feed.enabled false
+
+# グローバルでより安価なモデルを使用
+clerk config set -g summary.model haiku
+
+# グローバルで出力言語を変更
+clerk config set -g output.language en
 ```
 
-設定ファイルはオプションです — 存在しない場合、clerk はデフォルト値を使用します。
+## MCP ツール
 
-## 要約フォーマット
+MCP サーバーのインストール後に利用可能（`clerk install mcp`）：
 
-各プロジェクトは1日1ファイル、増分的にマージされます：
+| ツール | 説明 |
+|--------|------|
+| `clerk-resume` | コンテキスト復元のための要約 + トランスクリプトファイルパスを返す |
+| `clerk-search` | キーワード/タグで過去のセッションを検索 |
 
-```markdown
-# projects-my-app
+## スキル
 
-> Last updated: 14:30:25
+スキルのインストール後に利用可能（`clerk install skills`）：
 
-### コア作業
-- JWT トークンによるユーザー認証を実装
-- WebSocket ハンドラーの競合状態を修正
-
-### サポート作業
-- GitHub Actions CI パイプラインを追加
-- README の API ドキュメントを更新
-
-### 主要な決定と理由
-- **決定**：セッションではなく JWT を使用 → **理由**：マルチリージョンデプロイのためのステートレススケーリング
-
-### ユーザーノート
-- 最小限の抽象化を好み、フレームワークよりも直接コードを書くスタイル
-
-### バージョンログ
-- v1.0.0 — 認証と WebSocket サポートを含む初回リリース
-```
+| スキル | 説明 |
+|--------|------|
+| `/clerk-resume` | 前回のセッションからコンテキストを復元 — MCP ツールを呼び出し、ファイルを読み込み、コンテキストを再構築 |
+| `/clerk-search` | キーワードで過去のセッションを検索 — MCP ツールを呼び出し、一致するファイルを読み込み |
 
 ## トラブルシューティング
 
-ログは `~/.clerk/.log/YYYYMMDD-clerk.log` に保存されます。要約が生成されない場合に確認：
+ログは `~/.clerk/.log/YYYYMMDD-clerk.log` に保存されます：
 
 ```bash
 cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
@@ -188,7 +214,7 @@ cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
 
 - **要約が生成されない** — `claude` が PATH にあるか確認
 - **Hook cancelled** — clerk はバックグラウンドフォークで対応済み。最新版にアップデート
-- **内容が重複** — 旧バージョンの動作。現在は増分マージを使用
+- **MCP ツールが見つからない** — `clerk install mcp` を実行してセッションを再起動
 
 ## シェル補完
 

@@ -251,6 +251,16 @@ Rules:
 - Keep the summary concise — merge and condense older items as the summary grows
 - Section titles and all content must be in the specified output language
 
+After the summary, output a tag line in this exact format:
+<!-- CLERK:TAGS -->
+tag1, tag2, tag3
+
+Tag rules:
+- Tags are lowercase English keywords (no translation), separated by commas
+- Include: technologies, frameworks, tools, concepts, and actions (e.g. go, cobra, mcp, refactor, bug-fix, ci-cd)
+- Merge with prior tags — keep all relevant tags, remove obsolete ones
+- Keep under 20 tags
+
 ---
 Prior summary:
 %s
@@ -292,6 +302,87 @@ func ReadExistingSummary(cfg config.Config, cwd string) string {
 		return ""
 	}
 	return string(data)
+}
+
+func parseSummaryAndTags(output string) (string, []string) {
+	parts := strings.SplitN(output, "<!-- CLERK:TAGS -->", 2)
+	summary := strings.TrimSpace(parts[0])
+	if len(parts) < 2 {
+		return summary, nil
+	}
+
+	tagLine := strings.TrimSpace(parts[1])
+	var tags []string
+	for _, t := range strings.Split(tagLine, ",") {
+		t = strings.TrimSpace(strings.ToLower(t))
+		if t != "" {
+			tags = append(tags, t)
+		}
+	}
+	return summary, tags
+}
+
+func tagsDir(cfg config.Config) string {
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".tags")
+}
+
+func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, tags []string) error {
+	dir := tagsDir(cfg)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("creating tags directory: %w", err)
+	}
+
+	for _, tag := range tags {
+		tagFile := filepath.Join(dir, tag+".md")
+
+		f, err := os.OpenFile(tagFile, os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			continue
+		}
+
+		if err := platform.FlockExclusive(f); err != nil {
+			f.Close()
+			continue
+		}
+
+		// read existing content, clean stale entries, check for duplicate
+		existing, _ := os.ReadFile(tagFile)
+		lines := strings.Split(string(existing), "\n")
+		var cleaned []string
+		found := false
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" {
+				continue
+			}
+			// check if referenced file still exists
+			refPath := strings.TrimPrefix(strings.TrimPrefix(trimmed, "-"), " ")
+			refPath = strings.TrimSpace(refPath)
+			if _, err := os.Stat(refPath); err != nil {
+				continue // stale entry, skip
+			}
+			if strings.Contains(line, summaryFilePath) {
+				found = true
+			}
+			cleaned = append(cleaned, line)
+		}
+
+		if !found {
+			cleaned = append(cleaned, fmt.Sprintf("- %s", summaryFilePath))
+			if transcriptPath != "" {
+				cleaned = append(cleaned, fmt.Sprintf("  - %s", transcriptPath))
+			}
+		}
+
+		// overwrite with cleaned content
+		f.Truncate(0)
+		f.Seek(0, 0)
+		f.WriteString(strings.Join(cleaned, "\n") + "\n")
+
+		platform.FlockUnlock(f)
+		f.Close()
+	}
+	return nil
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string) error {
@@ -489,16 +580,26 @@ func Run(inputData []byte, cfg config.Config) error {
 
 	logger.Info(cfg, "calling claude -p for summary...")
 	prompt := BuildPrompt(conversation, priorSummary, cfg.Output.Language)
-	summary, err := CallClaude(prompt, cfg.Summary.Model)
+	output, err := CallClaude(prompt, cfg.Summary.Model)
 	if err != nil {
 		logger.Errorf(cfg, "claude -p failed: %v", err)
 		return err
 	}
 	logger.Info(cfg, "summary generated successfully")
 
+	summary, tags := parseSummaryAndTags(output)
+
 	if err := SaveSummary(cfg, input.Cwd, summary); err != nil {
 		logger.Errorf(cfg, "save summary: %v", err)
 		return err
+	}
+
+	if len(tags) > 0 {
+		sPath := summaryPath(cfg, input.Cwd)
+		if err := saveTags(cfg, input.Cwd, sPath, input.TranscriptPath, tags); err != nil {
+			logger.Errorf(cfg, "save tags: %v", err)
+		}
+		logger.Infof(cfg, "saved %d tags: %v", len(tags), tags)
 	}
 
 	if err := writeCursor(cfg, input.Cwd, totalLines); err != nil {
@@ -514,18 +615,30 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 
 	priorSummary := ReadExistingSummary(cfg, orphan.State.Cwd)
 	prompt := BuildPrompt(orphan.State.Conversation, priorSummary, cfg.Output.Language)
-	summary, err := CallClaude(prompt, cfg.Summary.Model)
+	output, err := CallClaude(prompt, cfg.Summary.Model)
 	if err != nil {
 		logger.Errorf(cfg, "retry claude -p failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}
+
+	summary, tags := parseSummaryAndTags(output)
 
 	if err := SaveSummary(cfg, orphan.State.Cwd, summary); err != nil {
 		logger.Errorf(cfg, "retry save failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}
 
+	if len(tags) > 0 {
+		sPath := summaryPath(cfg, orphan.State.Cwd)
+		saveTags(cfg, orphan.State.Cwd, sPath, "", tags)
+	}
+
 	os.Remove(orphan.Path)
 	logger.Infof(cfg, "retry succeeded for %s", orphan.State.Slug)
 	return nil
+}
+
+// TagsDir exports the tags directory path for use by MCP server.
+func TagsDir(cfg config.Config) string {
+	return tagsDir(cfg)
 }

@@ -4,42 +4,62 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [v2.1.0] - 2026-04-16
+## [v3.0.0] - 2026-04-16
 
-### Core
-- `feed` command — process SessionEnd hook, filter conversation, generate summary via `claude -p`
-- `config show` — display current configuration
-- `config set <key> <value>` — set configuration values with tab completion
-- `hook install / uninstall` — manage Claude Code SessionEnd hook in settings.json
-- `status` — show active feed processes and interrupted sessions
-- `status --watch` — live-refresh status every second
-- `retry` — re-run interrupted feed processes with slug selection and `--all` flag
-- `kill` — force-stop active feed processes with slug selection and `--all` flag
+### MCP Server
+- `clerk mcp` — MCP stdio server for Claude Code integration
+- `clerk-resume` tool — returns summary + transcript file paths for context recovery
+- `clerk-search` tool — search previous sessions by keyword/tag
+- `clerk install mcp` / `clerk uninstall mcp` — manage MCP server registration
+
+### Skills
+- `/clerk-resume` — skill to recover context from previous sessions via MCP tool
+- `/clerk-search` — skill to search past sessions by keyword via MCP tool
+- `clerk install skills` / `clerk uninstall skills` — manage skill files
+
+### Tag System
+- Auto-extract tags from summaries during feed (via `<!-- CLERK:TAGS -->` separator)
+- Tags stored in `~/.clerk/.tags/<tag>.md` with summary + transcript paths
+- File locking on tag writes, stale entry cleanup on save
+- Partial keyword matching in search
+
+### Install Restructure
+- `clerk install` — install all components (hook + mcp + skills) in one command
+- `clerk install hook` / `clerk install mcp` / `clerk install skills` — individual install
+- `clerk uninstall` — remove all components in one command
+- Removed `clerk hook install/uninstall` and `clerk mcp install/uninstall` (moved to `clerk install/uninstall`)
+
+### Config Restructure
+- Config path changed to `~/.config/clerk/.clerk.json` (global) + `<cwd>/.clerk.json` (project)
+- Merge order: defaults → global → project
+- `config set` defaults to project config, `-g` flag for global
+- Project config only stores explicitly set fields
+- New `feed.enabled` setting (default true) — disable feed per-project
+
+### Session Tracking
+- `clerk punch` — record session ID on SessionStart hook
+- Session history stored in `~/.clerk/.sessions/<slug>.md`
+- `clerk install hook` now registers both SessionStart (punch) and SessionEnd (feed)
 
 ### Summary Engine
 - Incremental merge — each session merges into a single daily summary per project
-- Cursor tracking — only processes new transcript lines since last run, saving tokens
+- Cursor tracking — only processes new transcript lines since last run
 - Structured prompt with 5 sections: Core Work, Supporting Work, Key Decisions, User Notes, Version Log
-- Prior summary passed to claude -p for context-aware merging
+- Fork-to-background mechanism — hook returns immediately, feed runs as detached process
+
+### Process Management
+- `clerk status` / `status --watch` — show active feed processes and interrupted sessions
+- `clerk retry <slug>` / `retry --all` — re-run interrupted feed processes
+- `clerk kill <slug>` / `kill --all` — force-stop active feed processes
+- Running state files with conversation backup for crash recovery
+- `config set` with tab completion for keys
 
 ### Reliability
-- Fork-to-background mechanism — hook returns immediately, feed runs as detached process
-- Running state files — track active processes with slug, cwd, conversation, and start time
-- Orphan detection — interrupted processes are detected and recoverable via `retry`
-- File locking (flock/LockFileEx) — prevents race conditions on concurrent writes
+- File locking (flock/LockFileEx) on summary and tag writes
+- Platform abstraction layer for Windows support (file locking, process detaching, process alive checks)
 - Recursion guard via `CLERK_INTERNAL` environment variable
-
-### Platform
-- Cross-platform support: macOS, Linux, Windows
-- Platform abstraction layer for file locking, process detaching, and process alive checks
-
-### Configuration
-- Nested config structure: `output.dir`, `output.language`, `summary.model`, `log.retention_days`
-- Config file at `~/.config/clerk/config.json` (optional, sensible defaults)
-
-### Logging & Cleanup
-- Daily log files at `~/.clerk/.log/YYYYMMDD-clerk.log`
-- Automatic cleanup of old log and cursor files based on `log.retention_days`
+- Daily log files with automatic cleanup based on `log.retention_days`
+- Cursor file cleanup matching log retention
 
 ### Release Infrastructure
 - GoReleaser config for multi-platform builds (macOS, Linux, Windows × amd64, arm64)

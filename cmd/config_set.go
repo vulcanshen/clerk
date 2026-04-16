@@ -7,6 +7,8 @@ import (
 	"github.com/vulcanshen/clerk/internal/config"
 )
 
+var configSetGlobalFlag bool
+
 var configSetCmd = &cobra.Command{
 	Use:   "set <key> <value>",
 	Short: "Set a configuration value",
@@ -19,14 +21,19 @@ var configSetCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		key, value := args[0], args[1]
-		if err := config.Set(key, value); err != nil {
+		if err := config.Set(key, value, configSetGlobalFlag); err != nil {
 			return err
 		}
-		fmt.Printf("Set %s = %s\n", key, value)
+		scope := "project"
+		if configSetGlobalFlag {
+			scope = "global"
+		}
+		fmt.Printf("Set %s = %s (%s)\n", key, value, scope)
 		return nil
 	},
 }
 
 func init() {
+	configSetCmd.Flags().BoolVarP(&configSetGlobalFlag, "global", "g", false, "Set in global config instead of project config")
 	configCmd.AddCommand(configSetCmd)
 }

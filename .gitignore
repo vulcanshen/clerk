@@ -28,5 +28,6 @@ RELEASE_NOTES.md
 # Project private
 idea.md
 .claude/
+.clerk.json
 CLAUDE.md
 docs/man/
