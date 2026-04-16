@@ -10,7 +10,33 @@
 
 The Claude Code Clerk — auto-summarize your sessions, recover context, search by keyword.
 
-clerk is a CLI tool that hooks into Claude Code, automatically generating conversation summaries, tracking sessions, and providing MCP tools to recover context and search past work.
+## The Problem
+
+If you use Claude Code daily, you've hit these walls:
+
+- **Lost context** — You forgot `-c` or `--resume`, and now you're starting from scratch. Your previous session had all the context, but good luck finding it in a pile of session IDs.
+- **Session chaos** — Multiple projects, multiple sessions, all running in parallel. What did you do on the API server this morning? Which session had the auth fix? No idea.
+- **Weekly report panic** — Friday afternoon, time for the weekly report. You're digging through `git log`, trying to reconstruct what you actually did all week.
+- **Manual bookkeeping** — You told Claude to "save a summary" but forgot last time. Or the session crashed. Or you closed the terminal. The context is gone.
+
+All of these boil down to one thing: **Claude Code doesn't remember across sessions, and you shouldn't have to.**
+
+## The Solution
+
+```bash
+clerk install
+```
+
+That's it. clerk hooks into Claude Code and works silently in the background:
+
+| Pain point | How clerk solves it |
+|------------|-------------------|
+| Lost context | `/clerk-resume` — instantly recover context from any previous session |
+| Session chaos | Auto-generated daily summaries per project, organized by date |
+| Weekly reports | Summaries + keyword tags = searchable work history via `/clerk-search` |
+| Manual bookkeeping | Fully automatic — no commands to remember, no habits to build |
+
+clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away.
 
 ## Features
 
