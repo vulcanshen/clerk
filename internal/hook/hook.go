@@ -8,30 +8,12 @@ import (
 	"strings"
 )
 
-type HookCommand struct {
-	Type    string `json:"type"`
-	Command string `json:"command"`
-}
-
-type HookEntry struct {
-	Hooks []HookCommand `json:"hooks"`
-}
-
-type HooksConfig struct {
-	SessionEnd []HookEntry `json:"SessionEnd,omitempty"`
-}
-
-type ClaudeSettings struct {
-	Hooks   HooksConfig            `json:"hooks,omitempty"`
-	Unknown map[string]interface{} `json:"-"`
-}
-
 func settingsPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".claude", "settings.json")
 }
 
-func clerkCommand() (string, error) {
+func clerkExePath() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("resolving executable path: %w", err)
@@ -40,11 +22,11 @@ func clerkCommand() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolving symlinks: %w", err)
 	}
-	return exe + " feed", nil
+	return exe, nil
 }
 
-func isClerkCommand(cmd string) bool {
-	return strings.Contains(cmd, "clerk") && strings.Contains(cmd, "feed")
+func isClerkHook(cmd, subcommand string) bool {
+	return strings.Contains(cmd, "clerk") && strings.Contains(cmd, subcommand)
 }
 
 func readSettings() (map[string]interface{}, error) {
@@ -77,8 +59,91 @@ func writeSettings(settings map[string]interface{}) error {
 	return os.WriteFile(path, append(data, '\n'), 0644)
 }
 
+func hasHook(hooks map[string]interface{}, event, subcommand string) bool {
+	entries, _ := hooks[event].([]interface{})
+	for _, entry := range entries {
+		entryMap, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		hooksList, _ := entryMap["hooks"].([]interface{})
+		for _, h := range hooksList {
+			hMap, ok := h.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			cmd, _ := hMap["command"].(string)
+			if isClerkHook(cmd, subcommand) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func addHook(hooks map[string]interface{}, event, command string) {
+	entries, _ := hooks[event].([]interface{})
+	newEntry := map[string]interface{}{
+		"hooks": []interface{}{
+			map[string]interface{}{
+				"type":    "command",
+				"command": command,
+			},
+		},
+	}
+	entries = append(entries, newEntry)
+	hooks[event] = entries
+}
+
+func removeHook(hooks map[string]interface{}, event, subcommand string) bool {
+	entries, _ := hooks[event].([]interface{})
+	if len(entries) == 0 {
+		return false
+	}
+
+	var filtered []interface{}
+	removed := false
+
+	for _, entry := range entries {
+		entryMap, ok := entry.(map[string]interface{})
+		if !ok {
+			filtered = append(filtered, entry)
+			continue
+		}
+
+		hooksList, _ := entryMap["hooks"].([]interface{})
+		var filteredHooks []interface{}
+		for _, h := range hooksList {
+			hMap, ok := h.(map[string]interface{})
+			if !ok {
+				filteredHooks = append(filteredHooks, h)
+				continue
+			}
+			cmd, _ := hMap["command"].(string)
+			if isClerkHook(cmd, subcommand) {
+				removed = true
+				continue
+			}
+			filteredHooks = append(filteredHooks, h)
+		}
+
+		if len(filteredHooks) > 0 {
+			entryMap["hooks"] = filteredHooks
+			filtered = append(filtered, entryMap)
+		}
+	}
+
+	if len(filtered) == 0 {
+		delete(hooks, event)
+	} else {
+		hooks[event] = filtered
+	}
+
+	return removed
+}
+
 func Install() error {
-	command, err := clerkCommand()
+	exe, err := clerkExePath()
 	if err != nil {
 		return err
 	}
@@ -93,46 +158,34 @@ func Install() error {
 		hooks = make(map[string]interface{})
 	}
 
-	sessionEnd, _ := hooks["SessionEnd"].([]interface{})
+	feedCmd := exe + " feed"
+	punchCmd := exe + " punch"
 
-	for _, entry := range sessionEnd {
-		entryMap, ok := entry.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		hooksList, _ := entryMap["hooks"].([]interface{})
-		for _, h := range hooksList {
-			hMap, ok := h.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			cmd, _ := hMap["command"].(string)
-			if isClerkCommand(cmd) {
-				fmt.Println("Clerk hook is already installed.")
-				fmt.Printf("Settings file: %s\n", settingsPath())
-				return nil
-			}
-		}
+	feedExists := hasHook(hooks, "SessionEnd", "feed")
+	punchExists := hasHook(hooks, "SessionStart", "punch")
+
+	if feedExists && punchExists {
+		fmt.Println("Clerk hooks are already installed.")
+		fmt.Printf("Settings file: %s\n", settingsPath())
+		return nil
 	}
 
-	newEntry := map[string]interface{}{
-		"hooks": []interface{}{
-			map[string]interface{}{
-				"type":    "command",
-				"command": command,
-			},
-		},
+	if !feedExists {
+		addHook(hooks, "SessionEnd", feedCmd)
+		fmt.Printf("Installed SessionEnd hook: %s\n", feedCmd)
 	}
 
-	sessionEnd = append(sessionEnd, newEntry)
-	hooks["SessionEnd"] = sessionEnd
+	if !punchExists {
+		addHook(hooks, "SessionStart", punchCmd)
+		fmt.Printf("Installed SessionStart hook: %s\n", punchCmd)
+	}
+
 	settings["hooks"] = hooks
 
 	if err := writeSettings(settings); err != nil {
 		return err
 	}
 
-	fmt.Printf("Installed clerk hook: %s\n", command)
 	fmt.Printf("Settings file: %s\n", settingsPath())
 	return nil
 }
@@ -149,53 +202,12 @@ func Uninstall() error {
 		return nil
 	}
 
-	sessionEnd, _ := hooks["SessionEnd"].([]interface{})
-	if len(sessionEnd) == 0 {
-		fmt.Println("No SessionEnd hooks found, nothing to uninstall.")
+	feedRemoved := removeHook(hooks, "SessionEnd", "feed")
+	punchRemoved := removeHook(hooks, "SessionStart", "punch")
+
+	if !feedRemoved && !punchRemoved {
+		fmt.Println("No clerk hooks found, nothing to uninstall.")
 		return nil
-	}
-
-	var filtered []interface{}
-	removed := false
-
-	for _, entry := range sessionEnd {
-		entryMap, ok := entry.(map[string]interface{})
-		if !ok {
-			filtered = append(filtered, entry)
-			continue
-		}
-
-		hooksList, _ := entryMap["hooks"].([]interface{})
-		var filteredHooks []interface{}
-		for _, h := range hooksList {
-			hMap, ok := h.(map[string]interface{})
-			if !ok {
-				filteredHooks = append(filteredHooks, h)
-				continue
-			}
-			cmd, _ := hMap["command"].(string)
-			if isClerkCommand(cmd) {
-				removed = true
-				continue
-			}
-			filteredHooks = append(filteredHooks, h)
-		}
-
-		if len(filteredHooks) > 0 {
-			entryMap["hooks"] = filteredHooks
-			filtered = append(filtered, entryMap)
-		}
-	}
-
-	if !removed {
-		fmt.Println("No clerk hook found, nothing to uninstall.")
-		return nil
-	}
-
-	if len(filtered) == 0 {
-		delete(hooks, "SessionEnd")
-	} else {
-		hooks["SessionEnd"] = filtered
 	}
 
 	if len(hooks) == 0 {
@@ -208,7 +220,12 @@ func Uninstall() error {
 		return err
 	}
 
-	fmt.Println("Clerk hook uninstalled.")
+	if feedRemoved {
+		fmt.Println("Removed SessionEnd hook (feed).")
+	}
+	if punchRemoved {
+		fmt.Println("Removed SessionStart hook (punch).")
+	}
 	fmt.Printf("Settings file: %s\n", settingsPath())
 	return nil
 }
