@@ -1,19 +1,34 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Show how to update clerk to the latest version",
+	Short: "Check for updates and show how to update clerk",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Current version: %s\n\n", Version)
+		fmt.Printf("Current version: %s\n", Version)
+
+		latest, err := fetchLatestVersion()
+		if err != nil {
+			fmt.Printf("Latest version:  (unable to check: %v)\n\n", err)
+		} else {
+			fmt.Printf("Latest version:  %s\n\n", latest)
+
+			if Version == latest || "v"+Version == latest {
+				fmt.Println("Already up to date.")
+				return
+			}
+		}
 
 		exe, err := os.Executable()
 		if err != nil {
@@ -27,12 +42,12 @@ var updateCmd = &cobra.Command{
 		case strings.Contains(path, "/cellar/") || strings.Contains(path, "/homebrew/"):
 			fmt.Println("Installed via Homebrew. Run:")
 			fmt.Println()
-			fmt.Println("  brew upgrade clerk")
+			fmt.Println("  brew update && brew upgrade clerk")
 
 		case strings.Contains(path, "/scoop/apps/"):
 			fmt.Println("Installed via Scoop. Run:")
 			fmt.Println()
-			fmt.Println("  scoop update clerk")
+			fmt.Println("  scoop update && scoop update clerk")
 
 		case strings.Contains(path, "/go/bin/"):
 			fmt.Println("Installed via go install. Run:")
@@ -59,6 +74,23 @@ var updateCmd = &cobra.Command{
 			printFallback()
 		}
 	},
+}
+
+func fetchLatestVersion() (string, error) {
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get("https://api.github.com/repos/vulcanshen/clerk/releases/latest")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", err
+	}
+	return release.TagName, nil
 }
 
 func printFallback() {

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.10] - 2026-04-17
+
+### Update Command Enhancement
+- `clerk update` now checks GitHub API for latest version before showing upgrade instructions
+- Shows "Already up to date" if current version matches latest
+- Only shows upgrade command when an update is available
+- Fix brew/scoop instructions to include index update (`brew update &&`, `scoop update &&`)
+
 ## [v3.2.9] - 2026-04-17
 
 ### New Command
