@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.9] - 2026-04-17
+
+### New Command
+- `clerk update` — detects install method and shows the appropriate update command
+- Supports Homebrew, Scoop, go install, install script (Git Bash / PowerShell), and direct download
+
 ## [v3.2.8] - 2026-04-17
 
 ### Bug Fix

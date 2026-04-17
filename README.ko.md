@@ -247,6 +247,7 @@ go install github.com/vulcanshen/clerk@latest
 | `kill --all` | 모든 활성 feed 프로세스 강제 종료 |
 | `report` | 최근 요약에서 보고서 생성 (기본: 당일) |
 | `report --days 7` | 프로젝트 간 주간 보고서 |
+| `update` | clerk 업데이트 방법 표시 |
 | `version` | clerk 버전 출력 |
 | `moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
 | `migrate` | 데이터 디렉토리 구조를 최신 형식으로 마이그레이션 (v3.0.0에서 업그레이드 후 실행) |
