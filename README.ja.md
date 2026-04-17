@@ -139,6 +139,14 @@ clerk report --days 7 > weekly-report.md
 
 デフォルトは `--days 1`（当日のみ）— デイリースタンドアップの要約に最適。
 
+まだ終了していないセッションも含めたい場合は `--realtime` を追加：
+
+```bash
+clerk report --days 7 --realtime
+```
+
+> **注意：** `--realtime` はアクティブなセッションのトランスクリプトをその場で処理するため、追加の Claude API コールが発生します。このフラグなしでは、完了したセッションのみが含まれます。
+
 出力例：
 
 ```markdown

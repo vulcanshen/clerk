@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.2] - 2026-04-17
+
+### Report
+- Report no longer flushes active sessions by default — saves Claude API calls
+- Add `--realtime` flag to opt-in to including active sessions
+- Realtime status message outputs to stderr to avoid polluting piped output
+
 ## [v3.2.1] - 2026-04-17
 
 ### Report Enhancement

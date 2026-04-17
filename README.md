@@ -139,6 +139,14 @@ clerk report --days 7 > weekly-report.md
 
 Default is `--days 1` (today only) — useful as a daily standup summary.
 
+Want to include sessions that haven't ended yet? Add `--realtime`:
+
+```bash
+clerk report --days 7 --realtime
+```
+
+> **Note:** `--realtime` processes active session transcripts on the spot, which uses additional Claude API calls. Without this flag, only completed sessions are included.
+
 Example output:
 
 ```markdown

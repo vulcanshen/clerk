@@ -139,6 +139,14 @@ clerk report --days 7 > weekly-report.md
 
 預設 `--days 1`（只看當天）— 適合當每日站會摘要。
 
+想包含還沒結束的 session？加上 `--realtime`：
+
+```bash
+clerk report --days 7 --realtime
+```
+
+> **注意：** `--realtime` 會即時處理進行中的 session transcript，這會消耗額外的 Claude API 額度。不加此旗標時，只包含已結束的 session。
+
 輸出範例：
 
 ```markdown
