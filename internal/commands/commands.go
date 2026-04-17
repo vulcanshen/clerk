@@ -62,6 +62,10 @@ func IsInstalled() bool {
 	return err == nil
 }
 
+func ForceInstall() error {
+	return Install()
+}
+
 func Install() error {
 	for _, s := range clerkSkills {
 		dir := filepath.Join(skillsDir(), s.name)

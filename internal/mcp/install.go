@@ -20,6 +20,11 @@ func IsInstalled() bool {
 	return strings.Contains(string(output), "clerk")
 }
 
+func ForceInstall() error {
+	Uninstall()
+	return Install()
+}
+
 func Install() error {
 	exe, err := os.Executable()
 	if err != nil {

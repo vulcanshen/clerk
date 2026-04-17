@@ -9,19 +9,33 @@ import (
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 )
 
+var forceInstall bool
+
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install clerk components",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing clerk...")
-		if err := hook.Install(); err != nil {
-			return err
-		}
-		if err := mcpinstall.Install(); err != nil {
-			return err
-		}
-		if err := commands.Install(); err != nil {
-			return err
+		if forceInstall {
+			if err := hook.ForceInstall(); err != nil {
+				return err
+			}
+			if err := mcpinstall.ForceInstall(); err != nil {
+				return err
+			}
+			if err := commands.ForceInstall(); err != nil {
+				return err
+			}
+		} else {
+			if err := hook.Install(); err != nil {
+				return err
+			}
+			if err := mcpinstall.Install(); err != nil {
+				return err
+			}
+			if err := commands.Install(); err != nil {
+				return err
+			}
 		}
 		fmt.Println("\nDone.")
 		return nil
@@ -33,8 +47,14 @@ var installHookCmd = &cobra.Command{
 	Short: "Install clerk as Claude Code SessionStart/SessionEnd hooks",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing clerk hook...")
-		if err := hook.Install(); err != nil {
-			return err
+		if forceInstall {
+			if err := hook.ForceInstall(); err != nil {
+				return err
+			}
+		} else {
+			if err := hook.Install(); err != nil {
+				return err
+			}
 		}
 		fmt.Println("\nDone.")
 		return nil
@@ -46,8 +66,14 @@ var installMcpCmd = &cobra.Command{
 	Short: "Register clerk as a Claude Code MCP server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing clerk mcp...")
-		if err := mcpinstall.Install(); err != nil {
-			return err
+		if forceInstall {
+			if err := mcpinstall.ForceInstall(); err != nil {
+				return err
+			}
+		} else {
+			if err := mcpinstall.Install(); err != nil {
+				return err
+			}
 		}
 		fmt.Println("\nDone.")
 		return nil
@@ -59,8 +85,14 @@ var installSkillsCmd = &cobra.Command{
 	Short: "Install clerk skills for Claude Code",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing clerk skills...")
-		if err := commands.Install(); err != nil {
-			return err
+		if forceInstall {
+			if err := commands.ForceInstall(); err != nil {
+				return err
+			}
+		} else {
+			if err := commands.Install(); err != nil {
+				return err
+			}
 		}
 		fmt.Println("\nDone.")
 		return nil
@@ -68,6 +100,7 @@ var installSkillsCmd = &cobra.Command{
 }
 
 func init() {
+	installCmd.PersistentFlags().BoolVar(&forceInstall, "force", false, "Force reinstall (uninstall then install)")
 	installCmd.AddCommand(installHookCmd)
 	installCmd.AddCommand(installMcpCmd)
 	installCmd.AddCommand(installSkillsCmd)

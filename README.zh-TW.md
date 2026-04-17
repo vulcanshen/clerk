@@ -230,7 +230,7 @@ go install github.com/vulcanshen/clerk@latest
 
 | 指令 | 說明 |
 |------|------|
-| `install` | 安裝所有元件（hook + mcp + skills） |
+| `install` | 安裝所有元件（hook + mcp + skills），加 `--force` 可強制重裝 |
 | `install hook` | 僅安裝 SessionStart/SessionEnd hook |
 | `install mcp` | 僅註冊 MCP server |
 | `install skills` | 僅安裝斜線指令 skills |

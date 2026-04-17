@@ -157,6 +157,11 @@ func removeHook(hooks map[string]interface{}, event, subcommand string) bool {
 	return removed
 }
 
+func ForceInstall() error {
+	Uninstall()
+	return Install()
+}
+
 func Install() error {
 	exe, err := clerkExePath()
 	if err != nil {

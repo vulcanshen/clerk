@@ -231,7 +231,7 @@ go install github.com/vulcanshen/clerk@latest
 
 | 명령어 | 설명 |
 |--------|------|
-| `install` | 모든 컴포넌트 설치 (hook + mcp + skills) |
+| `install` | 모든 컴포넌트 설치 (hook + mcp + skills), `--force`로 재설치 |
 | `install hook` | SessionStart/SessionEnd 훅만 설치 |
 | `install mcp` | MCP 서버만 등록 |
 | `install skills` | 슬래시 명령어 스킬만 설치 |

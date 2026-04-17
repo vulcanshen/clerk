@@ -231,7 +231,7 @@ go install github.com/vulcanshen/clerk@latest
 
 | Command | Description |
 |---------|-------------|
-| `install` | Install all components (hook + mcp + skills) |
+| `install` | Install all components (hook + mcp + skills), use `--force` to reinstall |
 | `install hook` | Install SessionStart/SessionEnd hooks only |
 | `install mcp` | Register MCP server only |
 | `install skills` | Install slash command skills only |

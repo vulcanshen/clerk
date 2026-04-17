@@ -231,7 +231,7 @@ go install github.com/vulcanshen/clerk@latest
 
 | コマンド | 説明 |
 |----------|------|
-| `install` | すべてのコンポーネントをインストール（hook + mcp + skills） |
+| `install` | すべてのコンポーネントをインストール（hook + mcp + skills）、`--force` で再インストール |
 | `install hook` | SessionStart/SessionEnd フックのみをインストール |
 | `install mcp` | MCP サーバーのみを登録 |
 | `install skills` | スラッシュコマンドスキルのみをインストール |

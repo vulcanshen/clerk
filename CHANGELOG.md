@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.6] - 2026-04-17
+
+### Install
+- Add `--force` flag to `clerk install` for force reinstall (uninstall then install)
+- Works on all subcommands: `install --force`, `install hook --force`, etc.
+- Useful for updating executable paths after upgrading or switching between dev/release builds
+
 ## [v3.2.5] - 2026-04-17
 
 ### Bug Fix
