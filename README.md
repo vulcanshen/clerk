@@ -1,4 +1,10 @@
-# clerk
+```
+ ______     __         ______     ______     __  __    
+/\  ___\   /\ \       /\  ___\   /\  == \   /\ \/ /    
+\ \ \____  \ \ \____  \ \  __\   \ \  __<   \ \  _"-.  
+ \ \_____\  \ \_____\  \ \_____\  \ \_\ \_\  \ \_\ \_\ 
+  \/_____/   \/_____/   \/_____/   \/_/ /_/   \/_/\/_/  
+```
 
 [![GitHub Release](https://img.shields.io/github/v/release/vulcanshen/clerk)](https://github.com/vulcanshen/clerk/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/vulcanshen/clerk)](https://go.dev/)
