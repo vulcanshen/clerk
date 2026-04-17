@@ -24,7 +24,7 @@ var updateCmd = &cobra.Command{
 		} else {
 			fmt.Printf("Latest version:  %s\n\n", latest)
 
-			if Version == latest || "v"+Version == latest {
+			if Version == latest {
 				fmt.Println("Already up to date.")
 				return
 			}
@@ -90,7 +90,7 @@ func fetchLatestVersion() (string, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return "", err
 	}
-	return release.TagName, nil
+	return strings.TrimPrefix(release.TagName, "v"), nil
 }
 
 func printFallback() {

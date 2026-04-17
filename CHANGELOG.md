@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.11] - 2026-04-17
+
+### Bug Fix
+- Windows: move HideConsoleWindow to main() before Cobra parsing, eliminating window flash entirely
+- Fix version display consistency in `clerk update` (remove `v` prefix from latest version)
+
 ## [v3.2.10] - 2026-04-17
 
 ### Update Command Enhancement

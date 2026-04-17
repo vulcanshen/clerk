@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
-	"github.com/vulcanshen/clerk/internal/platform"
 	"github.com/vulcanshen/clerk/internal/punch"
 )
 
@@ -18,8 +17,6 @@ var punchCmd = &cobra.Command{
 		if os.Getenv("CLERK_INTERNAL") == "1" {
 			return nil
 		}
-
-		platform.HideConsoleWindow()
 
 		data, err := io.ReadAll(os.Stdin)
 		if err != nil {

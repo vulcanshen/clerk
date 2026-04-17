@@ -25,8 +25,6 @@ var feedCmd = &cobra.Command{
 			return nil
 		}
 
-		platform.HideConsoleWindow()
-
 		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("reading stdin: %w", err)
