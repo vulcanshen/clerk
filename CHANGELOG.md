@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.14] - 2026-04-17
+
+### Bug Fix
+- `clerk update`: show friendly message when GitHub API is unavailable or rate limited
+
 ## [v3.2.13] - 2026-04-17
 
 ### Bug Fix
