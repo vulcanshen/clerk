@@ -39,10 +39,10 @@ var doctorCmd = &cobra.Command{
 		if hook.IsInstalled() {
 			fmt.Printf("Hook:        OK\n")
 
-			// Check hook path for backslashes (Windows issue)
-			hookPath := checkHookPath()
-			if hookPath != "" {
-				fmt.Printf("Hook path:   WARNING — contains backslashes: %s\n", hookPath)
+			// Check hook path issues
+			hookIssue := checkHookPath()
+			if hookIssue != "" {
+				fmt.Printf("Hook path:   WARNING — %s\n", hookIssue)
 				fmt.Printf("             Run 'clerk install --force' to fix\n")
 				issues++
 			}
@@ -118,14 +118,23 @@ func checkHookPath() string {
 		}
 	}
 	content := string(data)
-	// Look for clerk commands with backslashes
-	if strings.Contains(content, "clerk") && strings.Contains(content, "\\") {
-		for _, line := range strings.Split(content, "\n") {
-			if strings.Contains(line, "clerk") && strings.Contains(line, "\\") {
-				return strings.TrimSpace(line)
+
+	// Check for cmd.exe wrapper (outdated v3.4.0 format, breaks stdin)
+	if strings.Contains(content, "cmd.exe") && strings.Contains(content, "clerk") {
+		return "hook uses cmd.exe wrapper (outdated, breaks feed)"
+	}
+
+	// Check for backslashes in clerk paths (Windows issue)
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "clerk") && strings.Contains(line, "\\") {
+			// Ignore JSON escape sequences like \"
+			unescaped := strings.ReplaceAll(line, "\\\"", "")
+			if strings.Contains(unescaped, "\\") {
+				return "hook path contains backslashes"
 			}
 		}
 	}
+
 	return ""
 }
 
