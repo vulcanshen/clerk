@@ -59,7 +59,9 @@ func FlockUnlock(f *os.File) error {
 }
 
 func DetachProcess(cmd *exec.Cmd) {
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x00000008}
+	// CREATE_NO_WINDOW (0x08000000): prevents child process from creating/inheriting a console window
+	// DETACHED_PROCESS (0x00000008): detaches from parent's console
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000008}
 }
 
 func IsProcessAlive(pid int) bool {

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Bug Fix
 - Fix markdown links in tag files using backslashes on Windows
 - MCP scope changed from `local` to `user` for global availability
+- Windows: reduce terminal window flash by using CREATE_NO_WINDOW for background feed process
 
 ## [v3.2.6] - 2026-04-17
 
