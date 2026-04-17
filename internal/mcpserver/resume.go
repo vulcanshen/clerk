@@ -21,7 +21,9 @@ func claudeProjectsDir() string {
 }
 
 func cwdToClaudeProjectSlug(cwd string) string {
-	return strings.ReplaceAll(cwd, "/", "-")
+	slug := strings.ReplaceAll(cwd, "/", "-")
+	slug = strings.ReplaceAll(slug, "\\", "-")
+	return slug
 }
 
 // SessionEntry represents a parsed line from a sessions file.

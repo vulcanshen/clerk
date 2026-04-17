@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.4] - 2026-04-17
+
+### Bug Fix
+- Fix Windows path handling: backslashes in cwd now correctly converted to hyphens in slug
+- Add defensive MkdirAll before writing session files
+- Fix cwdToClaudeProjectSlug to handle Windows backslashes
+
 ## [v3.2.3] - 2026-04-17
 
 ### Config

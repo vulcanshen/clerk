@@ -204,8 +204,9 @@ func CwdToSlug(cwd string) string {
 		rel = cwd[len(home):]
 	}
 	rel = strings.ToLower(rel)
-	rel = strings.Trim(rel, "/")
+	rel = strings.Trim(rel, "/\\")
 	rel = strings.ReplaceAll(rel, "/", "-")
+	rel = strings.ReplaceAll(rel, "\\", "-")
 	if rel == "" {
 		rel = "root"
 	}
