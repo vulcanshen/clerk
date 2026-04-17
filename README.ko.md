@@ -27,7 +27,9 @@ Claude Code를 매일 사용한다면, 이런 벽에 부딪힌 적이 있을 겁
 clerk install
 ```
 
-끝입니다. clerk는 Claude Code에 연결되어 백그라운드에서 조용히 작동합니다:
+끝입니다. clerk는 완전히 로컬에서 실행됩니다 — 원격 서비스 연결 없음, 계정 불필요, 데이터가 컴퓨터 밖으로 나가지 않습니다. Claude Code만 있으면 됩니다.
+
+clerk는 Claude Code에 연결되어 백그라운드에서 조용히 작동합니다:
 
 | 문제점 | clerk의 해결 방법 |
 |--------|-----------------|
@@ -85,26 +87,28 @@ clerk는 **설치하고 잊어버리는** 도구입니다. 한 번 설치하면 
 
 1. Claude Code에서 `/clerk-search`를 입력
 2. Claude가 검색할 키워드를 물어봄 (또는 인수로 직접 제공)
-3. Claude가 해당 키워드로 `clerk-search` MCP 도구를 호출
-4. clerk가 태그 인덱스와 대조하여 일치하는 요약 및 transcript 경로를 반환
-5. Claude가 해당 파일을 읽고 관련 컨텍스트를 제시
+3. Claude가 `clerk-tags-list`를 호출하여 사용 가능한 모든 태그를 가져옴
+4. Claude가 의미론적 추론으로 관련 태그를 식별 (예: "database" → `postgres`, `sql`, `migration` 선택)
+5. Claude가 `clerk-tags-read`를 호출하여 관련 태그의 요약 및 transcript 경로를 가져옴
+6. Claude가 해당 파일을 읽고 관련 컨텍스트를 제시
 
 ```
 ~/.clerk/
-├── 20260416/
+├── summary/
+│   └── 20260416/
+│       ├── projects-my-app.md
+│       └── work-frontend.md
+├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── .sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── .tags/
+├── tags/
 │   ├── mcp.md
 │   ├── refactor.md
 │   └── auth.md
-├── .log/
+├── log/
 │   └── 20260416-clerk.log
-├── .running/
-└── .cursor/
+├── running/
+└── cursor/
 ```
 
 ## 설치
@@ -163,6 +167,9 @@ go install github.com/vulcanshen/clerk@latest
 | `retry --all` | 모든 중단 세션 재시도 |
 | `kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
 | `kill --all` | 모든 활성 feed 프로세스 강제 종료 |
+| `version` | clerk 버전 출력 |
+| `moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
+| `migrate` | 데이터 디렉토리 구조를 최신 형식으로 마이그레이션 |
 
 내부 명령어 (훅에서 호출되며, 사용자가 직접 사용하지 않음):
 
@@ -228,7 +235,8 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`):
 | 도구 | 설명 |
 |------|------|
 | `clerk-resume` | 컨텍스트 복원을 위한 요약 + 트랜스크립트 파일 경로 반환 |
-| `clerk-search` | 키워드/태그로 이전 세션 검색 |
+| `clerk-tags-list` | 사용 가능한 모든 세션 태그 목록 |
+| `clerk-tags-read` | 하나 이상의 태그 내용 읽기 |
 
 ## 스킬
 
@@ -241,10 +249,10 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`):
 
 ## 문제 해결
 
-로그는 `~/.clerk/.log/YYYYMMDD-clerk.log`에 저장됩니다:
+로그는 `~/.clerk/log/YYYYMMDD-clerk.log`에 저장됩니다:
 
 ```bash
-cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
+cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
 ```
 
 일반적인 문제:

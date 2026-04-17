@@ -38,17 +38,19 @@ If the tool is available:
 		name: "clerk-search",
 		content: `---
 name: clerk-search
-description: Search previous Claude Code sessions by keyword using clerk MCP tool
+description: Search previous Claude Code sessions by keyword using clerk MCP tools
 disable-model-invocation: true
 ---
 
-First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-search tool is not available, tell the user to run "clerk install mcp" and restart the session.
+First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-tags-list tool is not available, tell the user to run "clerk install mcp" and restart the session.
 
-If the tool is available:
+If the tools are available:
 1. Ask the user what keyword or topic they want to search for (if not already provided as an argument)
-2. Call the clerk-search MCP tool with the keyword
-3. Read the returned summary and transcript files to understand the context
-4. Present the relevant context to the user
+2. Call the clerk-tags-list MCP tool to get the full list of available tags
+3. Use semantic reasoning to identify which tags are relevant to the user's keywords (e.g. if searching for "database", tags like "postgres", "sql", "migration" may be relevant)
+4. Call the clerk-tags-read MCP tool with the relevant tags (comma separated) to read their content in one call
+5. Read the returned summary and transcript files to understand the context
+6. Present the relevant context to the user
 `,
 	},
 }

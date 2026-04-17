@@ -80,7 +80,7 @@ func ReadTranscript(path string, skipLines int) ([]Message, int, error) {
 }
 
 func cursorDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".cursor")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "cursor")
 }
 
 func cursorPath(cfg config.Config, cwd string) string {
@@ -256,8 +256,11 @@ After the summary, output a tag line in this exact format:
 tag1, tag2, tag3
 
 Tag rules:
-- Tags are lowercase English keywords (no translation), separated by commas
-- Include: technologies, frameworks, tools, concepts, and actions (e.g. go, cobra, mcp, refactor, bug-fix, ci-cd)
+- Each tag is a single lowercase keyword or hyphenated-word (e.g. go, cobra, mcp, bug-fix, ci-cd)
+- NO spaces, NO sentences, NO descriptions — just the keyword itself
+- Valid examples: go, cobra, mcp, refactor, bug-fix, ci-cd, docker, auth
+- INVALID examples: "go cli + cobra rewrite", "config hierarchy (global + project)", "bug fixes (transcript format"
+- Include: technologies, frameworks, tools, concepts, and actions
 - Merge with prior tags — keep all relevant tags, remove obsolete ones
 - Keep under 20 tags
 
@@ -291,7 +294,7 @@ func CallClaude(prompt string, model string) (string, error) {
 
 func summaryPath(cfg config.Config, cwd string) string {
 	dir := config.ExpandPath(cfg.Output.Dir)
-	dateDir := filepath.Join(dir, time.Now().Format("20060102"))
+	dateDir := filepath.Join(dir, "summary", time.Now().Format("20060102"))
 	slug := CwdToSlug(cwd)
 	return filepath.Join(dateDir, slug+".md")
 }
@@ -315,15 +318,29 @@ func parseSummaryAndTags(output string) (string, []string) {
 	var tags []string
 	for _, t := range strings.Split(tagLine, ",") {
 		t = strings.TrimSpace(strings.ToLower(t))
-		if t != "" {
-			tags = append(tags, t)
+		if t == "" {
+			continue
 		}
+		// reject tags with spaces, newlines, or that are too long
+		if strings.ContainsAny(t, " \t\n") || len(t) > 30 {
+			continue
+		}
+		tags = append(tags, t)
 	}
 	return summary, tags
 }
 
 func tagsDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".tags")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "tags")
+}
+
+func summaryMarkdownLink(tagsDir, summaryFilePath string) string {
+	rel, err := filepath.Rel(tagsDir, summaryFilePath)
+	if err != nil {
+		rel = summaryFilePath
+	}
+	name := strings.TrimSuffix(filepath.Base(summaryFilePath), ".md")
+	return fmt.Sprintf("[%s](%s)", name, rel)
 }
 
 func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, tags []string) error {
@@ -345,6 +362,9 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 			continue
 		}
 
+		now := time.Now().Format("2006-01-02 15:04")
+		mdLink := summaryMarkdownLink(dir, summaryFilePath)
+
 		// read existing content, clean stale entries, check for duplicate
 		existing, _ := os.ReadFile(tagFile)
 		lines := strings.Split(string(existing), "\n")
@@ -355,22 +375,29 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 			if trimmed == "" {
 				continue
 			}
-			// check if referenced file still exists
-			refPath := strings.TrimPrefix(strings.TrimPrefix(trimmed, "-"), " ")
-			refPath = strings.TrimSpace(refPath)
-			if _, err := os.Stat(refPath); err != nil {
-				continue // stale entry, skip
-			}
-			if strings.Contains(line, summaryFilePath) {
-				found = true
+			// check for stale summary entries by extracting markdown link path
+			if strings.Contains(trimmed, "summary") {
+				if start := strings.Index(trimmed, "]("); start != -1 {
+					end := strings.Index(trimmed[start:], ")")
+					if end != -1 {
+						relPath := trimmed[start+2 : start+end]
+						absPath := filepath.Join(dir, relPath)
+						if _, err := os.Stat(absPath); err != nil {
+							continue // stale entry
+						}
+					}
+				}
+				if strings.Contains(trimmed, mdLink) {
+					found = true
+				}
 			}
 			cleaned = append(cleaned, line)
 		}
 
 		if !found {
-			cleaned = append(cleaned, fmt.Sprintf("- %s", summaryFilePath))
+			cleaned = append(cleaned, fmt.Sprintf("%s summary %s %s", now, cwd, mdLink))
 			if transcriptPath != "" {
-				cleaned = append(cleaned, fmt.Sprintf("  - %s", transcriptPath))
+				cleaned = append(cleaned, fmt.Sprintf("%s transcript %s %s", now, cwd, transcriptPath))
 			}
 		}
 
@@ -385,7 +412,7 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 	return nil
 }
 
-func SaveSummary(cfg config.Config, cwd string, summary string) error {
+func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
 	path := summaryPath(cfg, cwd)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
@@ -407,13 +434,25 @@ func SaveSummary(cfg config.Config, cwd string, summary string) error {
 		}
 	}()
 
+	// YAML frontmatter with tags for Obsidian
+	var sb strings.Builder
+	if len(tags) > 0 {
+		sb.WriteString("---\ntags:\n")
+		for _, tag := range tags {
+			fmt.Fprintf(&sb, "  - %s\n", tag)
+		}
+		sb.WriteString("---\n\n")
+	}
+
 	timestamp := time.Now().Format("15:04:05")
-	_, err = fmt.Fprintf(f, "# %s\n\n> Last updated: %s\n\n%s\n", CwdToSlug(cwd), timestamp, summary)
+	fmt.Fprintf(&sb, "# %s\n\n> Last updated: %s\n\n%s\n", CwdToSlug(cwd), timestamp, summary)
+
+	_, err = f.WriteString(sb.String())
 	return err
 }
 
 func runningDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".running")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "running")
 }
 
 func writeRunningState(cfg config.Config, slug, cwd, conversation string) (string, error) {
@@ -589,7 +628,7 @@ func Run(inputData []byte, cfg config.Config) error {
 
 	summary, tags := parseSummaryAndTags(output)
 
-	if err := SaveSummary(cfg, input.Cwd, summary); err != nil {
+	if err := SaveSummary(cfg, input.Cwd, summary, tags); err != nil {
 		logger.Errorf(cfg, "save summary: %v", err)
 		return err
 	}
@@ -623,7 +662,7 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 
 	summary, tags := parseSummaryAndTags(output)
 
-	if err := SaveSummary(cfg, orphan.State.Cwd, summary); err != nil {
+	if err := SaveSummary(cfg, orphan.State.Cwd, summary, tags); err != nil {
 		logger.Errorf(cfg, "retry save failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}

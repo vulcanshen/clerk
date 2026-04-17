@@ -10,7 +10,7 @@ import (
 )
 
 func logDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".log")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "log")
 }
 
 func logPath(cfg config.Config) string {

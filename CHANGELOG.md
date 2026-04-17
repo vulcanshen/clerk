@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.1.0] - 2026-04-17
+
+### Search & Tags Overhaul
+- MCP tools split: `clerk-search` replaced by `clerk-tags-list` + `clerk-tags-read`
+- Semantic search flow: AI gets full tag list, uses reasoning to pick relevant tags, reads in one call
+- `/clerk-search` skill updated to orchestrate the two-step tag discovery flow
+- Tag prompt strengthened: strict lowercase keyword format, no spaces/sentences allowed
+- Tag validation in parser: rejects tags with spaces or over 30 characters
+
+### Obsidian Compatibility
+- Summary files now include YAML frontmatter with `tags:` for Obsidian tag pane and graph view
+- Tag files use standard markdown links for Obsidian graph connections
+- Tag file format: `[timestamp] [type] [cwd] [link]` per line
+
+### Directory Structure
+- Hidden directories renamed to non-hidden: `.tags/` → `tags/`, `.cursor/` → `cursor/`, `.running/` → `running/`, `.sessions/` → `sessions/`, `.log/` → `log/`
+- Summaries moved under `summary/` subdirectory: `summary/YYYYMMDD/<slug>.md`
+
+### New Commands
+- `clerk version` — print version (alternative to `--version`)
+- `clerk moveto <path>` — move clerk data to a new directory and update `output.dir` config
+- `clerk migrate` — migrate data directory structure to latest format (currently: moves `YYYYMMDD/` dirs into `summary/`)
+
 ## [v3.0.0] - 2026-04-16
 
 ### MCP Server

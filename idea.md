@@ -4,17 +4,20 @@
 
 ## 核心指令 (MVP)
 
-- [ ] **clerk feed**：書記官核心指令，對接 `SessionEnd` hook。
+- [x] **clerk feed**：書記官核心指令，對接 `SessionEnd` hook。
   - 從 `stdin` 讀取 JSON 並過濾對話文字（僅保留 `user` 與 `assistant`）。
   - 將 `cwd` 轉為全小寫的 slug（取 `~` 之後的完整路徑）。
   - 呼叫 `claude -p` 產生摘要（注入 `CLERK_INTERNAL=1` 防遞迴）。
-  - 存檔至 `<output_dir>/YYYYMMDD/<slug>.md`。
-- [ ] **clerk config show**：印出目前生效的配置與配置路徑。
-  - 配置路徑：`~/.config/clerk/config.json`。
+  - 存檔至 `<output_dir>/summary/YYYYMMDD/<slug>.md`（含 YAML frontmatter tags）。
+- [x] **clerk config show**：印出目前生效的配置與配置路徑。
+  - 配置路徑：`~/.config/clerk/.clerk.json`。
   - 預設值：`output_dir: ~/.clerk/`, `output_language: en`。
-- [ ] **clerk hook install/uninstall**：
+- [x] **clerk hook install/uninstall**：
   - `install`: 自動獲取 `clerk` 絕對路徑並寫入 `~/.claude/settings.json` 的 `hooks.SessionEnd`。
   - `uninstall`: 從 `settings.json` 移除該 hook 設定。
+- [x] **clerk version**：印出版本號。
+- [x] **clerk moveto `<path>`**：搬遷 data 目錄 + 更新 config output.dir。
+- [x] **clerk migrate**：處理版本升級造成的目錄結構遷移。
 
 ## 技術細節
 

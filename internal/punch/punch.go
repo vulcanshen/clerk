@@ -17,7 +17,7 @@ type HookInput struct {
 }
 
 func sessionsDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".sessions")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "sessions")
 }
 
 func Run(data []byte, cfg config.Config) error {

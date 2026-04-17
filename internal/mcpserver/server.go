@@ -47,20 +47,20 @@ After receiving the paths, read the summary files first. If more detail is neede
 		handleResume,
 	)
 
-	addTool(s, mcp.NewTool("clerk-search",
-			mcp.WithDescription(`Search previous sessions by keyword/tag.
+	addTool(s, mcp.NewTool("clerk-tags-list",
+			mcp.WithDescription(`List all available session tags. Returns tag names that can be used with clerk-tags-read.`),
+		),
+		handleTagsList,
+	)
 
-Use this tool when:
-- The user asks "what did we do with X", "find sessions about Y", or similar
-- You need to find past work related to a specific technology, tool, or concept
-
-Returns file paths to matching summaries and transcripts, organized by tag. Read the returned files to provide context.`),
-			mcp.WithString("keyword",
+	addTool(s, mcp.NewTool("clerk-tags-read",
+			mcp.WithDescription(`Read the content of one or more tags. Returns file paths to summaries and transcripts associated with the given tags.`),
+			mcp.WithString("tags",
 				mcp.Required(),
-				mcp.Description("Keyword to search for (e.g. mcp, refactor, auth, docker)"),
+				mcp.Description("Tag names to read, comma separated (e.g. 'go,mcp,refactor')."),
 			),
 		),
-		handleSearch,
+		handleTagsRead,
 	)
 
 	return s
@@ -85,10 +85,24 @@ func handleResume(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	return mcp.NewToolResultText(result), nil
 }
 
-func handleSearch(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	keyword := request.GetString("keyword", "")
-	if keyword == "" {
-		return mcp.NewToolResultError("keyword is required"), nil
+func handleTagsList(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return mcp.NewToolResultError("failed to load config: " + err.Error()), nil
+	}
+
+	result, err := ListTags(cfg)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	return mcp.NewToolResultText(result), nil
+}
+
+func handleTagsRead(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	tags := request.GetString("tags", "")
+	if tags == "" {
+		return mcp.NewToolResultError("tags is required"), nil
 	}
 
 	cfg, err := config.Load()
@@ -96,7 +110,7 @@ func handleSearch(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 		return mcp.NewToolResultError("failed to load config: " + err.Error()), nil
 	}
 
-	result, err := Search(keyword, cfg)
+	result, err := ReadTags(tags, cfg)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

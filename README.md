@@ -27,7 +27,9 @@ All of these boil down to one thing: **Claude Code doesn't remember across sessi
 clerk install
 ```
 
-That's it. clerk hooks into Claude Code and works silently in the background:
+That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop. All you need is Claude Code.
+
+It hooks into Claude Code and works silently in the background:
 
 | Pain point | How clerk solves it |
 |------------|-------------------|
@@ -85,26 +87,28 @@ clerk is a **set-and-forget** tool. Install once, and every session is automatic
 
 1. You type `/clerk-search` in Claude Code
 2. Claude asks what keyword you're looking for (or you provide it as an argument)
-3. Claude calls the `clerk-search` MCP tool with the keyword
-4. clerk matches against tag index, returns paths to matching summaries and transcripts
-5. Claude reads the files and presents the relevant context
+3. Claude calls `clerk-tags-list` to get all available tags
+4. Claude uses semantic reasoning to identify relevant tags (e.g. "database" → picks `postgres`, `sql`, `migration`)
+5. Claude calls `clerk-tags-read` with the relevant tags to get summary and transcript paths
+6. Claude reads the files and presents the relevant context
 
 ```
 ~/.clerk/
-├── 20260416/
+├── summary/
+│   └── 20260416/
+│       ├── projects-my-app.md
+│       └── work-frontend.md
+├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── .sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── .tags/
+├── tags/
 │   ├── mcp.md
 │   ├── refactor.md
 │   └── auth.md
-├── .log/
+├── log/
 │   └── 20260416-clerk.log
-├── .running/
-└── .cursor/
+├── running/
+└── cursor/
 ```
 
 ## Installation
@@ -163,6 +167,9 @@ go install github.com/vulcanshen/clerk@latest
 | `retry --all` | Retry all interrupted sessions |
 | `kill <slug>` | Kill a specific active feed process |
 | `kill --all` | Kill all active feed processes |
+| `version` | Print the version of clerk |
+| `moveto <path>` | Move clerk data to a new directory and update config |
+| `migrate` | Migrate data directory structure to the latest format |
 
 Internal commands (called by hooks, not by users):
 
@@ -228,7 +235,8 @@ Available when MCP server is installed (`clerk install mcp`):
 | Tool | Description |
 |------|-------------|
 | `clerk-resume` | Returns summary + transcript file paths for context recovery |
-| `clerk-search` | Search previous sessions by keyword/tag |
+| `clerk-tags-list` | List all available session tags |
+| `clerk-tags-read` | Read the content of one or more tags |
 
 ## Skills
 
@@ -241,10 +249,10 @@ Available when skills are installed (`clerk install skills`):
 
 ## Troubleshooting
 
-Logs are stored at `~/.clerk/.log/YYYYMMDD-clerk.log`:
+Logs are stored at `~/.clerk/log/YYYYMMDD-clerk.log`:
 
 ```bash
-cat ~/.clerk/.log/$(date +%Y%m%d)-clerk.log
+cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
 ```
 
 Common issues:

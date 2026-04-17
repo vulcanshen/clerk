@@ -12,7 +12,7 @@ import (
 )
 
 func sessionsDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), ".sessions")
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "sessions")
 }
 
 func claudeProjectsDir() string {
@@ -70,7 +70,7 @@ func findTranscriptPaths(cwd string, sessionIDs []string) []string {
 }
 
 func findSummaryPaths(cfg config.Config, slug string) []string {
-	root := config.ExpandPath(cfg.Output.Dir)
+	root := filepath.Join(config.ExpandPath(cfg.Output.Dir), "summary")
 	var paths []string
 
 	entries, err := os.ReadDir(root)

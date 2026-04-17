@@ -10,21 +10,23 @@ import (
 	"github.com/vulcanshen/clerk/internal/feed"
 )
 
-func Search(keyword string, cfg config.Config) (string, error) {
-	keyword = strings.TrimSpace(strings.ToLower(keyword))
-	if keyword == "" {
-		return "", fmt.Errorf("keyword is empty")
+// parseList splits a string by commas and/or spaces into trimmed, lowercased tokens.
+func parseList(s string) []string {
+	s = strings.ReplaceAll(s, ",", " ")
+	var out []string
+	for _, tok := range strings.Fields(s) {
+		tok = strings.TrimSpace(strings.ToLower(tok))
+		if tok != "" {
+			out = append(out, tok)
+		}
 	}
+	return out
+}
 
+// ListTags returns all available tag names.
+func ListTags(cfg config.Config) (string, error) {
 	dir := feed.TagsDir(cfg)
 
-	// exact match first
-	tagFile := filepath.Join(dir, keyword+".md")
-	if data, err := os.ReadFile(tagFile); err == nil {
-		return fmt.Sprintf("## Tag: %s\n\n%s", keyword, string(data)), nil
-	}
-
-	// partial match — scan all tag files
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -33,34 +35,38 @@ func Search(keyword string, cfg config.Config) (string, error) {
 		return "", err
 	}
 
-	var matches []string
+	var tags []string
 	for _, e := range entries {
-		name := strings.TrimSuffix(e.Name(), ".md")
-		if strings.Contains(name, keyword) {
-			matches = append(matches, name)
+		if e.IsDir() {
+			continue
 		}
+		tags = append(tags, strings.TrimSuffix(e.Name(), ".md"))
 	}
 
-	if len(matches) == 0 {
-		// list available tags
-		var available []string
-		for _, e := range entries {
-			available = append(available, strings.TrimSuffix(e.Name(), ".md"))
-		}
-		if len(available) == 0 {
-			return "No tags found. Run some sessions with clerk feed first.", nil
-		}
-		return fmt.Sprintf("No tags matching '%s'. Available tags: %s", keyword, strings.Join(available, ", ")), nil
+	if len(tags) == 0 {
+		return "No tags found. Run some sessions with clerk feed first.", nil
+	}
+
+	return strings.Join(tags, ", "), nil
+}
+
+// ReadTags returns the content of one or more tag files.
+func ReadTags(tags string, cfg config.Config) (string, error) {
+	dir := feed.TagsDir(cfg)
+
+	parsed := parseList(tags)
+	if len(parsed) == 0 {
+		return "", fmt.Errorf("tags is empty")
 	}
 
 	var sb strings.Builder
-	for _, tag := range matches {
+	for _, tag := range parsed {
 		data, err := os.ReadFile(filepath.Join(dir, tag+".md"))
 		if err != nil {
+			fmt.Fprintf(&sb, "## Tag: %s\n\n(not found)\n\n", tag)
 			continue
 		}
-		fmt.Fprintf(&sb, "## Tag: %s\n\n%s\n", tag, string(data))
+		fmt.Fprintf(&sb, "## Tag: %s\n\n%s\n\n", tag, strings.TrimSpace(string(data)))
 	}
-
-	return sb.String(), nil
+	return strings.TrimSpace(sb.String()), nil
 }
