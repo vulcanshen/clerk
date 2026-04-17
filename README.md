@@ -50,7 +50,7 @@ clerk is a **set-and-forget** tool. Install once, and every session is automatic
 clerk report --days 7
 ```
 
-> **Note:** clerk is not an AI memory tool. Tools like claude-mem store context for AI to recall. clerk stores summaries for *you* to read — organized by date, searchable by keyword, ready for your weekly review.
+> **Note:** clerk is not an AI memory tool. AI memory tools store context for the AI to recall. clerk stores summaries for *you* to read — organized by date, searchable by keyword, ready for your weekly review.
 
 ## Features
 
