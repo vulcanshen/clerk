@@ -248,7 +248,8 @@ go install github.com/vulcanshen/clerk@latest
 | `report` | Generate a report from recent summaries (default: today) |
 | `report --days 7` | Weekly report across all projects |
 | `diagnosis` | Check if your environment is set up correctly |
-| `diagnosis error` | Show error logs for troubleshooting |
+| `diagnosis error` | Show error logs for troubleshooting (`--mask` to redact personal info) |
+| `diagnosis log` | Show all logs for troubleshooting (`--mask` to redact personal info) |
 | `update` | Show how to update clerk to the latest version |
 | `version` | Print the version of clerk |
 | `moveto <path>` | Move clerk data to a new directory and update config |
