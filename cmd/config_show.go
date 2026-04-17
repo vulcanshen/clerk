@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
@@ -18,9 +19,12 @@ var configShowCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Global config: %s\n", config.GlobalConfigPath())
+		exe, _ := os.Executable()
+		fmt.Printf("Executable:     %s\n", exe)
+		fmt.Printf("Version:        %s\n", Version)
+		fmt.Printf("Global config:  %s\n", config.GlobalConfigPath())
 		fmt.Printf("Project config: %s\n", config.ProjectConfigPath(""))
-		fmt.Printf("Log path:      %s\n\n", logger.LogPath(cfg))
+		fmt.Printf("Log path:       %s\n\n", logger.LogPath(cfg))
 
 		data, err := json.MarshalIndent(cfg, "", "  ")
 		if err != nil {

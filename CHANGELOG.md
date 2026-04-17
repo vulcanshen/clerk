@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.3] - 2026-04-17
+
+### Config
+- `config show` now displays executable path and version for easier debugging
+
 ## [v3.2.2] - 2026-04-17
 
 ### Report
