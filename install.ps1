@@ -30,7 +30,15 @@ Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile -UseBasicParsing
 
 # Extract
 if (Test-Path $installDir) {
-    Remove-Item $installDir -Recurse -Force
+    try {
+        Remove-Item $installDir -Recurse -Force -ErrorAction Stop
+    } catch {
+        Write-Host ""
+        Write-Host "Error: Cannot update clerk — the file is in use." -ForegroundColor Red
+        Write-Host "Please close all Claude Code sessions first, then run this installer again." -ForegroundColor Yellow
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+        exit 1
+    }
 }
 New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 Expand-Archive -Path $tempFile -DestinationPath $installDir -Force
