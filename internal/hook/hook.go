@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -179,15 +178,8 @@ func Install() error {
 		hooks = make(map[string]interface{})
 	}
 
-	var feedCmd, punchCmd string
-	if runtime.GOOS == "windows" {
-		// Wrap with cmd.exe /c start /b to prevent console window flash
-		feedCmd = fmt.Sprintf(`cmd.exe /c start /b "" "%s" feed`, exe)
-		punchCmd = fmt.Sprintf(`cmd.exe /c start /b "" "%s" punch`, exe)
-	} else {
-		feedCmd = exe + " feed"
-		punchCmd = exe + " punch"
-	}
+	feedCmd := exe + " feed"
+	punchCmd := exe + " punch"
 
 	feedExists := hasHook(hooks, "SessionEnd", "feed")
 	punchExists := hasHook(hooks, "SessionStart", "punch")

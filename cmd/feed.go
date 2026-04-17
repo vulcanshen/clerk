@@ -36,7 +36,9 @@ var feedCmd = &cobra.Command{
 			return forkFeed(data)
 		}
 
-		// --internal: do the actual work, read from file if specified
+		// --internal: do the actual work
+
+		// read from file if specified
 		if feedInputFlag != "" {
 			data, err = os.ReadFile(feedInputFlag)
 			if err != nil {

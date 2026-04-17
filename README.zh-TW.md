@@ -249,6 +249,7 @@ go install github.com/vulcanshen/clerk@latest
 | `diagnosis` | 檢查環境是否正確設定 |
 | `diagnosis error` | 顯示錯誤日誌供排查（`--mask` 遮蔽個資） |
 | `diagnosis log` | 顯示所有日誌供排查（`--mask` 遮蔽個資） |
+| `purge` | 刪除所有 clerk 資料（`-y` 跳過確認） |
 | `update` | 顯示更新 clerk 的方式 |
 | `version` | 印出 clerk 版本 |
 | `moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |

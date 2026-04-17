@@ -17,6 +17,7 @@ var (
 	procOpenProcess     = modkernel32.NewProc("OpenProcess")
 	procGetConsoleWindow = modkernel32.NewProc("GetConsoleWindow")
 	procShowWindow      = moduser32.NewProc("ShowWindow")
+	procFreeConsole     = modkernel32.NewProc("FreeConsole")
 )
 
 const (
@@ -66,14 +67,21 @@ func FlockUnlock(f *os.File) error {
 func HideConsoleWindow() {
 	hwnd, _, _ := procGetConsoleWindow.Call()
 	if hwnd != 0 {
-		procShowWindow.Call(hwnd, 0) // SW_HIDE = 0
+		procShowWindow.Call(hwnd, 7) // SW_SHOWMINNOACTIVE = 7: minimize without stealing focus
 	}
 }
 
+// FreeConsole detaches the current process from its console.
+// This closes the console window if no other process is attached to it.
+func FreeConsole() {
+	procFreeConsole.Call()
+}
+
 func DetachProcess(cmd *exec.Cmd) {
-	// CREATE_NO_WINDOW (0x08000000): prevents child process from creating/inheriting a console window
-	// DETACHED_PROCESS (0x00000008): detaches from parent's console
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000008}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow:    true,
+		CreationFlags: 0x00000010, // CREATE_NEW_CONSOLE
+	}
 }
 
 func IsProcessAlive(pid int) bool {

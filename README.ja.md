@@ -250,6 +250,7 @@ go install github.com/vulcanshen/clerk@latest
 | `diagnosis` | 環境が正しく設定されているか確認 |
 | `diagnosis error` | トラブルシューティング用のエラーログを表示（`--mask` で個人情報をマスク） |
 | `diagnosis log` | トラブルシューティング用の全ログを表示（`--mask` で個人情報をマスク） |
+| `purge` | すべての clerk データを削除（`-y` で確認スキップ） |
 | `update` | clerk の更新方法を表示 |
 | `version` | clerk のバージョンを表示 |
 | `moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |

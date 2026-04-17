@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.5.0] - 2026-04-18
+
+### Windows
+- Fix terminal window popup on hook trigger: use CREATE_NEW_CONSOLE + HideWindow to run feed/punch in a hidden console
+- Revert cmd.exe wrapper approach (broke stdin piping)
+
+### New Command
+- `clerk purge` — delete all clerk data (summaries, tags, sessions, logs, cursors) with confirmation prompt (`-y` to skip)
+
+### Bug Fix
+- Remove cmd.exe /c start /b hook wrapping that broke feed on Windows
+
 ## [v3.4.0] - 2026-04-17
 
 ### Windows

@@ -19,6 +19,9 @@ func FlockUnlock(f *os.File) error {
 // HideConsoleWindow is a no-op on Unix.
 func HideConsoleWindow() {}
 
+// FreeConsole is a no-op on Unix.
+func FreeConsole() {}
+
 func DetachProcess(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 }
