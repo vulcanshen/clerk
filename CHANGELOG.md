@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.4.0] - 2026-04-17
+
+### Windows
+- Fix terminal window flash on hook trigger: wrap hook commands with `cmd.exe /c start /b` on Windows
+- No impact on macOS/Linux
+
+### Commands
+- Rename `doctor` → `diagnosis`, `doctor diagnosis` → `diagnosis error`
+- Add `diagnosis log` — show all logs (not just errors) with `--days N`
+- Add `--mask` flag to `diagnosis error` and `diagnosis log` — redact personal info via Claude before output
+- MCP scope changed from `local` to `user` for global availability
+
+### Docs
+- Fix PowerShell completion instructions in all READMEs
+
 ## [v3.3.0] - 2026-04-17
 
 ### New Command

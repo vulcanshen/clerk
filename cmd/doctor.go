@@ -15,7 +15,7 @@ import (
 )
 
 var doctorCmd = &cobra.Command{
-	Use:   "doctor",
+	Use:   "diagnosis",
 	Short: "Check if your environment is set up correctly",
 	Run: func(cmd *cobra.Command, args []string) {
 		issues := 0

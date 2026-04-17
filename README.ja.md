@@ -247,8 +247,8 @@ go install github.com/vulcanshen/clerk@latest
 | `kill --all` | すべてのアクティブ feed プロセスを強制終了 |
 | `report` | 最近の要約からレポートを生成（デフォルト：当日） |
 | `report --days 7` | プロジェクト横断の週次レポート |
-| `doctor` | 環境が正しく設定されているか確認 |
-| `doctor diagnosis` | トラブルシューティング用のエラーログを表示 |
+| `diagnosis` | 環境が正しく設定されているか確認 |
+| `diagnosis error` | トラブルシューティング用のエラーログを表示 |
 | `update` | clerk の更新方法を表示 |
 | `version` | clerk のバージョンを表示 |
 | `moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
@@ -361,7 +361,8 @@ clerk completion bash > /etc/bash_completion.d/clerk
 clerk completion fish > ~/.config/fish/completions/clerk.fish
 
 # PowerShell
-clerk completion powershell > clerk.ps1
+New-Item -ItemType Directory -Path (Split-Path $PROFILE) -Force
+clerk completion powershell | Set-Content $PROFILE
 ```
 
 ## ライセンス
