@@ -55,6 +55,13 @@ If the tools are available:
 	},
 }
 
+// IsInstalled checks if clerk skills are currently installed.
+func IsInstalled() bool {
+	dir := filepath.Join(skillsDir(), clerkSkills[0].name)
+	_, err := os.Stat(dir)
+	return err == nil
+}
+
 func Install() error {
 	for _, s := range clerkSkills {
 		dir := filepath.Join(skillsDir(), s.name)

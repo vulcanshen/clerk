@@ -10,6 +10,16 @@ import (
 	"github.com/vulcanshen/clerk/internal/mcpserver"
 )
 
+// IsInstalled checks if clerk MCP server is currently registered.
+func IsInstalled() bool {
+	c := exec.Command("claude", "mcp", "list")
+	output, err := c.Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(output), "clerk")
+}
+
 func Install() error {
 	exe, err := os.Executable()
 	if err != nil {

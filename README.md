@@ -35,19 +35,24 @@ It hooks into Claude Code and works silently in the background:
 |------------|-------------------|
 | Lost context | `/clerk-resume` — instantly recover context from any previous session |
 | Session chaos | Auto-generated daily summaries per project, organized by date |
-| Weekly reports | Summaries + keyword tags = searchable work history via `/clerk-search` with AI-powered semantic matching |
+| Weekly reports | `clerk report --days 7` — AI-generated report organized by date and project, ready to paste |
 | Manual bookkeeping | Fully automatic — no commands to remember, no habits to build |
 
-clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away.
+clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away. And when it's time for your weekly report, just ask:
+
+```bash
+clerk report --days 7
+```
 
 > **Note:** clerk is not an AI memory tool. Tools like claude-mem store context for AI to recall. clerk stores summaries for *you* to read — organized by date, searchable by keyword, ready for your weekly review.
 
 ## Features
 
 - **Auto-summarize** — generates an incremental summary when your Claude Code session ends
+- **Report generation** — `clerk report --days 7` produces a weekly report with summary, by-date, and by-project views
 - **Context recovery** — `/clerk-resume` to rebuild context from previous sessions
 - **Semantic search** — `/clerk-search` to find past work by tag with AI-powered semantic matching
-- **Obsidian compatible** — summaries include YAML frontmatter tags, tag files use markdown links for graph view
+- **Obsidian compatible** — output directory works as an Obsidian vault with tag graph view
 - **Session tracking** — records every session start for history lookup
 - **Tag system** — auto-extracts keywords from summaries for searchable indexing
 - **Cursor tracking** — only processes new messages since the last run, saving tokens and time
@@ -112,6 +117,65 @@ clerk is a **set-and-forget** tool. Install once, and every session is automatic
 └── cursor/
 ```
 
+## Report
+
+Friday afternoon, time for the weekly report? One command:
+
+```bash
+clerk report --days 7
+```
+
+clerk reads all summaries from the past 7 days, sends them to Claude, and outputs a structured report with three views:
+
+- **Summary** — high-level overview of the entire period, organized by project
+- **By Date** — what was done each day, broken down by project
+- **By Project** — what was done on each project, broken down by date
+
+Output goes to stdout. Save it, paste it, or pipe it wherever you need:
+
+```bash
+clerk report --days 7 > weekly-report.md
+```
+
+Default is `--days 1` (today only) — useful as a daily standup summary.
+
+Example output:
+
+```markdown
+### Summary (2026-04-14 ~ 2026-04-18)
+
+#### my-api-server
+Implemented user authentication with JWT, added rate limiting middleware,
+and fixed connection pool leak under high concurrency.
+
+#### frontend-app
+Migrated from Vue 2 to Vue 3, replaced Vuex with Pinia, updated all unit tests.
+
+---
+
+### By Date
+
+#### 2026-04-14
+- **my-api-server**: Set up JWT auth with refresh token rotation
+- **frontend-app**: Started Vue 3 migration, updated build config
+
+#### 2026-04-16
+- **my-api-server**: Added rate limiting middleware, fixed connection pool leak
+- **frontend-app**: Replaced Vuex with Pinia, migrated 12 store modules
+
+---
+
+### By Project
+
+#### my-api-server
+- **2026-04-14**: JWT auth with refresh token rotation
+- **2026-04-16**: Rate limiting middleware, connection pool leak fix
+
+#### frontend-app
+- **2026-04-14**: Vue 3 migration kickoff, build config update
+- **2026-04-16**: Vuex → Pinia migration, 12 store modules converted
+```
+
 ## Installation
 
 ### Quick Install
@@ -168,6 +232,8 @@ go install github.com/vulcanshen/clerk@latest
 | `retry --all` | Retry all interrupted sessions |
 | `kill <slug>` | Kill a specific active feed process |
 | `kill --all` | Kill all active feed processes |
+| `report` | Generate a report from recent summaries (default: today) |
+| `report --days 7` | Weekly report across all projects |
 | `version` | Print the version of clerk |
 | `moveto <path>` | Move clerk data to a new directory and update config |
 | `migrate` | Migrate data directory structure to the latest format (run after upgrading from v3.0.0) |

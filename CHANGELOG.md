@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Summaries moved under `summary/` subdirectory: `summary/YYYYMMDD/<slug>.md`
 
 ### New Commands
+- `clerk report` — generate a report from recent summaries (default: today, `--days 7` for weekly)
 - `clerk version` — print version (alternative to `--version`)
 - `clerk moveto <path>` — move clerk data to a new directory and update `output.dir` config
 - `clerk migrate` — migrate data directory structure to latest format (currently: moves `YYYYMMDD/` dirs into `summary/`)

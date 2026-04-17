@@ -59,6 +59,19 @@ func writeSettings(settings map[string]interface{}) error {
 	return os.WriteFile(path, append(data, '\n'), 0644)
 }
 
+// IsInstalled checks if clerk hooks are currently installed.
+func IsInstalled() bool {
+	settings, err := readSettings()
+	if err != nil {
+		return false
+	}
+	hooks, _ := settings["hooks"].(map[string]interface{})
+	if hooks == nil {
+		return false
+	}
+	return hasHook(hooks, "SessionEnd", "feed") || hasHook(hooks, "SessionStart", "punch")
+}
+
 func hasHook(hooks map[string]interface{}, event, subcommand string) bool {
 	entries, _ := hooks[event].([]interface{})
 	for _, entry := range entries {
