@@ -10,10 +10,13 @@ import (
 )
 
 var (
-	modkernel32      = syscall.NewLazyDLL("kernel32.dll")
-	procLockFileEx   = modkernel32.NewProc("LockFileEx")
-	procUnlockFileEx = modkernel32.NewProc("UnlockFileEx")
-	procOpenProcess  = modkernel32.NewProc("OpenProcess")
+	modkernel32         = syscall.NewLazyDLL("kernel32.dll")
+	moduser32           = syscall.NewLazyDLL("user32.dll")
+	procLockFileEx      = modkernel32.NewProc("LockFileEx")
+	procUnlockFileEx    = modkernel32.NewProc("UnlockFileEx")
+	procOpenProcess     = modkernel32.NewProc("OpenProcess")
+	procGetConsoleWindow = modkernel32.NewProc("GetConsoleWindow")
+	procShowWindow      = moduser32.NewProc("ShowWindow")
 )
 
 const (
@@ -56,6 +59,15 @@ func FlockUnlock(f *os.File) error {
 		return err
 	}
 	return nil
+}
+
+// HideConsoleWindow hides the console window of the current process.
+// Used by hook commands (feed, punch) to prevent a visible window flash on Windows.
+func HideConsoleWindow() {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	if hwnd != 0 {
+		procShowWindow.Call(hwnd, 0) // SW_HIDE = 0
+	}
 }
 
 func DetachProcess(cmd *exec.Cmd) {

@@ -16,6 +16,9 @@ func FlockUnlock(f *os.File) error {
 	return syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 }
 
+// HideConsoleWindow is a no-op on Unix.
+func HideConsoleWindow() {}
+
 func DetachProcess(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 }

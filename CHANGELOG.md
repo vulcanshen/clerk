@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.8] - 2026-04-17
+
+### Bug Fix
+- Windows: hide console window for hook commands (feed, punch) using Windows API to eliminate terminal flash
+- No impact on macOS/Linux or user-initiated commands
+
 ## [v3.2.7] - 2026-04-17
 
 ### Bug Fix
