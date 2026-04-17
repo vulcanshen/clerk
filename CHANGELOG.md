@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.13] - 2026-04-17
+
+### Bug Fix
+- Windows install.sh (Git Bash): show friendly error when clerk.exe is locked by active Claude Code sessions
+
 ## [v3.2.12] - 2026-04-17
 
 ### Bug Fix

@@ -60,7 +60,13 @@ fi
 # Install
 mkdir -p "$INSTALL_DIR"
 if [ "$OS" = "windows" ]; then
-  cp "$TMPDIR/clerk.exe" "$INSTALL_DIR/clerk.exe"
+  if ! cp "$TMPDIR/clerk.exe" "$INSTALL_DIR/clerk.exe" 2>/dev/null; then
+    echo ""
+    echo "Error: Cannot update clerk — the file is in use."
+    echo "Please close all Claude Code sessions first, then run this installer again."
+    rm -rf "$TMPDIR"
+    exit 1
+  fi
 else
   cp "$TMPDIR/clerk" "$INSTALL_DIR/clerk"
   chmod +x "$INSTALL_DIR/clerk"
