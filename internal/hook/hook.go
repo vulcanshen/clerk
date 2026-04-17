@@ -22,6 +22,8 @@ func clerkExePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolving symlinks: %w", err)
 	}
+	// Use forward slashes for hook commands — Claude Code uses bash on all platforms
+	exe = filepath.ToSlash(exe)
 	return exe, nil
 }
 

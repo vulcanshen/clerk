@@ -29,6 +29,8 @@ func Install() error {
 	if err != nil {
 		return fmt.Errorf("resolving symlinks: %w", err)
 	}
+	// Use forward slashes — Claude Code uses bash on all platforms
+	exe = filepath.ToSlash(exe)
 
 	c := exec.Command("claude", "mcp", "add", "--transport", "stdio", "--scope", "local", "clerk", "--", exe, "mcp")
 	output, err := c.CombinedOutput()

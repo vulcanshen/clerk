@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.5] - 2026-04-17
+
+### Bug Fix
+- Fix Windows hook/MCP install: use forward slashes in command paths so bash can execute them correctly
+- Fixes issue where backslash paths with non-ASCII characters (e.g. Chinese usernames) caused hook failures
+
 ## [v3.2.4] - 2026-04-17
 
 ### Bug Fix
