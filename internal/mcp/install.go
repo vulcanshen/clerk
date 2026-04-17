@@ -37,7 +37,7 @@ func Install() error {
 	// Use forward slashes — Claude Code uses bash on all platforms
 	exe = filepath.ToSlash(exe)
 
-	c := exec.Command("claude", "mcp", "add", "--transport", "stdio", "--scope", "local", "clerk", "--", exe, "mcp")
+	c := exec.Command("claude", "mcp", "add", "--transport", "stdio", "--scope", "user", "clerk", "--", exe, "mcp")
 	output, err := c.CombinedOutput()
 
 	if err != nil {
