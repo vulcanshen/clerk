@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.3.0] - 2026-04-17
+
+### New Command
+- `clerk doctor` — check if your environment is set up correctly (claude CLI, hook, MCP, skills, config, output dir, migration status)
+- `clerk doctor diagnosis` — show error logs for troubleshooting (`--days N` to include multiple days)
+
 ## [v3.2.14] - 2026-04-17
 
 ### Bug Fix

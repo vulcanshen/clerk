@@ -247,6 +247,8 @@ go install github.com/vulcanshen/clerk@latest
 | `kill --all` | Kill all active feed processes |
 | `report` | Generate a report from recent summaries (default: today) |
 | `report --days 7` | Weekly report across all projects |
+| `doctor` | Check if your environment is set up correctly |
+| `doctor diagnosis` | Show error logs for troubleshooting |
 | `update` | Show how to update clerk to the latest version |
 | `version` | Print the version of clerk |
 | `moveto <path>` | Move clerk data to a new directory and update config |
