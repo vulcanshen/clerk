@@ -35,7 +35,7 @@ It hooks into Claude Code and works silently in the background:
 |------------|-------------------|
 | Lost context | `/clerk-resume` — instantly recover context from any previous session |
 | Session chaos | Auto-generated daily summaries per project, organized by date |
-| Weekly reports | Summaries + keyword tags = searchable work history via `/clerk-search` |
+| Weekly reports | Summaries + keyword tags = searchable work history via `/clerk-search` with AI-powered semantic matching |
 | Manual bookkeeping | Fully automatic — no commands to remember, no habits to build |
 
 clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away.
@@ -46,7 +46,8 @@ clerk is a **set-and-forget** tool. Install once, and every session is automatic
 
 - **Auto-summarize** — generates an incremental summary when your Claude Code session ends
 - **Context recovery** — `/clerk-resume` to rebuild context from previous sessions
-- **Keyword search** — `/clerk-search` to find past work by tag
+- **Semantic search** — `/clerk-search` to find past work by tag with AI-powered semantic matching
+- **Obsidian compatible** — summaries include YAML frontmatter tags, tag files use markdown links for graph view
 - **Session tracking** — records every session start for history lookup
 - **Tag system** — auto-extracts keywords from summaries for searchable indexing
 - **Cursor tracking** — only processes new messages since the last run, saving tokens and time
@@ -169,7 +170,7 @@ go install github.com/vulcanshen/clerk@latest
 | `kill --all` | Kill all active feed processes |
 | `version` | Print the version of clerk |
 | `moveto <path>` | Move clerk data to a new directory and update config |
-| `migrate` | Migrate data directory structure to the latest format |
+| `migrate` | Migrate data directory structure to the latest format (run after upgrading from v3.0.0) |
 
 Internal commands (called by hooks, not by users):
 
@@ -230,7 +231,7 @@ clerk config set -g output.language en
 
 ## MCP Tools
 
-Available when MCP server is installed (`clerk install mcp`):
+Available when MCP server is installed (`clerk install mcp`). These are called by Claude Code through skills — you don't need to invoke them directly.
 
 | Tool | Description |
 |------|-------------|
