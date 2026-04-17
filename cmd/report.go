@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
+	"github.com/vulcanshen/clerk/internal/mcpserver"
 )
 
 var reportDays int
@@ -31,6 +33,9 @@ var reportCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("loading config: %w", err)
 		}
+
+		// Flush active sessions: run feed for any sessions with unprocessed transcripts
+		flushActiveSessions(cfg)
 
 		summaryDir := filepath.Join(config.ExpandPath(cfg.Output.Dir), "summary")
 
@@ -158,6 +163,40 @@ Rules:
 Summaries:
 
 %s`, language, formatDate(startDate), formatDate(endDate), summaries)
+}
+
+func flushActiveSessions(cfg config.Config) {
+	allSessions, err := mcpserver.ReadAllSessionEntries(cfg)
+	if err != nil {
+		return
+	}
+
+	seen := make(map[string]bool)
+	for _, entries := range allSessions {
+		// iterate in reverse to get the latest entry per cwd
+		for i := len(entries) - 1; i >= 0; i-- {
+			entry := entries[i]
+			if entry.TranscriptPath == "" || entry.Cwd == "" {
+				continue
+			}
+			if seen[entry.Cwd] {
+				continue
+			}
+			seen[entry.Cwd] = true
+
+			if _, err := os.Stat(entry.TranscriptPath); err != nil {
+				continue
+			}
+
+			inputData, _ := json.Marshal(feed.HookInput{
+				SessionID:      entry.SessionID,
+				TranscriptPath: entry.TranscriptPath,
+				Cwd:            entry.Cwd,
+			})
+
+			feed.Run(inputData, cfg)
+		}
+	}
 }
 
 func init() {

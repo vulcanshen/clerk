@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.1] - 2026-04-17
+
+### Report Enhancement
+- `clerk report` now includes active sessions — no need to close current session first
+- Punch now stores `cwd` and `transcript_path` for active session processing
+- Sessions file format extended: `- timestamp \`session_id\` cwd transcript_path`
+- Backward compatible with old session entries (no migration needed)
+
+## [v3.2.0] - 2026-04-17
+
+### New Commands
+- `clerk report` — generate a report from recent summaries (default: today, `--days 7` for weekly)
+- Report outputs three views: summary (by time range), by-date, and by-project
+- `clerk version` — print version (alternative to `--version`)
+- `clerk moveto <path>` — move clerk data to a new directory and update `output.dir` config
+- `clerk migrate` — migrate data directory structure to latest format, auto-reinstalls only installed components
+
 ## [v3.1.0] - 2026-04-17
 
 ### Search & Tags Overhaul
@@ -21,12 +38,6 @@ All notable changes to this project will be documented in this file.
 ### Directory Structure
 - Hidden directories renamed to non-hidden: `.tags/` → `tags/`, `.cursor/` → `cursor/`, `.running/` → `running/`, `.sessions/` → `sessions/`, `.log/` → `log/`
 - Summaries moved under `summary/` subdirectory: `summary/YYYYMMDD/<slug>.md`
-
-### New Commands
-- `clerk report` — generate a report from recent summaries (default: today, `--days 7` for weekly)
-- `clerk version` — print version (alternative to `--version`)
-- `clerk moveto <path>` — move clerk data to a new directory and update `output.dir` config
-- `clerk migrate` — migrate data directory structure to latest format (currently: moves `YYYYMMDD/` dirs into `summary/`)
 
 ## [v3.0.0] - 2026-04-16
 

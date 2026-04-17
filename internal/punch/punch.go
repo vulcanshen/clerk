@@ -12,8 +12,9 @@ import (
 )
 
 type HookInput struct {
-	SessionID string `json:"session_id"`
-	Cwd       string `json:"cwd"`
+	SessionID      string `json:"session_id"`
+	TranscriptPath string `json:"transcript_path"`
+	Cwd            string `json:"cwd"`
 }
 
 func sessionsDir(cfg config.Config) string {
@@ -43,6 +44,6 @@ func Run(data []byte, cfg config.Config) error {
 	defer f.Close()
 
 	ts := time.Now().Format("2006-01-02 15:04:05")
-	_, err = fmt.Fprintf(f, "- %s `%s`\n", ts, input.SessionID)
+	_, err = fmt.Fprintf(f, "- %s `%s` %s %s\n", ts, input.SessionID, input.Cwd, input.TranscriptPath)
 	return err
 }
