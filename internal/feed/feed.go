@@ -340,6 +340,8 @@ func summaryMarkdownLink(tagsDir, summaryFilePath string) string {
 	if err != nil {
 		rel = summaryFilePath
 	}
+	// Markdown links must use forward slashes
+	rel = filepath.ToSlash(rel)
 	name := strings.TrimSuffix(filepath.Base(summaryFilePath), ".md")
 	return fmt.Sprintf("[%s](%s)", name, rel)
 }

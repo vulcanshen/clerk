@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.2.7] - 2026-04-17
+
+### Bug Fix
+- Windows: fix terminal window flashing when hook triggers clerk.exe
+- Windows build now uses `-H windowsgui` to prevent console allocation
+- Fix markdown links in tag files using backslashes on Windows
+
 ## [v3.2.6] - 2026-04-17
 
 ### Install

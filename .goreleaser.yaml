@@ -3,13 +3,23 @@ version: 2
 project_name: clerk
 
 builds:
-  - main: .
+  - id: clerk
+    main: .
     binary: clerk
     ldflags:
       - -s -w -X github.com/vulcanshen/clerk/cmd.Version={{.Version}}
     goos:
       - linux
       - darwin
+    goarch:
+      - amd64
+      - arm64
+  - id: clerk-windows
+    main: .
+    binary: clerk
+    ldflags:
+      - -s -w -X github.com/vulcanshen/clerk/cmd.Version={{.Version}} -H windowsgui
+    goos:
       - windows
     goarch:
       - amd64
