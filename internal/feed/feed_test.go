@@ -2,6 +2,7 @@ package feed
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 )
@@ -184,9 +185,11 @@ func TestBuildPrompt(t *testing.T) {
 }
 
 func TestBuildTerms(t *testing.T) {
-	terms := BuildTerms([]string{"go", "mcp"}, "/Users/vulcan/Documents/sideproj/clerk", "20260418")
+	home, _ := os.UserHomeDir()
+	cwd := home + "/projects/my-app"
+	terms := BuildTerms([]string{"go", "mcp"}, cwd, "20260418")
 
-	expected := []string{"go", "mcp", "20260418", "documents-sideproj-clerk", "documents", "sideproj", "clerk"}
+	expected := []string{"go", "mcp", "20260418", "projects-my-app", "projects", "my", "app"}
 	for _, e := range expected {
 		found := false
 		for _, term := range terms {
@@ -200,16 +203,16 @@ func TestBuildTerms(t *testing.T) {
 		}
 	}
 
-	// test dedup: if tag matches a word
-	terms2 := BuildTerms([]string{"clerk", "go"}, "/Users/vulcan/Documents/sideproj/clerk", "20260418")
+	// test dedup: if tag matches a word from slug
+	terms2 := BuildTerms([]string{"projects", "go"}, cwd, "20260418")
 	count := 0
-	for _, t := range terms2 {
-		if t == "clerk" {
+	for _, term := range terms2 {
+		if term == "projects" {
 			count++
 		}
 	}
 	if count != 1 {
-		t.Errorf("expected 'clerk' once, got %d times in %v", count, terms2)
+		t.Errorf("expected 'projects' once, got %d times in %v", count, terms2)
 	}
 }
 
