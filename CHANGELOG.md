@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.6.2] - 2026-04-18
+
+### Diagnosis
+- Feed pipeline test: diagnosis now tests full feed flow (BuildPrompt → CallClaude → ParseSummaryAndTags)
+- Clear error messages when API format changes: suggests updating clerk or reporting issue
+- Export `ParseSummaryAndTags` for diagnosis use
+
 ## [v3.6.1] - 2026-04-18
 
 ### Testing

@@ -308,7 +308,7 @@ func ReadExistingSummary(cfg config.Config, cwd string) string {
 	return string(data)
 }
 
-func parseSummaryAndTags(output string) (string, []string) {
+func ParseSummaryAndTags(output string) (string, []string) {
 	parts := strings.SplitN(output, "<!-- CLERK:TAGS -->", 2)
 	summary := strings.TrimSpace(parts[0])
 	if len(parts) < 2 {
@@ -629,7 +629,7 @@ func Run(inputData []byte, cfg config.Config) error {
 	}
 	logger.Info(cfg, "summary generated successfully")
 
-	summary, tags := parseSummaryAndTags(output)
+	summary, tags := ParseSummaryAndTags(output)
 
 	if err := SaveSummary(cfg, input.Cwd, summary, tags); err != nil {
 		logger.Errorf(cfg, "save summary: %v", err)
@@ -663,7 +663,7 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 		return err
 	}
 
-	summary, tags := parseSummaryAndTags(output)
+	summary, tags := ParseSummaryAndTags(output)
 
 	if err := SaveSummary(cfg, orphan.State.Cwd, summary, tags); err != nil {
 		logger.Errorf(cfg, "retry save failed for %s: %v", orphan.State.Slug, err)

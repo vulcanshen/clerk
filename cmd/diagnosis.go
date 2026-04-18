@@ -38,24 +38,35 @@ var doctorCmd = &cobra.Command{
 		} else {
 			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
 
-			// Test claude -p
-			fmt.Print("Claude -p:   Test API call? (Y/n): ")
+			// Test feed pipeline
+			fmt.Print("Feed test:   Test feed pipeline? (Y/n): ")
 			reader := bufio.NewReader(os.Stdin)
 			answer, _ := reader.ReadString('\n')
 			answer = strings.TrimSpace(strings.ToLower(answer))
 			if answer == "" || answer == "y" || answer == "yes" {
-				testOut, err := feed.CallClaude("Reply with exactly: OK", "")
+				testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
+				testPrompt := feed.BuildPrompt(testConv, "", "en")
+				testOut, err := feed.CallClaude(testPrompt, "")
 				if err != nil {
-					fmt.Printf("Claude -p:   FAILED — %v\n", err)
+					fmt.Printf("Feed test:   FAILED — claude -p error: %v\n", err)
 					issues++
-				} else if strings.TrimSpace(testOut) != "" {
-					fmt.Printf("Claude -p:   OK\n")
 				} else {
-					fmt.Printf("Claude -p:   FAILED — empty response\n")
-					issues++
+					summary, tags := feed.ParseSummaryAndTags(testOut)
+					if strings.TrimSpace(summary) == "" {
+						fmt.Printf("Feed test:   FAILED — empty summary\n")
+						fmt.Printf("             Claude API response format may have changed.\n")
+						fmt.Printf("             Run 'clerk version' to check for updates.\n")
+						fmt.Printf("             If already latest, please report at https://github.com/vulcanshen/clerk/issues\n")
+						issues++
+					} else if len(tags) == 0 {
+						fmt.Printf("Feed test:   WARNING — summary OK but no tags extracted\n")
+						fmt.Printf("             Tag format may have changed. Run 'clerk version' to check for updates.\n")
+					} else {
+						fmt.Printf("Feed test:   OK (summary + %d tags)\n", len(tags))
+					}
 				}
 			} else {
-				fmt.Printf("Claude -p:   SKIPPED\n")
+				fmt.Printf("Feed test:   SKIPPED\n")
 			}
 		}
 

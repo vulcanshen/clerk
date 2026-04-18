@@ -94,7 +94,7 @@ func TestParseSummaryAndTags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			summary, tags := parseSummaryAndTags(tt.input)
+			summary, tags := ParseSummaryAndTags(tt.input)
 			if summary != tt.wantSummary {
 				t.Errorf("summary = %q, want %q", summary, tt.wantSummary)
 			}
