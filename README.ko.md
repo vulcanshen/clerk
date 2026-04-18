@@ -69,59 +69,84 @@ clerk report --days 7
 
 ## 작동 방식
 
-### 설치되는 항목
+```mermaid
+flowchart LR
+    subgraph Claude Code
+        A[Session Start] -->|hook| B[clerk punch]
+        C[Session End] -->|hook| D[clerk feed]
+    end
 
-| 컴포넌트 | 기능 |
-|----------|------|
-| **hook** | SessionStart에서 세션 ID 기록, SessionEnd에서 요약 생성 트리거 |
-| **mcp** | `clerk-resume` 및 `clerk-search` 도구를 제공하는 MCP stdio 서버 |
-| **skills** | Claude Code용 `/clerk-resume` 및 `/clerk-search` 슬래시 명령어 |
+    B --> E[sessions/]
+    D --> F[summary/]
+    D --> G[index/]
 
-### 요약 흐름
+    subgraph User Commands
+        H["/clerk-resume"] -->|MCP| F
+        I["/clerk-search"] -->|MCP| G
+        J["clerk report"] --> F
+    end
 
-1. 세션 종료 → 훅이 `clerk feed` 트리거
-2. Feed가 백그라운드로 포크 (훅은 즉시 반환)
-3. 마지막 실행 이후의 새 메시지만 읽기 (커서 추적)
-4. 기존 일일 요약을 로드하고, `claude -p`를 호출하여 병합
-5. 업데이트된 요약 저장 + 검색 인덱스용 태그 추출
+    subgraph Obsidian Vault
+        F --- G
+    end
+```
 
-### 복원 흐름
+### 라이프사이클
 
-1. Claude Code에서 `/clerk-resume`을 입력
-2. Claude가 프로젝트의 작업 디렉토리를 지정하여 `clerk-resume` MCP 도구를 호출
-3. clerk가 파일 경로를 반환: 일일 요약 + 전체 transcript 파일
-4. Claude가 먼저 요약을 읽어 빠른 개요 파악
-5. 더 자세한 내용이 필요하면 Claude가 transcript 파일을 읽음
-6. Claude가 이전에 수행한 작업을 요약하고, 컨텍스트가 복원되었음을 확인
+| 이벤트 | 동작 |
+|--------|------|
+| **세션 시작** | `clerk punch`가 세션 ID + 트랜스크립트 경로를 기록 |
+| **세션 종료** | `clerk feed`가 요약을 생성하고 인덱스 항목을 구축 |
+| **컨텍스트 필요** | `/clerk-resume`이 과거 요약과 트랜스크립트를 읽음 |
+| **검색** | `/clerk-search`가 인덱스 항목의 의미론적 매칭 |
+| **보고서 필요** | `clerk report --days 7`이 구조화된 보고서를 생성 |
 
-### 검색 흐름
-
-1. Claude Code에서 `/clerk-search`를 입력
-2. Claude가 검색할 키워드를 물어봄 (또는 인수로 직접 제공)
-3. Claude가 `clerk-index-list`를 호출하여 사용 가능한 모든 인덱스 항목을 가져옴 (태그, 날짜, 프로젝트, 키워드)
-4. Claude가 의미론적 추론으로 관련 항목을 식별 (예: "database" → `postgres`, `sql`, `migration` 선택)
-5. Claude가 `clerk-index-read`를 호출하여 관련 항목의 요약 링크를 가져옴
-6. Claude가 해당 파일을 읽고 관련 컨텍스트를 제시
+### 데이터 구조
 
 ```
 ~/.clerk/
-├── summary/
-│   └── 20260416/
-│       ├── projects-my-app.md
-│       └── work-frontend.md
-├── sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── index/
-│   ├── mcp.md
-│   ├── refactor.md
-│   ├── 20260416.md
-│   └── projects-my-app.md
-├── log/
-│   └── 20260416-clerk.log
-├── running/
-└── cursor/
+├── summary/YYYYMMDD/slug.md    ← 프로젝트별 일일 요약
+├── index/term.md               ← 역 인덱스 (태그, 날짜, 프로젝트, 키워드)
+├── sessions/slug.md            ← 세션 ID 이력
+├── cursor/                     ← 증분 처리 상태
+├── running/                    ← 활성 feed 프로세스 상태
+└── log/                        ← 일일 로그
 ```
+
+## Obsidian 통합
+
+`~/.clerk/`를 Obsidian vault로 열어보세요. 그래프 뷰에서 다차원 연결이 표시됩니다 — 태그, 날짜, 프로젝트, 키워드가 모두 노드로 나타나 요약에 연결됩니다.
+
+### 요약 형식
+
+각 요약 파일에는 관련된 모든 항목을 포함하는 YAML 프론트매터가 있습니다:
+
+```yaml
+---
+tags:
+  - go
+  - auth
+  - jwt
+  - 20260418
+  - my-api-server
+  - my
+  - api
+  - server
+---
+```
+
+Obsidian은 이러한 태그를 태그 패널과 그래프 뷰 필터에 사용합니다.
+
+### 인덱스 형식
+
+각 인덱스 파일에는 일치하는 요약에 대한 markdown 링크가 포함됩니다:
+
+```markdown
+- [my-api-server+20260418](../summary/20260418/my-api-server.md)
+- [my-api-server+20260419](../summary/20260419/my-api-server.md)
+```
+
+항목은 자연스럽게 겹칩니다 — "api"가 슬러그의 단어이자 AI가 추출한 태그인 경우, 하나의 그래프 노드로 병합되어 프로젝트와 주제 간의 연결을 보여줍니다.
 
 ## 보고서
 

@@ -69,59 +69,84 @@ clerk report --days 7
 
 ## 仕組み
 
-### インストールされるもの
+```mermaid
+flowchart LR
+    subgraph Claude Code
+        A[Session Start] -->|hook| B[clerk punch]
+        C[Session End] -->|hook| D[clerk feed]
+    end
 
-| コンポーネント | 機能 |
-|----------------|------|
-| **hook** | SessionStart でセッション ID を記録、SessionEnd で要約生成をトリガー |
-| **mcp** | `clerk-resume` と `clerk-search` ツールを提供する MCP stdio サーバー |
-| **skills** | Claude Code 用の `/clerk-resume` と `/clerk-search` スラッシュコマンド |
+    B --> E[sessions/]
+    D --> F[summary/]
+    D --> G[index/]
 
-### 要約フロー
+    subgraph User Commands
+        H["/clerk-resume"] -->|MCP| F
+        I["/clerk-search"] -->|MCP| G
+        J["clerk report"] --> F
+    end
 
-1. セッション終了 → フックが `clerk feed` をトリガー
-2. Feed がバックグラウンドにフォーク（フックは即座に返る）
-3. 前回以降の新しいメッセージのみを読み取り（カーソル追跡）
-4. 既存の日次要約を読み込み、`claude -p` を呼び出してマージ
-5. 更新された要約を保存 + 検索インデックス用のタグを抽出
+    subgraph Obsidian Vault
+        F --- G
+    end
+```
 
-### 復元フロー
+### ライフサイクル
 
-1. Claude Code で `/clerk-resume` と入力
-2. Claude がプロジェクトの作業ディレクトリを指定して `clerk-resume` MCP ツールを呼び出す
-3. clerk がファイルパスを返す：日次要約 + 完全なトランスクリプトファイル
-4. Claude がまず要約を読み取り、概要を素早く把握
-5. より詳細が必要な場合、Claude がトランスクリプトファイルを読み取る
-6. Claude が以前の作業内容を要約し、コンテキストが復元されたことを確認
+| イベント | 動作 |
+|---------|------|
+| **セッション開始** | `clerk punch` がセッション ID + トランスクリプトパスを記録 |
+| **セッション終了** | `clerk feed` が要約を生成し、インデックス項目を構築 |
+| **コンテキストが必要** | `/clerk-resume` が過去の要約とトランスクリプトを読み取る |
+| **検索** | `/clerk-search` がインデックス項目のセマンティックマッチング |
+| **レポートが必要** | `clerk report --days 7` が構造化レポートを生成 |
 
-### 検索フロー
-
-1. Claude Code で `/clerk-search` と入力
-2. Claude が検索したいキーワードを尋ねる（または引数として直接指定）
-3. Claude が `clerk-index-list` を呼び出して利用可能なすべてのインデックス項目を取得（タグ、日付、プロジェクト、キーワード）
-4. Claude がセマンティック推論で関連項目を特定（例：「database」→ `postgres`、`sql`、`migration` を選択）
-5. Claude が `clerk-index-read` を呼び出して関連項目の要約リンクを取得
-6. Claude がそれらのファイルを読み取り、関連するコンテキストを提示
+### データ構造
 
 ```
 ~/.clerk/
-├── summary/
-│   └── 20260416/
-│       ├── projects-my-app.md
-│       └── work-frontend.md
-├── sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── index/
-│   ├── mcp.md
-│   ├── refactor.md
-│   ├── 20260416.md
-│   └── projects-my-app.md
-├── log/
-│   └── 20260416-clerk.log
-├── running/
-└── cursor/
+├── summary/YYYYMMDD/slug.md    ← プロジェクトごとの日次要約
+├── index/term.md               ← 転置インデックス（タグ、日付、プロジェクト、キーワード）
+├── sessions/slug.md            ← セッション ID 履歴
+├── cursor/                     ← 増分処理状態
+├── running/                    ← アクティブ feed プロセス状態
+└── log/                        ← 日次ログ
 ```
+
+## Obsidian 統合
+
+`~/.clerk/` を Obsidian vault として開きます。グラフビューで多次元の接続が表示されます — タグ、日付、プロジェクト、キーワードがすべてノードとして要約にリンクされます。
+
+### 要約フォーマット
+
+各要約ファイルには関連するすべての項目を含む YAML フロントマターがあります：
+
+```yaml
+---
+tags:
+  - go
+  - auth
+  - jwt
+  - 20260418
+  - my-api-server
+  - my
+  - api
+  - server
+---
+```
+
+Obsidian はこれらのタグをタグペインとグラフビューフィルターに使用します。
+
+### インデックスフォーマット
+
+各インデックスファイルには、一致する要約への markdown リンクが含まれます：
+
+```markdown
+- [my-api-server+20260418](../summary/20260418/my-api-server.md)
+- [my-api-server+20260419](../summary/20260419/my-api-server.md)
+```
+
+項目は自然に重複します — 「api」がスラッグの単語と AI 抽出タグの両方である場合、1つのグラフノードに統合され、プロジェクトとトピック間の接続を表示します。
 
 ## レポート
 

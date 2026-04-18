@@ -69,59 +69,84 @@ clerk report --days 7
 
 ## 運作原理
 
-### 安裝了什麼
+```mermaid
+flowchart LR
+    subgraph Claude Code
+        A[Session Start] -->|hook| B[clerk punch]
+        C[Session End] -->|hook| D[clerk feed]
+    end
 
-| 元件 | 功能 |
-|------|------|
-| **hook** | SessionStart 記錄 session ID，SessionEnd 觸發摘要產生 |
-| **mcp** | MCP stdio server，提供 `clerk-resume` 和 `clerk-search` 工具 |
-| **skills** | `/clerk-resume` 和 `/clerk-search` 斜線指令供 Claude Code 使用 |
+    B --> E[sessions/]
+    D --> F[summary/]
+    D --> G[index/]
 
-### 摘要流程
+    subgraph User Commands
+        H["/clerk-resume"] -->|MCP| F
+        I["/clerk-search"] -->|MCP| G
+        J["clerk report"] --> F
+    end
 
-1. Session 結束 → hook 觸發 `clerk feed`
-2. Feed fork 到背景執行（hook 立刻返回）
-3. 只讀取上次之後的新訊息（游標追蹤）
-4. 載入現有的每日摘要，呼叫 `claude -p` 進行合併
-5. 儲存更新後的摘要 + 擷取標籤供搜尋索引使用
+    subgraph Obsidian Vault
+        F --- G
+    end
+```
 
-### 恢復流程
+### 生命週期
 
-1. 你在 Claude Code 中輸入 `/clerk-resume`
-2. Claude 以你專案的工作目錄呼叫 `clerk-resume` MCP 工具
-3. clerk 回傳檔案路徑：每日摘要 + 完整 transcript 檔案
-4. Claude 先讀取摘要以快速了解概況
-5. 如需更多細節，Claude 會讀取 transcript 檔案
-6. Claude 總結之前完成的工作，並確認上下文已恢復
+| 事件 | 發生什麼 |
+|------|---------|
+| **Session 開始** | `clerk punch` 記錄 session ID + transcript 路徑 |
+| **Session 結束** | `clerk feed` 產生摘要，建立索引項目 |
+| **需要上下文** | `/clerk-resume` 讀取過去的摘要和 transcript |
+| **搜尋** | `/clerk-search` 用語意比對搜尋索引項目 |
+| **需要報告** | `clerk report --days 7` 產生結構化報告 |
 
-### 搜尋流程
-
-1. 你在 Claude Code 中輸入 `/clerk-search`
-2. Claude 詢問你要搜尋的關鍵字（或你以參數直接提供）
-3. Claude 呼叫 `clerk-index-list` 取得所有可用索引項目（標籤、日期、專案、關鍵字）
-4. Claude 用語意推理找出相關項目（例如搜尋「database」→ 挑出 `postgres`、`sql`、`migration`）
-5. Claude 呼叫 `clerk-index-read` 讀取相關項目的摘要連結
-6. Claude 讀取這些檔案並呈現相關的上下文
+### 資料結構
 
 ```
 ~/.clerk/
-├── summary/
-│   └── 20260416/
-│       ├── projects-my-app.md
-│       └── work-frontend.md
-├── sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── index/
-│   ├── mcp.md
-│   ├── refactor.md
-│   ├── 20260416.md
-│   └── projects-my-app.md
-├── log/
-│   └── 20260416-clerk.log
-├── running/
-└── cursor/
+├── summary/YYYYMMDD/slug.md    ← 每日每專案摘要
+├── index/term.md               ← 倒排索引（標籤、日期、專案、關鍵字）
+├── sessions/slug.md            ← session ID 歷史
+├── cursor/                     ← 增量處理狀態
+├── running/                    ← 進行中的 feed 狀態
+└── log/                        ← 每日日誌
 ```
+
+## Obsidian 整合
+
+以 Obsidian vault 開啟 `~/.clerk/`。graph view 會顯示多維度的連結 — 標籤、日期、專案、關鍵字都會成為節點連結到你的摘要。
+
+### 摘要格式
+
+每個摘要檔案的 YAML frontmatter 包含所有相關項目：
+
+```yaml
+---
+tags:
+  - go
+  - auth
+  - jwt
+  - 20260418
+  - my-api-server
+  - my
+  - api
+  - server
+---
+```
+
+Obsidian 使用這些 tags 來建立 tag pane 和 graph view 篩選。
+
+### 索引格式
+
+每個索引檔案包含指向對應摘要的 markdown 連結：
+
+```markdown
+- [my-api-server+20260418](../summary/20260418/my-api-server.md)
+- [my-api-server+20260419](../summary/20260419/my-api-server.md)
+```
+
+項目會自然重疊 — 如果 "api" 同時是 slug 拆分的字和 AI 提取的標籤，它們會合併成一個 graph 節點，呈現跨專案和主題的關聯。
 
 ## 報告
 
