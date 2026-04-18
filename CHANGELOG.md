@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.6.1] - 2026-04-18
+
+### Testing
+- Add unit tests for core functions: CwdToSlug, parseSummaryAndTags, FilterConversation, BuildPrompt, ExpandPath, applyKeyValue, parseList
+- CI now runs tests on Ubuntu, Windows, and macOS before release
+
+### Diagnosis
+- `clerk diagnosis` now tests `claude -p` API call (with Y/n prompt, default yes)
+
 ## [v3.6.0] - 2026-04-18
 
 ### Command Restructure

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/commands"
 	"github.com/vulcanshen/clerk/internal/config"
+	"github.com/vulcanshen/clerk/internal/feed"
 	"github.com/vulcanshen/clerk/internal/hook"
 	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
@@ -35,6 +37,26 @@ var doctorCmd = &cobra.Command{
 			issues++
 		} else {
 			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
+
+			// Test claude -p
+			fmt.Print("Claude -p:   Test API call? (Y/n): ")
+			reader := bufio.NewReader(os.Stdin)
+			answer, _ := reader.ReadString('\n')
+			answer = strings.TrimSpace(strings.ToLower(answer))
+			if answer == "" || answer == "y" || answer == "yes" {
+				testOut, err := feed.CallClaude("Reply with exactly: OK", "")
+				if err != nil {
+					fmt.Printf("Claude -p:   FAILED — %v\n", err)
+					issues++
+				} else if strings.TrimSpace(testOut) != "" {
+					fmt.Printf("Claude -p:   OK\n")
+				} else {
+					fmt.Printf("Claude -p:   FAILED — empty response\n")
+					issues++
+				}
+			} else {
+				fmt.Printf("Claude -p:   SKIPPED\n")
+			}
 		}
 
 		cfg, cfgErr := config.Load()
