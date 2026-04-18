@@ -720,3 +720,8 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 func IndexDir(cfg config.Config) string {
 	return indexDir(cfg)
 }
+
+// RebuildIndexForSummary builds index entries for a single summary file.
+func RebuildIndexForSummary(cfg config.Config, summaryFilePath string, terms []string) error {
+	return saveIndex(cfg, summaryFilePath, terms)
+}
