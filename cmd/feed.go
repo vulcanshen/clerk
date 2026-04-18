@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
@@ -70,10 +69,6 @@ func forkFeed(data []byte) error {
 	exe, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("resolving executable: %w", err)
-	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return fmt.Errorf("resolving symlinks: %w", err)
 	}
 
 	// write stdin data to temp file so the child can read it after parent exits

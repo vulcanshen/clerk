@@ -18,11 +18,8 @@ func clerkExePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolving executable path: %w", err)
 	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return "", fmt.Errorf("resolving symlinks: %w", err)
-	}
-	// Use forward slashes for hook commands — Claude Code uses bash on all platforms
+	// Don't resolve symlinks — keep brew's /opt/homebrew/bin/clerk symlink
+	// so the path survives version upgrades
 	exe = filepath.ToSlash(exe)
 	return exe, nil
 }

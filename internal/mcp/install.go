@@ -30,11 +30,7 @@ func Install() error {
 	if err != nil {
 		return fmt.Errorf("resolving executable: %w", err)
 	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return fmt.Errorf("resolving symlinks: %w", err)
-	}
-	// Use forward slashes — Claude Code uses bash on all platforms
+	// Don't resolve symlinks — keep package manager symlinks stable across upgrades
 	exe = filepath.ToSlash(exe)
 
 	c := exec.Command("claude", "mcp", "add", "--transport", "stdio", "--scope", "user", "clerk", "--", exe, "mcp")

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -353,6 +354,9 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 	}
 
 	for _, tag := range tags {
+		if strings.Contains(tag, "..") || strings.Contains(tag, "/") || strings.Contains(tag, "\\") {
+			continue
+		}
 		tagFile := filepath.Join(dir, tag+".md")
 
 		f, err := os.OpenFile(tagFile, os.O_CREATE|os.O_RDWR, 0644)
@@ -368,8 +372,9 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 		now := time.Now().Format("2006-01-02 15:04")
 		mdLink := summaryMarkdownLink(dir, summaryFilePath)
 
-		// read existing content, clean stale entries, check for duplicate
-		existing, _ := os.ReadFile(tagFile)
+		// read existing content through locked file descriptor
+		f.Seek(0, 0)
+		existing, _ := io.ReadAll(f)
 		lines := strings.Split(string(existing), "\n")
 		var cleaned []string
 		found := false
@@ -405,9 +410,14 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 		}
 
 		// overwrite with cleaned content
+		content := strings.Join(cleaned, "\n") + "\n"
 		f.Truncate(0)
 		f.Seek(0, 0)
-		f.WriteString(strings.Join(cleaned, "\n") + "\n")
+		if _, err := f.WriteString(content); err != nil {
+			platform.FlockUnlock(f)
+			f.Close()
+			continue
+		}
 
 		platform.FlockUnlock(f)
 		f.Close()

@@ -35,7 +35,6 @@ var updateCmd = &cobra.Command{
 			printFallback()
 			return
 		}
-		exe, _ = filepath.EvalSymlinks(exe)
 		path := filepath.ToSlash(strings.ToLower(exe))
 
 		switch {

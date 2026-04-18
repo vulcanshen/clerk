@@ -26,7 +26,6 @@ var doctorCmd = &cobra.Command{
 
 		// Executable
 		exe, _ := os.Executable()
-		exe, _ = filepath.EvalSymlinks(exe)
 		fmt.Printf("Executable:  %s\n", exe)
 		fmt.Printf("Version:     %s\n", Version)
 
@@ -39,7 +38,7 @@ var doctorCmd = &cobra.Command{
 			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
 
 			// Test feed pipeline
-			fmt.Print("Feed test:   Test feed pipeline? (Y/n): ")
+			fmt.Print("Feed test:   Run API test? This uses a small amount of tokens. (Y/n): ")
 			reader := bufio.NewReader(os.Stdin)
 			answer, _ := reader.ReadString('\n')
 			answer = strings.TrimSpace(strings.ToLower(answer))
@@ -88,7 +87,24 @@ var doctorCmd = &cobra.Command{
 					fixed++
 				}
 			} else {
-				fmt.Printf("Hook:        OK\n")
+				// Verify hook binary exists
+				binPath := extractHookBinary()
+				if binPath != "" {
+					if _, err := os.Stat(binPath); os.IsNotExist(err) {
+						fmt.Printf("Hook:        FIXING — binary not found at %s\n", binPath)
+						if err := hook.ForceInstall(); err != nil {
+							fmt.Printf("Hook:        FAILED — %v\n", err)
+							issues++
+						} else {
+							fmt.Printf("Hook:        FIXED\n")
+							fixed++
+						}
+					} else {
+						fmt.Printf("Hook:        OK\n")
+					}
+				} else {
+					fmt.Printf("Hook:        OK\n")
+				}
 			}
 		} else {
 			fmt.Printf("Hook:        NOT INSTALLED — run 'clerk install'\n")
@@ -168,6 +184,35 @@ var doctorCmd = &cobra.Command{
 	},
 }
 
+func extractHookBinary() string {
+	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".claude", "settings.json"))
+	if err != nil {
+		home, _ := os.UserHomeDir()
+		data, err = os.ReadFile(filepath.Join(home, ".claude", "settings.json"))
+		if err != nil {
+			return ""
+		}
+	}
+	// Extract the first clerk command path from hooks
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.Contains(line, "command") || !strings.Contains(line, "clerk") {
+			continue
+		}
+		// format: "command": "path/to/clerk feed"
+		parts := strings.SplitN(line, "\"", 5)
+		if len(parts) >= 4 {
+			cmd := parts[3]
+			// extract binary path (first token before subcommand)
+			fields := strings.Fields(cmd)
+			if len(fields) > 0 {
+				return fields[0]
+			}
+		}
+	}
+	return ""
+}
+
 func checkHookPath() string {
 	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".claude", "settings.json"))
 	if err != nil {
@@ -182,6 +227,12 @@ func checkHookPath() string {
 	// Check for cmd.exe wrapper (outdated v3.4.0 format, breaks stdin)
 	if strings.Contains(content, "cmd.exe") && strings.Contains(content, "clerk") {
 		return "hook uses cmd.exe wrapper (outdated, breaks feed)"
+	}
+
+	// Check for resolved symlink paths (e.g. /opt/homebrew/Cellar/clerk/3.6.1/bin/clerk)
+	// These break on brew upgrade because the version number changes
+	if strings.Contains(content, "/Cellar/") && strings.Contains(content, "clerk") {
+		return "hook path contains versioned Cellar path (breaks on brew upgrade)"
 	}
 
 	// Check for backslashes in clerk paths (Windows issue)

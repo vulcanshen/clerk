@@ -144,13 +144,13 @@ clerk report --days 7 > weekly-report.md
 
 기본값은 `--days 1` (당일만) — 데일리 스탠드업 요약에 적합합니다.
 
-아직 종료되지 않은 세션도 포함하려면 `--realtime`을 추가하세요:
+아직 종료되지 않은 세션도 포함하려면 `--active`를 추가하세요:
 
 ```bash
-clerk report --days 7 --realtime
+clerk report --days 7 --active
 ```
 
-> **주의:** `--realtime`은 활성 세션의 트랜스크립트를 즉시 처리하므로 추가 Claude API 호출이 발생합니다. 이 플래그 없이는 완료된 세션만 포함됩니다.
+> **주의:** `--active`는 활성 세션의 트랜스크립트를 즉시 처리하므로 추가 Claude API 호출이 발생합니다. 이 플래그 없이는 완료된 세션만 포함됩니다.
 
 출력 예시:
 

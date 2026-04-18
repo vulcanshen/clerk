@@ -61,6 +61,11 @@ func ReadTags(tags string, cfg config.Config) (string, error) {
 
 	var sb strings.Builder
 	for _, tag := range parsed {
+		// Sanitize: reject tags with path traversal
+		if strings.Contains(tag, "..") || strings.Contains(tag, "/") || strings.Contains(tag, "\\") {
+			fmt.Fprintf(&sb, "## Tag: %s\n\n(invalid tag name)\n\n", tag)
+			continue
+		}
 		data, err := os.ReadFile(filepath.Join(dir, tag+".md"))
 		if err != nil {
 			fmt.Fprintf(&sb, "## Tag: %s\n\n(not found)\n\n", tag)

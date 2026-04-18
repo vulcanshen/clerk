@@ -16,7 +16,7 @@ import (
 )
 
 var reportDays int
-var reportRealtime bool
+var reportActive bool
 
 var reportCmd = &cobra.Command{
 	Use:   "report",
@@ -35,7 +35,7 @@ var reportCmd = &cobra.Command{
 			return fmt.Errorf("loading config: %w", err)
 		}
 
-		if reportRealtime {
+		if reportActive {
 			fmt.Fprintln(os.Stderr, "Flushing active sessions (this will use additional Claude API calls)...")
 			flushActiveSessions(cfg)
 		}
@@ -204,6 +204,6 @@ func flushActiveSessions(cfg config.Config) {
 
 func init() {
 	reportCmd.Flags().IntVar(&reportDays, "days", 1, "Number of days to include (default: today only)")
-	reportCmd.Flags().BoolVar(&reportRealtime, "realtime", false, "Include active sessions in real time (uses extra Claude API calls)")
+	reportCmd.Flags().BoolVar(&reportActive, "active", false, "Include active sessions (uses extra Claude API calls)")
 	rootCmd.AddCommand(reportCmd)
 }
