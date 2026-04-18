@@ -4,6 +4,54 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v4.0.0] - 2026-04-18
+
+### Breaking Changes
+- `tags/` directory replaced by unified `index/` directory
+- MCP tools renamed: `clerk-tags-list` → `clerk-index-list`, `clerk-tags-read` → `clerk-index-read`
+- Commands restructured: `retry`/`kill` → `status retry`/`status kill`, `moveto`/`purge` → `data moveto`/`data purge`
+- `update` command renamed to `version`
+- `migrate` command removed (merged into `diagnosis`)
+- `--realtime` flag renamed to `--active`
+
+### Unified Inverted Index
+- All terms (tags, dates, slugs, keywords) indexed in `index/` directory
+- Overlapping terms merge into single graph nodes in Obsidian
+- Summary frontmatter includes all terms for Obsidian tag pane and graph view
+- Index files use markdown links: `[slug+YYYYMMDD](../summary/YYYYMMDD/slug.md)`
+- Migration from `tags/` rebuilds index from existing summaries
+
+### New Features
+- `clerk diagnosis claude` — test Claude API compatibility
+- `clerk report -o <file>` — save report to file with progress indicator
+- `summary.timeout` config (default 5m) — timeout for `claude -p` calls
+- `clerk install` checks for Claude Code before proceeding
+- `clerk uninstall` asks whether to remove data
+
+### Security & Stability
+- Path traversal protection on index terms
+- Diagnosis verifies hook binary exists
+- saveTags file locking read-through-lock fix
+- saveTags truncate error handling
+- CwdToSlug case-insensitive prefix match for Windows
+- Session entries use tab separator (handles paths with spaces)
+- Remove all filepath.EvalSymlinks (fixes brew upgrade path breakage)
+- Diagnosis detects and auto-fixes Cellar versioned paths
+- JSON-based settings.json parsing in diagnosis (replaces string splitting)
+- HookInput struct deduplicated (punch uses feed.HookInput)
+- cleanOldLogs runs once per process instead of every log write
+- Path concatenation standardized to filepath.Join
+
+### Documentation
+- Mermaid flow diagram showing session lifecycle
+- Obsidian integration section with summary/index format details
+- Troubleshooting simplified: diagnosis first, then diagnosis error --mask
+- summary.timeout documented in all READMEs
+
+### Testing & CI
+- Unit tests for CwdToSlug, ParseSummaryAndTags, FilterConversation, BuildPrompt, BuildTerms, ExpandPath, applyKeyValue, parseList
+- CI runs tests on Ubuntu, Windows, and macOS
+
 ## [v3.6.2] - 2026-04-18
 
 ### Diagnosis
