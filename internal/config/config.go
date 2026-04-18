@@ -242,6 +242,73 @@ func Save(cfg Config) error {
 	return saveToPath(GlobalConfigPath(), cfg)
 }
 
+// ConfigSource describes where a config value comes from.
+type ConfigSource struct {
+	Key    string
+	Value  string
+	Source string // "default", "global", or "project"
+}
+
+// LoadSources returns each config key's final value and which layer set it.
+func LoadSources() []ConfigSource {
+	def := DefaultConfig()
+	global := DefaultConfig()
+	_ = loadFile(GlobalConfigPath(), &global)
+
+	cwd, _ := os.Getwd()
+	project := global
+	hasProject := false
+	if cwd != "" {
+		projectPath := ProjectConfigPath(cwd)
+		if _, err := os.Stat(projectPath); err == nil {
+			hasProject = true
+			_ = loadFile(projectPath, &project)
+		}
+	}
+
+	type entry struct {
+		key      string
+		defVal   string
+		globalVal string
+		projVal  string
+	}
+
+	feedStr := func(b *bool) string {
+		if b == nil {
+			return "true"
+		}
+		if *b {
+			return "true"
+		}
+		return "false"
+	}
+
+	entries := []entry{
+		{"output.dir", def.Output.Dir, global.Output.Dir, project.Output.Dir},
+		{"output.language", def.Output.Language, global.Output.Language, project.Output.Language},
+		{"summary.model", def.Summary.Model, global.Summary.Model, project.Summary.Model},
+		{"summary.timeout", def.Summary.Timeout, global.Summary.Timeout, project.Summary.Timeout},
+		{"log.retention_days", fmt.Sprintf("%d", def.Log.RetentionDays), fmt.Sprintf("%d", global.Log.RetentionDays), fmt.Sprintf("%d", project.Log.RetentionDays)},
+		{"feed.enabled", feedStr(def.Feed.Enabled), feedStr(global.Feed.Enabled), feedStr(project.Feed.Enabled)},
+	}
+
+	var sources []ConfigSource
+	for _, e := range entries {
+		src := "default"
+		val := e.defVal
+		if e.globalVal != e.defVal {
+			src = "global"
+			val = e.globalVal
+		}
+		if hasProject && e.projVal != e.globalVal {
+			src = "project"
+			val = e.projVal
+		}
+		sources = append(sources, ConfigSource{Key: e.key, Value: val, Source: src})
+	}
+	return sources
+}
+
 func ExpandPath(path string) string {
 	if strings.HasPrefix(path, "~/") {
 		home, _ := os.UserHomeDir()

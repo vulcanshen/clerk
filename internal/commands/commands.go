@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 )
 
-func skillsDir() string {
+// SkillsDir returns the path to the Claude skills directory.
+func SkillsDir() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".claude", "skills")
 }
@@ -57,7 +58,7 @@ If the tools are available:
 
 // IsInstalled checks if clerk skills are currently installed.
 func IsInstalled() bool {
-	dir := filepath.Join(skillsDir(), clerkSkills[0].name)
+	dir := filepath.Join(SkillsDir(), clerkSkills[0].name)
 	_, err := os.Stat(dir)
 	return err == nil
 }
@@ -68,7 +69,7 @@ func ForceInstall() error {
 
 func Install() error {
 	for _, s := range clerkSkills {
-		dir := filepath.Join(skillsDir(), s.name)
+		dir := filepath.Join(SkillsDir(), s.name)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("creating skill directory %s: %w", s.name, err)
 		}
@@ -86,7 +87,7 @@ func Uninstall() error {
 	removed := 0
 
 	for _, s := range clerkSkills {
-		dir := filepath.Join(skillsDir(), s.name)
+		dir := filepath.Join(SkillsDir(), s.name)
 		if err := os.RemoveAll(dir); err == nil {
 			removed++
 		}

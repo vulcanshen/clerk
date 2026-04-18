@@ -55,7 +55,7 @@ var diagnosisCmd = &cobra.Command{
 					}
 					issues++
 				} else {
-					fmt.Printf("Hook:        FIXED\n")
+					fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
 					fixed++
 				}
 			} else {
@@ -68,11 +68,11 @@ var diagnosisCmd = &cobra.Command{
 							fmt.Printf("Hook:        FAILED — %v\n", err)
 							issues++
 						} else {
-							fmt.Printf("Hook:        FIXED\n")
+							fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
 							fixed++
 						}
 					} else {
-						fmt.Printf("Hook:        OK\n")
+						fmt.Printf("Hook:        OK (%s)\n", binPath)
 					}
 				} else {
 					fmt.Printf("Hook:        OK\n")
@@ -85,30 +85,44 @@ var diagnosisCmd = &cobra.Command{
 
 		// MCP
 		if mcpinstall.IsInstalled() {
-			fmt.Printf("MCP:         OK\n")
+			fmt.Printf("MCP:         OK (%s mcp)\n", exe)
 		} else {
-			fmt.Printf("MCP:         NOT INSTALLED — run 'clerk install'\n")
-			issues++
+			fmt.Printf("MCP:         FIXING — not registered\n")
+			if err := mcpinstall.ForceInstall(); err != nil {
+				fmt.Printf("MCP:         FAILED — %v\n", err)
+				if cfgErr == nil {
+					logger.Errorf(cfg, "diagnosis: mcp fix failed: %v", err)
+				}
+				issues++
+			} else {
+				fmt.Printf("MCP:         FIXED → %s mcp\n", exe)
+				fixed++
+			}
 		}
 
 		// Skills
+		skillsDir := commands.SkillsDir()
 		if commands.IsInstalled() {
-			fmt.Printf("Skills:      OK\n")
+			fmt.Printf("Skills:      OK (%s)\n", skillsDir)
 		} else {
-			fmt.Printf("Skills:      NOT INSTALLED — run 'clerk install'\n")
-			issues++
+			fmt.Printf("Skills:      FIXING — not installed\n")
+			if err := commands.Install(); err != nil {
+				fmt.Printf("Skills:      FAILED — %v\n", err)
+				if cfgErr == nil {
+					logger.Errorf(cfg, "diagnosis: skills fix failed: %v", err)
+				}
+				issues++
+			} else {
+				fmt.Printf("Skills:      FIXED → %s\n", skillsDir)
+				fixed++
+			}
 		}
 
-		// Config
+		// Output dir
 		if cfgErr != nil {
 			fmt.Printf("Config:      ERROR — %v\n", cfgErr)
 			issues++
 		} else {
-			fmt.Printf("Config:      OK\n")
-		}
-
-		// Output dir
-		if cfgErr == nil {
 			outDir := config.ExpandPath(cfg.Output.Dir)
 			if info, err := os.Stat(outDir); err != nil {
 				fmt.Printf("Output dir:  NOT FOUND — %s (will be created on first feed)\n", outDir)
@@ -148,6 +162,24 @@ var diagnosisCmd = &cobra.Command{
 
 				if !checkMigration(outDir) {
 					fmt.Printf("Migration:   OK\n")
+				}
+			}
+
+			// Config details
+			fmt.Println()
+			fmt.Printf("Config files:\n")
+			fmt.Printf("  global:    %s\n", config.GlobalConfigPath())
+			projectCfg := config.ProjectConfigPath("")
+			if _, err := os.Stat(projectCfg); err == nil {
+				fmt.Printf("  project:   %s\n", projectCfg)
+			}
+			fmt.Println()
+			fmt.Printf("Config values:\n")
+			for _, s := range config.LoadSources() {
+				if s.Value == "" {
+					fmt.Printf("  %-20s (not set)\n", s.Key)
+				} else {
+					fmt.Printf("  %-20s %s  ← %s\n", s.Key, s.Value, s.Source)
 				}
 			}
 		}
