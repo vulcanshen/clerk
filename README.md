@@ -69,59 +69,84 @@ clerk report --days 7
 
 ## How It Works
 
-### What gets installed
+```mermaid
+flowchart LR
+    subgraph Claude Code
+        A[Session Start] -->|hook| B[clerk punch]
+        C[Session End] -->|hook| D[clerk feed]
+    end
 
-| Component | What it does |
-|-----------|-------------|
-| **hook** | SessionStart records session ID, SessionEnd triggers summary generation |
-| **mcp** | MCP stdio server providing `clerk-resume` and `clerk-search` tools |
-| **skills** | `/clerk-resume` and `/clerk-search` slash commands for Claude Code |
+    B --> E[sessions/]
+    D --> F[summary/]
+    D --> G[index/]
 
-### Summary flow
+    subgraph User Commands
+        H["/clerk-resume"] -->|MCP| F
+        I["/clerk-search"] -->|MCP| G
+        J["clerk report"] --> F
+    end
 
-1. Session ends → hook triggers `clerk feed`
-2. Feed forks to background (hook returns immediately)
-3. Reads only new messages since last run (cursor tracking)
-4. Loads existing daily summary, calls `claude -p` to merge
-5. Saves updated summary + extracts tags for search indexing
+    subgraph Obsidian Vault
+        F --- G
+    end
+```
 
-### Resume flow
+### Lifecycle
 
-1. You type `/clerk-resume` in Claude Code
-2. Claude calls the `clerk-resume` MCP tool with your project's working directory
-3. clerk returns file paths: daily summaries + full transcript files
-4. Claude reads the summaries first for a quick overview
-5. If more detail is needed, Claude reads the transcript files
-6. Claude summarizes what was previously done and confirms context is restored
+| Event | What happens |
+|-------|-------------|
+| **Session starts** | `clerk punch` records session ID + transcript path |
+| **Session ends** | `clerk feed` generates summary, builds index entries |
+| **You need context** | `/clerk-resume` reads past summaries and transcripts |
+| **You search** | `/clerk-search` uses semantic matching on index terms |
+| **You need a report** | `clerk report --days 7` generates a structured report |
 
-### Search flow
-
-1. You type `/clerk-search` in Claude Code
-2. Claude asks what keyword you're looking for (or you provide it as an argument)
-3. Claude calls `clerk-index-list` to get all available index terms (tags, dates, projects, keywords)
-4. Claude uses semantic reasoning to identify relevant terms (e.g. "database" → picks `postgres`, `sql`, `migration`)
-5. Claude calls `clerk-index-read` with the relevant terms to get summary links
-6. Claude reads the files and presents the relevant context
+### Data structure
 
 ```
 ~/.clerk/
-├── summary/
-│   └── 20260416/
-│       ├── projects-my-app.md
-│       └── work-frontend.md
-├── sessions/
-│   ├── projects-my-app.md
-│   └── work-frontend.md
-├── index/
-│   ├── mcp.md
-│   ├── refactor.md
-│   ├── 20260416.md
-│   └── projects-my-app.md
-├── log/
-│   └── 20260416-clerk.log
-├── running/
-└── cursor/
+├── summary/YYYYMMDD/slug.md    ← daily summaries per project
+├── index/term.md               ← inverted index (tags, dates, projects, keywords)
+├── sessions/slug.md            ← session ID history
+├── cursor/                     ← incremental processing state
+├── running/                    ← active feed process state
+└── log/                        ← daily logs
 ```
+
+## Obsidian Integration
+
+Open `~/.clerk/` as an Obsidian vault. The graph view shows connections across multiple dimensions — tags, dates, projects, and keywords all appear as nodes linked to your summaries.
+
+### Summary format
+
+Each summary file has YAML frontmatter with all related terms:
+
+```yaml
+---
+tags:
+  - go
+  - auth
+  - jwt
+  - 20260418
+  - my-api-server
+  - my
+  - api
+  - server
+---
+```
+
+Obsidian uses these tags for the tag pane and graph view filters.
+
+### Index format
+
+Each index file contains markdown links to matching summaries:
+
+```markdown
+- [my-api-server+20260418](../summary/20260418/my-api-server.md)
+- [my-api-server+20260419](../summary/20260419/my-api-server.md)
+```
+
+Terms naturally overlap — if "api" is both a word from the slug and an AI-extracted tag, they merge into one graph node, showing connections across projects and topics.
 
 ## Report
 

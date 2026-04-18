@@ -88,24 +88,16 @@ func migrateSummaryDirs(root string) (int, error) {
 	return moved, nil
 }
 
-// migrateTagsToIndex renames tags/ to index/.
+// migrateTagsToIndex removes old tags/ directory. Index will be rebuilt by next feed run.
 func migrateTagsToIndex(root string) (int, error) {
 	src := filepath.Join(root, "tags")
-	dest := filepath.Join(root, "index")
 
 	if _, err := os.Stat(src); os.IsNotExist(err) {
 		return 0, nil
 	}
-	if _, err := os.Stat(dest); err == nil {
-		// index already exists, just remove old tags
-		os.RemoveAll(src)
-		return 1, nil
-	}
 
-	if err := os.Rename(src, dest); err != nil {
-		return 0, fmt.Errorf("renaming tags to index: %w", err)
-	}
-	fmt.Println("Migrated tags/ to index/")
+	os.RemoveAll(src)
+	fmt.Println("Removed old tags/ directory (index will be rebuilt on next feed)")
 	return 1, nil
 }
 
