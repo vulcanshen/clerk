@@ -20,7 +20,7 @@ var updateCmd = &cobra.Command{
 
 		latest, err := fetchLatestVersion()
 		if err != nil || latest == "" {
-			fmt.Printf("Latest version:  (unable to check — try again later)\n\n")
+			fmt.Printf("Latest version:  (unable to check — offline or rate limited)\n\n")
 		} else {
 			fmt.Printf("Latest version:  %s\n\n", latest)
 

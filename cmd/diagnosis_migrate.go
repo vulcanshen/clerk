@@ -99,7 +99,9 @@ func migrateTagsToIndex(root string) (int, error) {
 	hasTags := false
 	if _, err := os.Stat(tagsDir); err == nil {
 		hasTags = true
-		os.RemoveAll(tagsDir)
+		if err := os.RemoveAll(tagsDir); err != nil {
+			return 0, fmt.Errorf("removing old tags/: %w", err)
+		}
 	}
 
 	indexDir := filepath.Join(root, "index")
@@ -245,7 +247,11 @@ func updateSummaryFrontmatter(path string, terms []string) {
 	if strings.HasPrefix(content, "---\n") {
 		end := strings.Index(content[4:], "\n---\n")
 		if end != -1 {
-			body = content[end+4+4+1:] // skip past closing ---\n
+			// end is offset within content[4:], so:
+		// +4 = skip initial "---\n"
+		// +4 = length of "\n---"
+		// +1 = trailing "\n"
+		body = content[end+4+4+1:]
 		}
 	}
 
@@ -260,7 +266,9 @@ func updateSummaryFrontmatter(path string, terms []string) {
 	}
 	sb.WriteString(strings.TrimLeft(body, "\n"))
 
-	os.WriteFile(path, []byte(sb.String()), 0644)
+	if err := os.WriteFile(path, []byte(sb.String()), 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to update frontmatter for %s: %v\n", path, err)
+	}
 }
 
 // slugToCwdFallback creates a fake cwd from slug for BuildTerms.

@@ -304,7 +304,8 @@ go install github.com/vulcanshen/clerk@latest
     "language": "en"
   },
   "summary": {
-    "model": ""
+    "model": "",
+    "timeout": "5m"
   },
   "log": {
     "retention_days": 30
@@ -320,6 +321,7 @@ go install github.com/vulcanshen/clerk@latest
 | `output.dir` | `~/.clerk/` | 要約の保存ルートディレクトリ |
 | `output.language` | `en` | 要約の出力言語 |
 | `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
+| `summary.timeout` | `5m` | `claude -p` のタイムアウト（例: 5m、2m30s、1h） |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
 | `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
 

@@ -2,6 +2,7 @@ package feed
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -158,7 +159,7 @@ func TestFilterConversation(t *testing.T) {
 				return
 			}
 			for _, s := range tt.contains {
-				if !containsStr(result, s) {
+				if !strings.Contains(result, s) {
 					t.Errorf("result missing %q:\n%s", s, result)
 				}
 			}
@@ -168,16 +169,16 @@ func TestFilterConversation(t *testing.T) {
 
 func TestBuildPrompt(t *testing.T) {
 	prompt := BuildPrompt("conv", "prior", "en")
-	if !containsStr(prompt, "en") {
+	if !strings.Contains(prompt, "en") {
 		t.Error("prompt should contain language")
 	}
-	if !containsStr(prompt, "conv") {
+	if !strings.Contains(prompt, "conv") {
 		t.Error("prompt should contain conversation")
 	}
-	if !containsStr(prompt, "prior") {
+	if !strings.Contains(prompt, "prior") {
 		t.Error("prompt should contain prior summary")
 	}
-	if !containsStr(prompt, "CLERK:TAGS") {
+	if !strings.Contains(prompt, "CLERK:TAGS") {
 		t.Error("prompt should contain CLERK:TAGS instruction")
 	}
 }
@@ -212,15 +213,3 @@ func TestBuildTerms(t *testing.T) {
 	}
 }
 
-func containsStr(s, substr string) bool {
-	return len(s) >= len(substr) && searchStr(s, substr)
-}
-
-func searchStr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}

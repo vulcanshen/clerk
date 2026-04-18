@@ -95,5 +95,5 @@ func collectLogLines(cfg config.Config, days int, errorOnly bool) ([]string, err
 func init() {
 	diagnosisErrorCmd.Flags().IntVar(&diagnosisDays, "days", 1, "Number of days to include (default: today only)")
 	diagnosisErrorCmd.Flags().BoolVar(&diagnosisErrorMask, "mask", false, "Redact personal information using Claude (uses API calls)")
-	doctorCmd.AddCommand(diagnosisErrorCmd)
+	diagnosisCmd.AddCommand(diagnosisErrorCmd)
 }

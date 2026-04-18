@@ -65,16 +65,24 @@ func readSessionEntries(cfg config.Config, slug string) ([]SessionEntry, error) 
 			SessionID: rest[:end],
 		}
 		// extract cwd and transcript path after closing backtick
-		// format: "cwd transcript_path" or just "transcript_path" (old format with only path)
+		// new format uses tab separator (handles paths with spaces)
+		// old format uses space separator (fallback)
 		after := strings.TrimSpace(rest[end+1:])
 		if after != "" {
-			parts := strings.SplitN(after, " ", 2)
-			if len(parts) == 2 {
-				entry.Cwd = parts[0]
-				entry.TranscriptPath = parts[1]
+			if strings.Contains(after, "\t") {
+				parts := strings.SplitN(after, "\t", 2)
+				if len(parts) == 2 {
+					entry.Cwd = parts[0]
+					entry.TranscriptPath = parts[1]
+				}
 			} else {
-				// old format compatibility: single path could be transcript
-				entry.TranscriptPath = parts[0]
+				parts := strings.SplitN(after, " ", 2)
+				if len(parts) == 2 {
+					entry.Cwd = parts[0]
+					entry.TranscriptPath = parts[1]
+				} else {
+					entry.TranscriptPath = parts[0]
+				}
 			}
 		}
 		entries = append(entries, entry)

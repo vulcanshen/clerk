@@ -17,6 +17,7 @@ import (
 
 var reportDays int
 var reportActive bool
+var reportOutput string
 
 var reportCmd = &cobra.Command{
 	Use:   "report",
@@ -113,12 +114,21 @@ var reportCmd = &cobra.Command{
 
 		prompt := buildReportPrompt(sb.String(), startDate, endDate, cfg.Output.Language)
 
-		output, err := feed.CallClaude(prompt, cfg.Summary.Model)
+		fmt.Fprintf(os.Stderr, "Generating report (%d summaries, %s ~ %s)...\n", len(all), formatDate(startDate), formatDate(endDate))
+
+		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 		if err != nil {
 			return fmt.Errorf("claude -p failed: %w", err)
 		}
 
-		fmt.Println(output)
+		if reportOutput != "" {
+			if err := os.WriteFile(reportOutput, []byte(output+"\n"), 0644); err != nil {
+				return fmt.Errorf("writing report file: %w", err)
+			}
+			fmt.Fprintf(os.Stderr, "Report saved to %s\n", reportOutput)
+		} else {
+			fmt.Println(output)
+		}
 		return nil
 	},
 }
@@ -205,5 +215,6 @@ func flushActiveSessions(cfg config.Config) {
 func init() {
 	reportCmd.Flags().IntVar(&reportDays, "days", 1, "Number of days to include (default: today only)")
 	reportCmd.Flags().BoolVar(&reportActive, "active", false, "Include active sessions (uses extra Claude API calls)")
+	reportCmd.Flags().StringVarP(&reportOutput, "output", "o", "", "Save report to file instead of stdout")
 	rootCmd.AddCommand(reportCmd)
 }

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,13 +11,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/commands"
 	"github.com/vulcanshen/clerk/internal/config"
-	"github.com/vulcanshen/clerk/internal/feed"
 	"github.com/vulcanshen/clerk/internal/hook"
 	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 )
 
-var doctorCmd = &cobra.Command{
+var diagnosisCmd = &cobra.Command{
 	Use:   "diagnosis",
 	Short: "Check environment and auto-fix issues",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,8 +24,12 @@ var doctorCmd = &cobra.Command{
 		fixed := 0
 
 		// Executable
-		exe, _ := os.Executable()
-		fmt.Printf("Executable:  %s\n", exe)
+		exe, err := os.Executable()
+		if err != nil || exe == "" {
+			fmt.Printf("Executable:  (unable to detect)\n")
+		} else {
+			fmt.Printf("Executable:  %s\n", exe)
+		}
 		fmt.Printf("Version:     %s\n", Version)
 
 		// Claude CLI
@@ -36,37 +39,6 @@ var doctorCmd = &cobra.Command{
 			issues++
 		} else {
 			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
-
-			// Test feed pipeline
-			fmt.Print("Feed test:   Run API test? This uses a small amount of tokens. (Y/n): ")
-			reader := bufio.NewReader(os.Stdin)
-			answer, _ := reader.ReadString('\n')
-			answer = strings.TrimSpace(strings.ToLower(answer))
-			if answer == "" || answer == "y" || answer == "yes" {
-				testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
-				testPrompt := feed.BuildPrompt(testConv, "", "en")
-				testOut, err := feed.CallClaude(testPrompt, "")
-				if err != nil {
-					fmt.Printf("Feed test:   FAILED — claude -p error: %v\n", err)
-					issues++
-				} else {
-					summary, tags := feed.ParseSummaryAndTags(testOut)
-					if strings.TrimSpace(summary) == "" {
-						fmt.Printf("Feed test:   FAILED — empty summary\n")
-						fmt.Printf("             Claude API response format may have changed.\n")
-						fmt.Printf("             Run 'clerk version' to check for updates.\n")
-						fmt.Printf("             If already latest, please report at https://github.com/vulcanshen/clerk/issues\n")
-						issues++
-					} else if len(tags) == 0 {
-						fmt.Printf("Feed test:   WARNING — summary OK but no tags extracted\n")
-						fmt.Printf("             Tag format may have changed. Run 'clerk version' to check for updates.\n")
-					} else {
-						fmt.Printf("Feed test:   OK (summary + %d tags)\n", len(tags))
-					}
-				}
-			} else {
-				fmt.Printf("Feed test:   SKIPPED\n")
-			}
 		}
 
 		cfg, cfgErr := config.Load()
@@ -193,26 +165,61 @@ var doctorCmd = &cobra.Command{
 	},
 }
 
-func extractHookBinary() string {
-	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".claude", "settings.json"))
-	if err != nil {
-		home, _ := os.UserHomeDir()
-		data, err = os.ReadFile(filepath.Join(home, ".claude", "settings.json"))
-		if err != nil {
-			return ""
-		}
+func readSettingsJSON() (map[string]interface{}, error) {
+	home, _ := os.UserHomeDir()
+	paths := []string{
+		filepath.Join(home, ".claude", "settings.json"),
 	}
-	// Extract the first clerk command path from hooks
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if !strings.Contains(line, "command") || !strings.Contains(line, "clerk") {
+	for _, p := range paths {
+		data, err := os.ReadFile(p)
+		if err != nil {
 			continue
 		}
-		// format: "command": "path/to/clerk feed"
-		parts := strings.SplitN(line, "\"", 5)
-		if len(parts) >= 4 {
-			cmd := parts[3]
-			// extract binary path (first token before subcommand)
+		var settings map[string]interface{}
+		if err := json.Unmarshal(data, &settings); err != nil {
+			continue
+		}
+		return settings, nil
+	}
+	return nil, fmt.Errorf("settings.json not found")
+}
+
+func extractHookCommands(settings map[string]interface{}) []string {
+	hooks, _ := settings["hooks"].(map[string]interface{})
+	if hooks == nil {
+		return nil
+	}
+	var cmds []string
+	for _, event := range []string{"SessionStart", "SessionEnd"} {
+		entries, _ := hooks[event].([]interface{})
+		for _, entry := range entries {
+			entryMap, _ := entry.(map[string]interface{})
+			if entryMap == nil {
+				continue
+			}
+			hooksList, _ := entryMap["hooks"].([]interface{})
+			for _, h := range hooksList {
+				hMap, _ := h.(map[string]interface{})
+				if hMap == nil {
+					continue
+				}
+				cmd, _ := hMap["command"].(string)
+				if cmd != "" {
+					cmds = append(cmds, cmd)
+				}
+			}
+		}
+	}
+	return cmds
+}
+
+func extractHookBinary() string {
+	settings, err := readSettingsJSON()
+	if err != nil {
+		return ""
+	}
+	for _, cmd := range extractHookCommands(settings) {
+		if strings.Contains(cmd, "clerk") {
 			fields := strings.Fields(cmd)
 			if len(fields) > 0 {
 				return fields[0]
@@ -223,38 +230,24 @@ func extractHookBinary() string {
 }
 
 func checkHookPath() string {
-	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".claude", "settings.json"))
+	settings, err := readSettingsJSON()
 	if err != nil {
-		home, _ := os.UserHomeDir()
-		data, err = os.ReadFile(filepath.Join(home, ".claude", "settings.json"))
-		if err != nil {
-			return ""
+		return ""
+	}
+	for _, cmd := range extractHookCommands(settings) {
+		if !strings.Contains(cmd, "clerk") {
+			continue
+		}
+		if strings.Contains(cmd, "cmd.exe") {
+			return "hook uses cmd.exe wrapper (outdated, breaks feed)"
+		}
+		if strings.Contains(cmd, "/Cellar/") {
+			return "hook path contains versioned Cellar path (breaks on brew upgrade)"
+		}
+		if strings.Contains(cmd, "\\") {
+			return "hook path contains backslashes"
 		}
 	}
-	content := string(data)
-
-	// Check for cmd.exe wrapper (outdated v3.4.0 format, breaks stdin)
-	if strings.Contains(content, "cmd.exe") && strings.Contains(content, "clerk") {
-		return "hook uses cmd.exe wrapper (outdated, breaks feed)"
-	}
-
-	// Check for resolved symlink paths (e.g. /opt/homebrew/Cellar/clerk/3.6.1/bin/clerk)
-	// These break on brew upgrade because the version number changes
-	if strings.Contains(content, "/Cellar/") && strings.Contains(content, "clerk") {
-		return "hook path contains versioned Cellar path (breaks on brew upgrade)"
-	}
-
-	// Check for backslashes in clerk paths (Windows issue)
-	for _, line := range strings.Split(content, "\n") {
-		if strings.Contains(line, "clerk") && strings.Contains(line, "\\") {
-			// Ignore JSON escape sequences like \"
-			unescaped := strings.ReplaceAll(line, "\\\"", "")
-			if strings.Contains(unescaped, "\\") {
-				return "hook path contains backslashes"
-			}
-		}
-	}
-
 	return ""
 }
 
@@ -278,5 +271,5 @@ func checkMigration(outDir string) bool {
 }
 
 func init() {
-	rootCmd.AddCommand(doctorCmd)
+	rootCmd.AddCommand(diagnosisCmd)
 }

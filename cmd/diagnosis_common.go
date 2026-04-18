@@ -22,7 +22,7 @@ Output the redacted log lines only, no explanation.
 
 %s`, raw)
 
-	output, err := feed.CallClaude(prompt, cfg.Summary.Model)
+	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Warning: --mask failed, showing raw output")
 		return raw

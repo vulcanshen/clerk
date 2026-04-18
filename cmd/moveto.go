@@ -108,5 +108,3 @@ func copyDir(src, dest string) error {
 	})
 }
 
-func init() {
-}

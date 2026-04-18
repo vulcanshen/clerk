@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type OutputConfig struct {
@@ -14,7 +15,8 @@ type OutputConfig struct {
 }
 
 type SummaryConfig struct {
-	Model string `json:"model"`
+	Model   string `json:"model"`
+	Timeout string `json:"timeout"`
 }
 
 type LogConfig struct {
@@ -43,7 +45,8 @@ func DefaultConfig() Config {
 			Language: "en",
 		},
 		Summary: SummaryConfig{
-			Model: "",
+			Model:   "",
+			Timeout: "5m",
 		},
 		Log: LogConfig{
 			RetentionDays: 30,
@@ -121,6 +124,7 @@ func ValidKeys() []string {
 		"output.dir",
 		"output.language",
 		"summary.model",
+		"summary.timeout",
 		"log.retention_days",
 		"feed.enabled",
 	}
@@ -134,6 +138,11 @@ func applyKeyValue(cfg *Config, key, value string) error {
 		cfg.Output.Language = value
 	case "summary.model":
 		cfg.Summary.Model = value
+	case "summary.timeout":
+		if _, err := time.ParseDuration(value); err != nil {
+			return fmt.Errorf("invalid value for summary.timeout: %s (use format like 5m, 2m30s, 1h)", value)
+		}
+		cfg.Summary.Timeout = value
 	case "log.retention_days":
 		var days int
 		if _, err := fmt.Sscanf(value, "%d", &days); err != nil {

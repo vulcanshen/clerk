@@ -44,5 +44,5 @@ var diagnosisLogCmd = &cobra.Command{
 func init() {
 	diagnosisLogCmd.Flags().IntVar(&logDays, "days", 1, "Number of days to include (default: today only)")
 	diagnosisLogCmd.Flags().BoolVar(&diagnosisLogMask, "mask", false, "Redact personal information using Claude (uses API calls)")
-	doctorCmd.AddCommand(diagnosisLogCmd)
+	diagnosisCmd.AddCommand(diagnosisLogCmd)
 }

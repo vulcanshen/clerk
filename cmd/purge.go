@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -39,7 +40,7 @@ var purgeCmd = &cobra.Command{
 
 		removed := 0
 		for _, d := range dirs {
-			path := root + "/" + d
+			path := filepath.Join(root, d)
 			if err := os.RemoveAll(path); err == nil {
 				removed++
 			}

@@ -108,7 +108,7 @@ func TestValidKeys(t *testing.T) {
 		t.Error("ValidKeys should not be empty")
 	}
 
-	expected := []string{"output.dir", "output.language", "summary.model", "log.retention_days", "feed.enabled"}
+	expected := []string{"output.dir", "output.language", "summary.model", "summary.timeout", "log.retention_days", "feed.enabled"}
 	for _, e := range expected {
 		found := false
 		for _, k := range keys {

@@ -303,7 +303,8 @@ go install github.com/vulcanshen/clerk@latest
     "language": "en"
   },
   "summary": {
-    "model": ""
+    "model": "",
+    "timeout": "5m"
   },
   "log": {
     "retention_days": 30
@@ -319,6 +320,7 @@ go install github.com/vulcanshen/clerk@latest
 | `output.dir` | `~/.clerk/` | 摘要存放根目錄 |
 | `output.language` | `en` | 摘要輸出語言 |
 | `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
+| `summary.timeout` | `5m` | `claude -p` 的逾時時間（如 5m、2m30s、1h） |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
 | `feed.enabled` | `true` | 啟用/停用此專案的 feed |
 

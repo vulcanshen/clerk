@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/vulcanshen/clerk/internal/config"
 )
+
+var cleanOnce sync.Once
 
 func logDir(cfg config.Config) string {
 	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "log")
@@ -31,7 +34,7 @@ func write(cfg config.Config, level, msg string) {
 	ts := time.Now().Format("2006-01-02 15:04:05")
 	fmt.Fprintf(f, "[%s] [%s] %s\n", ts, level, msg)
 
-	cleanOldLogs(cfg)
+	cleanOnce.Do(func() { cleanOldLogs(cfg) })
 }
 
 func cleanOldLogs(cfg config.Config) {

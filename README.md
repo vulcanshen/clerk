@@ -304,7 +304,8 @@ Internal commands (called by hooks, not by users):
     "language": "en"
   },
   "summary": {
-    "model": ""
+    "model": "",
+    "timeout": "5m"
   },
   "log": {
     "retention_days": 30
@@ -320,6 +321,7 @@ Internal commands (called by hooks, not by users):
 | `output.dir` | `~/.clerk/` | Root directory for summaries |
 | `output.language` | `en` | Summary output language |
 | `summary.model` | `""` (claude default) | Model to use for `claude -p` |
+| `summary.timeout` | `5m` | Timeout for `claude -p` calls (e.g. 5m, 2m30s, 1h) |
 | `log.retention_days` | `30` | Days to keep log and cursor files |
 | `feed.enabled` | `true` | Enable/disable feed for this project |
 

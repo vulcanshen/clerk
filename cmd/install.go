@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/commands"
@@ -15,6 +16,11 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install clerk components",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if _, err := exec.LookPath("claude"); err != nil {
+			fmt.Println("Warning: 'claude' not found in PATH. clerk requires Claude Code to function.")
+			fmt.Println("Install Claude Code first: https://claude.ai/download")
+			fmt.Println()
+		}
 		fmt.Println("Installing clerk...")
 		if forceInstall {
 			if err := hook.ForceInstall(); err != nil {

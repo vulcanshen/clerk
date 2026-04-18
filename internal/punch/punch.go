@@ -11,18 +11,12 @@ import (
 	"github.com/vulcanshen/clerk/internal/feed"
 )
 
-type HookInput struct {
-	SessionID      string `json:"session_id"`
-	TranscriptPath string `json:"transcript_path"`
-	Cwd            string `json:"cwd"`
-}
-
 func sessionsDir(cfg config.Config) string {
 	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "sessions")
 }
 
 func Run(data []byte, cfg config.Config) error {
-	var input HookInput
+	var input feed.HookInput
 	if err := json.Unmarshal(data, &input); err != nil {
 		return fmt.Errorf("parsing hook input: %w", err)
 	}
@@ -47,6 +41,6 @@ func Run(data []byte, cfg config.Config) error {
 	defer f.Close()
 
 	ts := time.Now().Format("2006-01-02 15:04:05")
-	_, err = fmt.Fprintf(f, "- %s `%s` %s %s\n", ts, input.SessionID, input.Cwd, input.TranscriptPath)
+	_, err = fmt.Fprintf(f, "- %s `%s`\t%s\t%s\n", ts, input.SessionID, input.Cwd, input.TranscriptPath)
 	return err
 }

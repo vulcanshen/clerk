@@ -2,6 +2,7 @@ package feed
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,10 +55,10 @@ func ParseHookInput(data []byte) (HookInput, error) {
 	return input, nil
 }
 
-func ReadTranscript(path string, skipLines int) ([]Message, int, error) {
+func ReadTranscript(path string, skipLines int) ([]Message, int, int, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, 0, fmt.Errorf("opening transcript: %w", err)
+		return nil, 0, 0, fmt.Errorf("opening transcript: %w", err)
 	}
 	defer f.Close()
 
@@ -66,6 +67,7 @@ func ReadTranscript(path string, skipLines int) ([]Message, int, error) {
 	scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024)
 
 	lineNum := 0
+	parseErrors := 0
 	for scanner.Scan() {
 		lineNum++
 		if lineNum <= skipLines {
@@ -73,11 +75,12 @@ func ReadTranscript(path string, skipLines int) ([]Message, int, error) {
 		}
 		var msg Message
 		if err := json.Unmarshal(scanner.Bytes(), &msg); err != nil {
+			parseErrors++
 			continue
 		}
 		messages = append(messages, msg)
 	}
-	return messages, lineNum, scanner.Err()
+	return messages, lineNum, parseErrors, scanner.Err()
 }
 
 func cursorDir(cfg config.Config) string {
@@ -201,7 +204,8 @@ func extractTextBlocks(msg Message) []string {
 func CwdToSlug(cwd string) string {
 	home, _ := os.UserHomeDir()
 	rel := cwd
-	if strings.HasPrefix(cwd, home) {
+	// Case-insensitive prefix match for Windows
+	if len(cwd) >= len(home) && strings.EqualFold(cwd[:len(home)], home) {
 		rel = cwd[len(home):]
 	}
 	rel = strings.ToLower(rel)
@@ -274,18 +278,29 @@ New messages:
 %s`, language, priorSummary, conversation)
 }
 
-func CallClaude(prompt string, model string) (string, error) {
+func CallClaude(prompt string, model string, timeout string) (string, error) {
 	args := []string{"-p"}
 	if model != "" {
 		args = append(args, "--model", model)
 	}
 
-	cmd := exec.Command("claude", args...)
+	dur, err := time.ParseDuration(timeout)
+	if err != nil {
+		dur = 5 * time.Minute
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dur)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "claude", args...)
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Env = append(os.Environ(), "CLERK_INTERNAL=1")
 
 	out, err := cmd.Output()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("claude -p timed out after %s", timeout)
+		}
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return "", fmt.Errorf("claude exited with error: %s", string(exitErr.Stderr))
 		}
@@ -393,6 +408,7 @@ func saveIndex(cfg config.Config, summaryFilePath string, terms []string) error 
 		}
 
 		if err := platform.FlockExclusive(f); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to lock index file %s: %v\n", term, err)
 			f.Close()
 			continue
 		}
@@ -626,10 +642,13 @@ func Run(inputData []byte, cfg config.Config) error {
 	cursor := readCursor(cfg, input.Cwd)
 	logger.Infof(cfg, "cursor at line %d", cursor)
 
-	messages, totalLines, err := ReadTranscript(input.TranscriptPath, cursor)
+	messages, totalLines, parseErrors, err := ReadTranscript(input.TranscriptPath, cursor)
 	if err != nil {
 		logger.Errorf(cfg, "read transcript: %v", err)
 		return err
+	}
+	if parseErrors > 0 {
+		logger.Infof(cfg, "skipped %d unparseable lines in transcript", parseErrors)
 	}
 	logger.Infof(cfg, "read %d new messages (lines %d → %d)", len(messages), cursor, totalLines)
 
@@ -654,7 +673,7 @@ func Run(inputData []byte, cfg config.Config) error {
 
 	logger.Info(cfg, "calling claude -p for summary...")
 	prompt := BuildPrompt(conversation, priorSummary, cfg.Output.Language)
-	output, err := CallClaude(prompt, cfg.Summary.Model)
+	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 	if err != nil {
 		logger.Errorf(cfg, "claude -p failed: %v", err)
 		return err
@@ -691,7 +710,7 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 
 	priorSummary := ReadExistingSummary(cfg, orphan.State.Cwd)
 	prompt := BuildPrompt(orphan.State.Conversation, priorSummary, cfg.Output.Language)
-	output, err := CallClaude(prompt, cfg.Summary.Model)
+	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 	if err != nil {
 		logger.Errorf(cfg, "retry claude -p failed for %s: %v", orphan.State.Slug, err)
 		return err
