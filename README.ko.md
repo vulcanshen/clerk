@@ -98,9 +98,9 @@ clerk report --days 7
 
 1. Claude Code에서 `/clerk-search`를 입력
 2. Claude가 검색할 키워드를 물어봄 (또는 인수로 직접 제공)
-3. Claude가 `clerk-tags-list`를 호출하여 사용 가능한 모든 태그를 가져옴
-4. Claude가 의미론적 추론으로 관련 태그를 식별 (예: "database" → `postgres`, `sql`, `migration` 선택)
-5. Claude가 `clerk-tags-read`를 호출하여 관련 태그의 요약 및 transcript 경로를 가져옴
+3. Claude가 `clerk-index-list`를 호출하여 사용 가능한 모든 인덱스 항목을 가져옴 (태그, 날짜, 프로젝트, 키워드)
+4. Claude가 의미론적 추론으로 관련 항목을 식별 (예: "database" → `postgres`, `sql`, `migration` 선택)
+5. Claude가 `clerk-index-read`를 호출하여 관련 항목의 요약 링크를 가져옴
 6. Claude가 해당 파일을 읽고 관련 컨텍스트를 제시
 
 ```
@@ -112,10 +112,11 @@ clerk report --days 7
 ├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── tags/
+├── index/
 │   ├── mcp.md
 │   ├── refactor.md
-│   └── auth.md
+│   ├── 20260416.md
+│   └── projects-my-app.md
 ├── log/
 │   └── 20260416-clerk.log
 ├── running/
@@ -318,8 +319,8 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`). Claude Code가 스킬
 | 도구 | 설명 |
 |------|------|
 | `clerk-resume` | 컨텍스트 복원을 위한 요약 + 트랜스크립트 파일 경로 반환 |
-| `clerk-tags-list` | 사용 가능한 모든 세션 태그 목록 |
-| `clerk-tags-read` | 하나 이상의 태그 내용 읽기 |
+| `clerk-index-list` | 사용 가능한 모든 인덱스 항목 목록 (태그, 날짜, 프로젝트, 키워드) |
+| `clerk-index-read` | 하나 이상의 인덱스 항목 내용 읽기 |
 
 ## 스킬
 

@@ -165,6 +165,15 @@ var doctorCmd = &cobra.Command{
 					fixed++
 				}
 
+				// Auto-fix: rename tags/ to index/
+				if n, err := migrateTagsToIndex(outDir); err != nil {
+					fmt.Printf("Migration:   FAILED — %v\n", err)
+					logger.Errorf(cfg, "diagnosis: tags to index migration failed: %v", err)
+					issues++
+				} else if n > 0 {
+					fixed++
+				}
+
 				if !checkMigration(outDir) {
 					fmt.Printf("Migration:   OK\n")
 				}
@@ -250,7 +259,7 @@ func checkHookPath() string {
 }
 
 func checkMigration(outDir string) bool {
-	oldDirs := []string{".tags", ".sessions", ".cursor", ".running", ".log"}
+	oldDirs := []string{".tags", ".sessions", ".cursor", ".running", ".log", "tags"}
 	for _, d := range oldDirs {
 		if _, err := os.Stat(filepath.Join(outDir, d)); err == nil {
 			return true

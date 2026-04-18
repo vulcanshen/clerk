@@ -332,34 +332,62 @@ func ParseSummaryAndTags(output string) (string, []string) {
 	return summary, tags
 }
 
-func tagsDir(cfg config.Config) string {
-	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "tags")
+func indexDir(cfg config.Config) string {
+	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "index")
 }
 
-func summaryMarkdownLink(tagsDir, summaryFilePath string) string {
-	rel, err := filepath.Rel(tagsDir, summaryFilePath)
+func indexMarkdownLink(indexDir, summaryFilePath string) string {
+	rel, err := filepath.Rel(indexDir, summaryFilePath)
 	if err != nil {
 		rel = summaryFilePath
 	}
-	// Markdown links must use forward slashes
 	rel = filepath.ToSlash(rel)
-	name := strings.TrimSuffix(filepath.Base(summaryFilePath), ".md")
-	return fmt.Sprintf("[%s](%s)", name, rel)
+	slug := strings.TrimSuffix(filepath.Base(summaryFilePath), ".md")
+	date := filepath.Base(filepath.Dir(summaryFilePath))
+	return fmt.Sprintf("[%s+%s](%s)", slug, date, rel)
 }
 
-func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, tags []string) error {
-	dir := tagsDir(cfg)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("creating tags directory: %w", err)
+// BuildTerms combines AI-extracted tags with date, slug, and words from slug.
+func BuildTerms(tags []string, cwd string, date string) []string {
+	slug := CwdToSlug(cwd)
+	words := strings.Split(slug, "-")
+
+	seen := make(map[string]bool)
+	var terms []string
+	add := func(t string) {
+		t = strings.TrimSpace(strings.ToLower(t))
+		if t == "" || seen[t] {
+			return
+		}
+		seen[t] = true
+		terms = append(terms, t)
 	}
 
 	for _, tag := range tags {
-		if strings.Contains(tag, "..") || strings.Contains(tag, "/") || strings.Contains(tag, "\\") {
+		add(tag)
+	}
+	add(date)
+	add(slug)
+	for _, w := range words {
+		add(w)
+	}
+
+	return terms
+}
+
+func saveIndex(cfg config.Config, summaryFilePath string, terms []string) error {
+	dir := indexDir(cfg)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("creating index directory: %w", err)
+	}
+
+	for _, term := range terms {
+		if strings.Contains(term, "..") || strings.Contains(term, "/") || strings.Contains(term, "\\") {
 			continue
 		}
-		tagFile := filepath.Join(dir, tag+".md")
+		termFile := filepath.Join(dir, term+".md")
 
-		f, err := os.OpenFile(tagFile, os.O_CREATE|os.O_RDWR, 0644)
+		f, err := os.OpenFile(termFile, os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
 			continue
 		}
@@ -369,8 +397,7 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 			continue
 		}
 
-		now := time.Now().Format("2006-01-02 15:04")
-		mdLink := summaryMarkdownLink(dir, summaryFilePath)
+		mdLink := indexMarkdownLink(dir, summaryFilePath)
 
 		// read existing content through locked file descriptor
 		f.Seek(0, 0)
@@ -383,30 +410,25 @@ func saveTags(cfg config.Config, cwd, summaryFilePath, transcriptPath string, ta
 			if trimmed == "" {
 				continue
 			}
-			// check for stale summary entries by extracting markdown link path
-			if strings.Contains(trimmed, "summary") {
-				if start := strings.Index(trimmed, "]("); start != -1 {
-					end := strings.Index(trimmed[start:], ")")
-					if end != -1 {
-						relPath := trimmed[start+2 : start+end]
-						absPath := filepath.Join(dir, relPath)
-						if _, err := os.Stat(absPath); err != nil {
-							continue // stale entry
-						}
+			// check for stale entries by extracting link path
+			if start := strings.Index(trimmed, "]("); start != -1 {
+				end := strings.Index(trimmed[start:], ")")
+				if end != -1 {
+					relPath := trimmed[start+2 : start+end]
+					absPath := filepath.Join(dir, relPath)
+					if _, err := os.Stat(absPath); err != nil {
+						continue // stale entry
 					}
 				}
-				if strings.Contains(trimmed, mdLink) {
-					found = true
-				}
+			}
+			if strings.Contains(trimmed, mdLink) {
+				found = true
 			}
 			cleaned = append(cleaned, line)
 		}
 
 		if !found {
-			cleaned = append(cleaned, fmt.Sprintf("%s summary %s %s", now, cwd, mdLink))
-			if transcriptPath != "" {
-				cleaned = append(cleaned, fmt.Sprintf("%s transcript %s %s", now, cwd, transcriptPath))
-			}
+			cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
 		}
 
 		// overwrite with cleaned content
@@ -640,18 +662,20 @@ func Run(inputData []byte, cfg config.Config) error {
 	logger.Info(cfg, "summary generated successfully")
 
 	summary, tags := ParseSummaryAndTags(output)
+	date := time.Now().Format("20060102")
+	terms := BuildTerms(tags, input.Cwd, date)
 
-	if err := SaveSummary(cfg, input.Cwd, summary, tags); err != nil {
+	if err := SaveSummary(cfg, input.Cwd, summary, terms); err != nil {
 		logger.Errorf(cfg, "save summary: %v", err)
 		return err
 	}
 
-	if len(tags) > 0 {
+	if len(terms) > 0 {
 		sPath := summaryPath(cfg, input.Cwd)
-		if err := saveTags(cfg, input.Cwd, sPath, input.TranscriptPath, tags); err != nil {
-			logger.Errorf(cfg, "save tags: %v", err)
+		if err := saveIndex(cfg, sPath, terms); err != nil {
+			logger.Errorf(cfg, "save index: %v", err)
 		}
-		logger.Infof(cfg, "saved %d tags: %v", len(tags), tags)
+		logger.Infof(cfg, "saved %d index terms: %v", len(terms), terms)
 	}
 
 	if err := writeCursor(cfg, input.Cwd, totalLines); err != nil {
@@ -674,15 +698,17 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 	}
 
 	summary, tags := ParseSummaryAndTags(output)
+	date := time.Now().Format("20060102")
+	terms := BuildTerms(tags, orphan.State.Cwd, date)
 
-	if err := SaveSummary(cfg, orphan.State.Cwd, summary, tags); err != nil {
+	if err := SaveSummary(cfg, orphan.State.Cwd, summary, terms); err != nil {
 		logger.Errorf(cfg, "retry save failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}
 
-	if len(tags) > 0 {
+	if len(terms) > 0 {
 		sPath := summaryPath(cfg, orphan.State.Cwd)
-		saveTags(cfg, orphan.State.Cwd, sPath, "", tags)
+		saveIndex(cfg, sPath, terms)
 	}
 
 	os.Remove(orphan.Path)
@@ -690,7 +716,7 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 	return nil
 }
 
-// TagsDir exports the tags directory path for use by MCP server.
-func TagsDir(cfg config.Config) string {
-	return tagsDir(cfg)
+// IndexDir exports the index directory path for use by MCP server.
+func IndexDir(cfg config.Config) string {
+	return indexDir(cfg)
 }

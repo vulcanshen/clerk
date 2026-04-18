@@ -98,9 +98,9 @@ clerk report --days 7
 
 1. You type `/clerk-search` in Claude Code
 2. Claude asks what keyword you're looking for (or you provide it as an argument)
-3. Claude calls `clerk-tags-list` to get all available tags
-4. Claude uses semantic reasoning to identify relevant tags (e.g. "database" → picks `postgres`, `sql`, `migration`)
-5. Claude calls `clerk-tags-read` with the relevant tags to get summary and transcript paths
+3. Claude calls `clerk-index-list` to get all available index terms (tags, dates, projects, keywords)
+4. Claude uses semantic reasoning to identify relevant terms (e.g. "database" → picks `postgres`, `sql`, `migration`)
+5. Claude calls `clerk-index-read` with the relevant terms to get summary links
 6. Claude reads the files and presents the relevant context
 
 ```
@@ -112,10 +112,11 @@ clerk report --days 7
 ├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── tags/
+├── index/
 │   ├── mcp.md
 │   ├── refactor.md
-│   └── auth.md
+│   ├── 20260416.md
+│   └── projects-my-app.md
 ├── log/
 │   └── 20260416-clerk.log
 ├── running/
@@ -318,8 +319,8 @@ Available when MCP server is installed (`clerk install mcp`). These are called b
 | Tool | Description |
 |------|-------------|
 | `clerk-resume` | Returns summary + transcript file paths for context recovery |
-| `clerk-tags-list` | List all available session tags |
-| `clerk-tags-read` | Read the content of one or more tags |
+| `clerk-index-list` | List all available index terms (tags, dates, projects, keywords) |
+| `clerk-index-read` | Read the content of one or more index terms |
 
 ## Skills
 

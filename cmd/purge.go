@@ -35,7 +35,7 @@ var purgeCmd = &cobra.Command{
 			}
 		}
 
-		dirs := []string{"summary", "tags", "sessions", "cursor", "running", "log"}
+		dirs := []string{"summary", "index", "tags", "sessions", "cursor", "running", "log"}
 
 		removed := 0
 		for _, d := range dirs {

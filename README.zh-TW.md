@@ -98,9 +98,9 @@ clerk report --days 7
 
 1. 你在 Claude Code 中輸入 `/clerk-search`
 2. Claude 詢問你要搜尋的關鍵字（或你以參數直接提供）
-3. Claude 呼叫 `clerk-tags-list` 取得所有可用標籤
-4. Claude 用語意推理找出相關標籤（例如搜尋「database」→ 挑出 `postgres`、`sql`、`migration`）
-5. Claude 呼叫 `clerk-tags-read` 讀取相關標籤的摘要和 transcript 路徑
+3. Claude 呼叫 `clerk-index-list` 取得所有可用索引項目（標籤、日期、專案、關鍵字）
+4. Claude 用語意推理找出相關項目（例如搜尋「database」→ 挑出 `postgres`、`sql`、`migration`）
+5. Claude 呼叫 `clerk-index-read` 讀取相關項目的摘要連結
 6. Claude 讀取這些檔案並呈現相關的上下文
 
 ```
@@ -112,10 +112,11 @@ clerk report --days 7
 ├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── tags/
+├── index/
 │   ├── mcp.md
 │   ├── refactor.md
-│   └── auth.md
+│   ├── 20260416.md
+│   └── projects-my-app.md
 ├── log/
 │   └── 20260416-clerk.log
 ├── running/
@@ -317,8 +318,8 @@ clerk config set -g output.language en
 | 工具 | 說明 |
 |------|------|
 | `clerk-resume` | 回傳摘要 + transcript 檔案路徑，用於恢復上下文 |
-| `clerk-tags-list` | 列出所有可用的 session 標籤 |
-| `clerk-tags-read` | 讀取一個或多個標籤的內容 |
+| `clerk-index-list` | 列出所有可用的索引項目（標籤、日期、專案、關鍵字） |
+| `clerk-index-read` | 讀取一個或多個索引項目的內容 |
 
 ## Skills
 

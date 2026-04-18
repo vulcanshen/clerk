@@ -14,7 +14,7 @@ var dateDirPattern = regexp.MustCompile(`^\d{8}$`)
 // migrateHiddenDirs renames .tags→tags, .sessions→sessions, .cursor→cursor, .running→running, .log→log.
 func migrateHiddenDirs(root string) (int, error) {
 	renames := [][2]string{
-		{".tags", "tags"},
+		{".tags", "index"},
 		{".sessions", "sessions"},
 		{".cursor", "cursor"},
 		{".running", "running"},
@@ -86,5 +86,26 @@ func migrateSummaryDirs(root string) (int, error) {
 
 	fmt.Printf("Migrated %d date directories into summary/\n", moved)
 	return moved, nil
+}
+
+// migrateTagsToIndex renames tags/ to index/.
+func migrateTagsToIndex(root string) (int, error) {
+	src := filepath.Join(root, "tags")
+	dest := filepath.Join(root, "index")
+
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return 0, nil
+	}
+	if _, err := os.Stat(dest); err == nil {
+		// index already exists, just remove old tags
+		os.RemoveAll(src)
+		return 1, nil
+	}
+
+	if err := os.Rename(src, dest); err != nil {
+		return 0, fmt.Errorf("renaming tags to index: %w", err)
+	}
+	fmt.Println("Migrated tags/ to index/")
+	return 1, nil
 }
 

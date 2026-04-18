@@ -182,6 +182,36 @@ func TestBuildPrompt(t *testing.T) {
 	}
 }
 
+func TestBuildTerms(t *testing.T) {
+	terms := BuildTerms([]string{"go", "mcp"}, "/Users/vulcan/Documents/sideproj/clerk", "20260418")
+
+	expected := []string{"go", "mcp", "20260418", "documents-sideproj-clerk", "documents", "sideproj", "clerk"}
+	for _, e := range expected {
+		found := false
+		for _, term := range terms {
+			if term == e {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("BuildTerms missing %q, got %v", e, terms)
+		}
+	}
+
+	// test dedup: if tag matches a word
+	terms2 := BuildTerms([]string{"clerk", "go"}, "/Users/vulcan/Documents/sideproj/clerk", "20260418")
+	count := 0
+	for _, t := range terms2 {
+		if t == "clerk" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected 'clerk' once, got %d times in %v", count, terms2)
+	}
+}
+
 func containsStr(s, substr string) bool {
 	return len(s) >= len(substr) && searchStr(s, substr)
 }

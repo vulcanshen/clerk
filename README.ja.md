@@ -98,9 +98,9 @@ clerk report --days 7
 
 1. Claude Code で `/clerk-search` と入力
 2. Claude が検索したいキーワードを尋ねる（または引数として直接指定）
-3. Claude が `clerk-tags-list` を呼び出して利用可能なすべてのタグを取得
-4. Claude がセマンティック推論で関連タグを特定（例：「database」→ `postgres`、`sql`、`migration` を選択）
-5. Claude が `clerk-tags-read` を呼び出して関連タグの要約とトランスクリプトのパスを取得
+3. Claude が `clerk-index-list` を呼び出して利用可能なすべてのインデックス項目を取得（タグ、日付、プロジェクト、キーワード）
+4. Claude がセマンティック推論で関連項目を特定（例：「database」→ `postgres`、`sql`、`migration` を選択）
+5. Claude が `clerk-index-read` を呼び出して関連項目の要約リンクを取得
 6. Claude がそれらのファイルを読み取り、関連するコンテキストを提示
 
 ```
@@ -112,10 +112,11 @@ clerk report --days 7
 ├── sessions/
 │   ├── projects-my-app.md
 │   └── work-frontend.md
-├── tags/
+├── index/
 │   ├── mcp.md
 │   ├── refactor.md
-│   └── auth.md
+│   ├── 20260416.md
+│   └── projects-my-app.md
 ├── log/
 │   └── 20260416-clerk.log
 ├── running/
@@ -318,8 +319,8 @@ MCP サーバーのインストール後に利用可能（`clerk install mcp`）
 | ツール | 説明 |
 |--------|------|
 | `clerk-resume` | コンテキスト復元のための要約 + トランスクリプトファイルパスを返す |
-| `clerk-tags-list` | 利用可能なすべてのセッションタグを一覧表示 |
-| `clerk-tags-read` | 1つ以上のタグの内容を読み取る |
+| `clerk-index-list` | 利用可能なすべてのインデックス項目を一覧表示（タグ、日付、プロジェクト、キーワード） |
+| `clerk-index-read` | 1つ以上のインデックス項目の内容を読み取る |
 
 ## スキル
 
