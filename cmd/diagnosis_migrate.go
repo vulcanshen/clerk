@@ -5,59 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/spf13/cobra"
-	"github.com/vulcanshen/clerk/internal/commands"
-	"github.com/vulcanshen/clerk/internal/config"
-	"github.com/vulcanshen/clerk/internal/hook"
-	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 )
 
 var dateDirPattern = regexp.MustCompile(`^\d{8}$`)
 
-var migrateCmd = &cobra.Command{
-	Use:   "migrate",
-	Short: "Migrate data directory structure to the latest format",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.Load()
-		if err != nil {
-			return fmt.Errorf("loading config: %w", err)
-		}
-
-		root := config.ExpandPath(cfg.Output.Dir)
-		migrated := 0
-
-		// Migration 1: rename hidden directories to non-hidden
-		if n, err := migrateHiddenDirs(root); err != nil {
-			return err
-		} else {
-			migrated += n
-		}
-
-		// Migration 2: move YYYYMMDD dirs from root into summary/
-		if n, err := migrateSummaryDirs(root); err != nil {
-			return err
-		} else {
-			migrated += n
-		}
-
-		if migrated == 0 {
-			fmt.Println("Nothing to migrate. Already up to date.")
-		} else {
-			fmt.Println("\nUpdating installed components...")
-			if hook.IsInstalled() {
-				hook.Install()
-			}
-			if mcpinstall.IsInstalled() {
-				mcpinstall.Install()
-			}
-			if commands.IsInstalled() {
-				commands.Install()
-			}
-		}
-		return nil
-	},
-}
+// Migration functions are called by diagnosis for auto-fix.
 
 // migrateHiddenDirs renames .tags→tags, .sessions→sessions, .cursor→cursor, .running→running, .log→log.
 func migrateHiddenDirs(root string) (int, error) {
@@ -136,6 +88,3 @@ func migrateSummaryDirs(root string) (int, error) {
 	return moved, nil
 }
 
-func init() {
-	rootCmd.AddCommand(migrateCmd)
-}

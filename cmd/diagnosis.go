@@ -11,14 +11,16 @@ import (
 	"github.com/vulcanshen/clerk/internal/commands"
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/hook"
+	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 )
 
 var doctorCmd = &cobra.Command{
 	Use:   "diagnosis",
-	Short: "Check if your environment is set up correctly",
+	Short: "Check environment and auto-fix issues",
 	Run: func(cmd *cobra.Command, args []string) {
 		issues := 0
+		fixed := 0
 
 		// Executable
 		exe, _ := os.Executable()
@@ -35,16 +37,25 @@ var doctorCmd = &cobra.Command{
 			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
 		}
 
+		cfg, cfgErr := config.Load()
+
 		// Hook
 		if hook.IsInstalled() {
-			fmt.Printf("Hook:        OK\n")
-
-			// Check hook path issues
 			hookIssue := checkHookPath()
 			if hookIssue != "" {
-				fmt.Printf("Hook path:   WARNING — %s\n", hookIssue)
-				fmt.Printf("             Run 'clerk install --force' to fix\n")
-				issues++
+				fmt.Printf("Hook:        FIXING — %s\n", hookIssue)
+				if err := hook.ForceInstall(); err != nil {
+					fmt.Printf("Hook:        FAILED — %v\n", err)
+					if cfgErr == nil {
+						logger.Errorf(cfg, "diagnosis: hook fix failed: %v", err)
+					}
+					issues++
+				} else {
+					fmt.Printf("Hook:        FIXED\n")
+					fixed++
+				}
+			} else {
+				fmt.Printf("Hook:        OK\n")
 			}
 		} else {
 			fmt.Printf("Hook:        NOT INSTALLED — run 'clerk install'\n")
@@ -68,16 +79,15 @@ var doctorCmd = &cobra.Command{
 		}
 
 		// Config
-		cfg, err := config.Load()
-		if err != nil {
-			fmt.Printf("Config:      ERROR — %v\n", err)
+		if cfgErr != nil {
+			fmt.Printf("Config:      ERROR — %v\n", cfgErr)
 			issues++
 		} else {
 			fmt.Printf("Config:      OK\n")
 		}
 
 		// Output dir
-		if err == nil {
+		if cfgErr == nil {
 			outDir := config.ExpandPath(cfg.Output.Dir)
 			if info, err := os.Stat(outDir); err != nil {
 				fmt.Printf("Output dir:  NOT FOUND — %s (will be created on first feed)\n", outDir)
@@ -87,12 +97,26 @@ var doctorCmd = &cobra.Command{
 			} else {
 				fmt.Printf("Output dir:  OK (%s)\n", outDir)
 
-				// Check for old hidden directories needing migration
-				migrationNeeded := checkMigration(outDir)
-				if migrationNeeded {
-					fmt.Printf("Migration:   NEEDED — run 'clerk migrate'\n")
+				// Auto-fix: rename hidden directories
+				if n, err := migrateHiddenDirs(outDir); err != nil {
+					fmt.Printf("Migration:   FAILED — %v\n", err)
+					logger.Errorf(cfg, "diagnosis: hidden dir migration failed: %v", err)
 					issues++
-				} else {
+				} else if n > 0 {
+					fmt.Printf("Migration:   FIXED — renamed %d hidden directories\n", n)
+					fixed++
+				}
+
+				// Auto-fix: move YYYYMMDD dirs into summary/
+				if n, err := migrateSummaryDirs(outDir); err != nil {
+					fmt.Printf("Migration:   FAILED — %v\n", err)
+					logger.Errorf(cfg, "diagnosis: summary dir migration failed: %v", err)
+					issues++
+				} else if n > 0 {
+					fixed++
+				}
+
+				if !checkMigration(outDir) {
 					fmt.Printf("Migration:   OK\n")
 				}
 			}
@@ -100,10 +124,13 @@ var doctorCmd = &cobra.Command{
 
 		// Summary
 		fmt.Println()
-		if issues == 0 {
+		if issues == 0 && fixed == 0 {
 			fmt.Println("All checks passed.")
+		} else if issues == 0 && fixed > 0 {
+			fmt.Printf("Fixed %d issue(s). All checks passed now.\n", fixed)
 		} else {
-			fmt.Printf("%d issue(s) found.\n", issues)
+			fmt.Printf("%d issue(s) found, %d fixed.\n", issues, fixed)
+			fmt.Println("If issues persist, run 'clerk diagnosis error --mask' and report to GitHub.")
 		}
 	},
 }
@@ -145,7 +172,6 @@ func checkMigration(outDir string) bool {
 			return true
 		}
 	}
-	// Check for YYYYMMDD dirs in root (should be in summary/)
 	entries, err := os.ReadDir(outDir)
 	if err != nil {
 		return false

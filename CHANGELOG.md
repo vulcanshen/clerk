@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.6.0] - 2026-04-18
+
+### Command Restructure
+- `retry` / `kill` moved under `status` (`status retry`, `status kill`)
+- `moveto` / `purge` moved under `data` (`data moveto`, `data purge`)
+- `update` renamed to `version` (shows current version + checks for updates)
+- Old `version` subcommand removed (redundant with `--version` flag)
+- `migrate` removed — merged into `diagnosis` (auto-fix on check)
+
+### Diagnosis
+- `diagnosis` now auto-fixes issues: hidden dirs, summary migration, hook format
+- Fix failures logged for `diagnosis error` export
+- Troubleshooting section in README updated: diagnosis first, then `diagnosis error --mask` for issues
+
+### File Cleanup
+- `cmd/doctor.go` → `cmd/diagnosis.go`
+- `cmd/migrate.go` → `cmd/diagnosis_migrate.go` (functions only, no command)
+- `cmd/version.go` removed
+- `cmd/data.go` added (parent command)
+
 ## [v3.5.0] - 2026-04-18
 
 ### Windows

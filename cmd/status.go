@@ -95,7 +95,7 @@ func printStatus(cfg config.Config) error {
 		}
 		fmt.Printf("%s%s%s%s%s%s\n", colorBold, colorCyan, header, colorReset, colorDim, pad(len(header), timeStr))
 		fmt.Print(colorReset)
-		fmt.Printf("  Run 'clerk retry' to recover.\n\n")
+		fmt.Printf("  Run 'clerk status retry' to recover.\n\n")
 		for _, o := range orphans {
 			started := ""
 			if t, err := time.Parse(time.RFC3339, o.State.StartedAt); err == nil {
@@ -140,5 +140,7 @@ func formatDuration(d time.Duration) string {
 
 func init() {
 	statusCmd.Flags().BoolVarP(&watchFlag, "watch", "w", false, "Watch mode: refresh every second")
+	statusCmd.AddCommand(retryCmd)
+	statusCmd.AddCommand(killCmd)
 	rootCmd.AddCommand(statusCmd)
 }

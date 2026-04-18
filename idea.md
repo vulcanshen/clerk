@@ -15,9 +15,10 @@
 - [x] **clerk hook install/uninstall**：
   - `install`: 自動獲取 `clerk` 絕對路徑並寫入 `~/.claude/settings.json` 的 `hooks.SessionEnd`。
   - `uninstall`: 從 `settings.json` 移除該 hook 設定。
-- [x] **clerk version**：印出版本號。
-- [x] **clerk moveto `<path>`**：搬遷 data 目錄 + 更新 config output.dir。
-- [x] **clerk migrate**：處理版本升級造成的目錄結構遷移。
+- [x] **clerk version**：顯示版本並檢查更新。
+- [x] **clerk data moveto `<path>`**：搬遷 data 目錄 + 更新 config output.dir。
+- [x] **clerk data purge**：刪除所有 clerk 資料。
+- [x] **clerk diagnosis**：檢查環境並自動修復問題（含目錄遷移）。
 
 ## 技術細節
 

@@ -78,13 +78,11 @@ var killCmd = &cobra.Command{
 			fmt.Printf("  PID %-8d %s ... killed\n", s.PID, s.Slug)
 		}
 
-		fmt.Println("\nState files preserved. Run 'clerk retry' to regenerate summaries.")
+		fmt.Println("\nState files preserved. Run 'clerk status retry' to regenerate summaries.")
 		return nil
 	},
 }
 
 func init() {
 	killCmd.Flags().BoolVarP(&killAllFlag, "all", "a", false, "Kill all active feed processes")
-
-	rootCmd.AddCommand(killCmd)
 }

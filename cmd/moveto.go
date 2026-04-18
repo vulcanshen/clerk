@@ -109,5 +109,4 @@ func copyDir(src, dest string) error {
 }
 
 func init() {
-	rootCmd.AddCommand(movetoCmd)
 }

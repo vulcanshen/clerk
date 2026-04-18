@@ -241,20 +241,18 @@ go install github.com/vulcanshen/clerk@latest
 | `config set -g <key> <value>` | グローバル設定値を変更 |
 | `status` | アクティブな feed プロセスと中断されたセッションを表示 |
 | `status --watch` | ステータスをリアルタイム更新（毎秒） |
-| `retry <slug>` | 指定した中断セッションを再試行 |
-| `retry --all` | すべての中断セッションを再試行 |
-| `kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
-| `kill --all` | すべてのアクティブ feed プロセスを強制終了 |
+| `status retry <slug>` | 指定した中断セッションを再試行 |
+| `status retry --all` | すべての中断セッションを再試行 |
+| `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
+| `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
 | `report` | 最近の要約からレポートを生成（デフォルト：当日） |
 | `report --days 7` | プロジェクト横断の週次レポート |
-| `diagnosis` | 環境が正しく設定されているか確認 |
+| `diagnosis` | 環境をチェックし問題を自動修復 |
 | `diagnosis error` | トラブルシューティング用のエラーログを表示（`--mask` で個人情報をマスク） |
 | `diagnosis log` | トラブルシューティング用の全ログを表示（`--mask` で個人情報をマスク） |
-| `purge` | すべての clerk データを削除（`-y` で確認スキップ） |
-| `update` | clerk の更新方法を表示 |
-| `version` | clerk のバージョンを表示 |
-| `moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
-| `migrate` | データディレクトリ構造を最新形式に移行（v3.0.0 からのアップグレード後に実行） |
+| `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
+| `data purge` | すべての clerk データを削除（`-y` で確認スキップ） |
+| `version` | バージョン表示とアップデート確認 |
 
 内部コマンド（フックから呼び出されるもので、ユーザーが直接使用するものではありません）：
 
@@ -334,17 +332,19 @@ MCP サーバーのインストール後に利用可能（`clerk install mcp`）
 
 ## トラブルシューティング
 
-ログは `~/.clerk/log/YYYYMMDD-clerk.log` に保存されます：
+問題が発生した場合、まず diagnosis を実行してください — 環境をチェックし、一般的な問題を自動修復します：
 
 ```bash
-cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
+clerk diagnosis
 ```
 
-よくある問題：
+問題が解決しない場合、エラーログをエクスポートして [issue を作成](https://github.com/vulcanshen/clerk/issues)してください：
 
-- **要約が生成されない** — `claude` が PATH にあるか確認
-- **Hook cancelled** — clerk はバックグラウンドフォークで対応済み。最新版にアップデート
-- **MCP ツールが見つからない** — `clerk install mcp` を実行してセッションを再起動
+```bash
+clerk diagnosis error --mask --days 7
+```
+
+`--mask` フラグは個人情報（ユーザー名、パス）をマスクするため、GitHub issue に安全に貼り付けできます。
 
 ## シェル補完
 

@@ -80,5 +80,4 @@ var retryCmd = &cobra.Command{
 
 func init() {
 	retryCmd.Flags().BoolVarP(&retryAllFlag, "all", "a", false, "Retry all interrupted sessions")
-	rootCmd.AddCommand(retryCmd)
 }

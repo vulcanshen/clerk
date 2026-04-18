@@ -13,8 +13,8 @@ import (
 )
 
 var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Check for updates and show how to update clerk",
+	Use:   "version",
+	Short: "Show current version and check for updates",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Current version: %s\n", Version)
 

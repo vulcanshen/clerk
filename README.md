@@ -241,20 +241,18 @@ go install github.com/vulcanshen/clerk@latest
 | `config set -g <key> <value>` | Set global config value |
 | `status` | Show active feed processes and interrupted sessions |
 | `status --watch` | Live-refresh status every second |
-| `retry <slug>` | Retry a specific interrupted session |
-| `retry --all` | Retry all interrupted sessions |
-| `kill <slug>` | Kill a specific active feed process |
-| `kill --all` | Kill all active feed processes |
+| `status retry <slug>` | Retry a specific interrupted session |
+| `status retry --all` | Retry all interrupted sessions |
+| `status kill <slug>` | Kill a specific active feed process |
+| `status kill --all` | Kill all active feed processes |
 | `report` | Generate a report from recent summaries (default: today) |
 | `report --days 7` | Weekly report across all projects |
-| `diagnosis` | Check if your environment is set up correctly |
+| `diagnosis` | Check environment and auto-fix issues |
 | `diagnosis error` | Show error logs for troubleshooting (`--mask` to redact personal info) |
 | `diagnosis log` | Show all logs for troubleshooting (`--mask` to redact personal info) |
-| `purge` | Delete all clerk data (`-y` to skip confirmation) |
-| `update` | Show how to update clerk to the latest version |
-| `version` | Print the version of clerk |
-| `moveto <path>` | Move clerk data to a new directory and update config |
-| `migrate` | Migrate data directory structure to the latest format (run after upgrading from v3.0.0) |
+| `data moveto <path>` | Move clerk data to a new directory and update config |
+| `data purge` | Delete all clerk data (`-y` to skip confirmation) |
+| `version` | Show current version and check for updates |
 
 Internal commands (called by hooks, not by users):
 
@@ -334,17 +332,19 @@ Available when skills are installed (`clerk install skills`):
 
 ## Troubleshooting
 
-Logs are stored at `~/.clerk/log/YYYYMMDD-clerk.log`:
+If something isn't working, run diagnosis first — it checks your environment and auto-fixes common issues:
 
 ```bash
-cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
+clerk diagnosis
 ```
 
-Common issues:
+If the problem persists, export error logs and [open an issue](https://github.com/vulcanshen/clerk/issues):
 
-- **No summary generated** — Check if `claude` is in your PATH
-- **Hook cancelled** — clerk forks to background to avoid this; update to latest version
-- **MCP tool not found** — Run `clerk install mcp` and restart the session
+```bash
+clerk diagnosis error --mask --days 7
+```
+
+The `--mask` flag redacts personal information (usernames, paths) so the output is safe to paste in a GitHub issue.
 
 ## Shell Completion
 

@@ -241,20 +241,18 @@ go install github.com/vulcanshen/clerk@latest
 | `config set -g <key> <value>` | 전역 설정 값 변경 |
 | `status` | 활성 feed 프로세스와 중단된 세션 표시 |
 | `status --watch` | 실시간 상태 업데이트 (매초) |
-| `retry <slug>` | 지정한 중단 세션 재시도 |
-| `retry --all` | 모든 중단 세션 재시도 |
-| `kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
-| `kill --all` | 모든 활성 feed 프로세스 강제 종료 |
+| `status retry <slug>` | 지정한 중단 세션 재시도 |
+| `status retry --all` | 모든 중단 세션 재시도 |
+| `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
+| `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
 | `report` | 최근 요약에서 보고서 생성 (기본: 당일) |
 | `report --days 7` | 프로젝트 간 주간 보고서 |
-| `diagnosis` | 환경이 올바르게 설정되었는지 확인 |
+| `diagnosis` | 환경 확인 및 문제 자동 수정 |
 | `diagnosis error` | 문제 해결을 위한 오류 로그 표시 (`--mask`로 개인정보 마스킹) |
 | `diagnosis log` | 문제 해결을 위한 전체 로그 표시 (`--mask`로 개인정보 마스킹) |
-| `purge` | 모든 clerk 데이터 삭제 (`-y`로 확인 건너뛰기) |
-| `update` | clerk 업데이트 방법 표시 |
-| `version` | clerk 버전 출력 |
-| `moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
-| `migrate` | 데이터 디렉토리 구조를 최신 형식으로 마이그레이션 (v3.0.0에서 업그레이드 후 실행) |
+| `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
+| `data purge` | 모든 clerk 데이터 삭제 (`-y`로 확인 건너뛰기) |
+| `version` | 버전 표시 및 업데이트 확인 |
 
 내부 명령어 (훅에서 호출되며, 사용자가 직접 사용하지 않음):
 
@@ -334,17 +332,19 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`). Claude Code가 스킬
 
 ## 문제 해결
 
-로그는 `~/.clerk/log/YYYYMMDD-clerk.log`에 저장됩니다:
+문제가 발생하면 먼저 diagnosis를 실행하세요 — 환경을 확인하고 일반적인 문제를 자동 수정합니다:
 
 ```bash
-cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
+clerk diagnosis
 ```
 
-일반적인 문제:
+문제가 지속되면 오류 로그를 내보내고 [issue를 제출](https://github.com/vulcanshen/clerk/issues)하세요:
 
-- **요약이 생성되지 않음** — `claude`가 PATH에 있는지 확인
-- **Hook cancelled** — clerk는 백그라운드 포크로 대응 완료. 최신 버전으로 업데이트
-- **MCP 도구를 찾을 수 없음** — `clerk install mcp`를 실행하고 세션을 재시작
+```bash
+clerk diagnosis error --mask --days 7
+```
+
+`--mask` 플래그는 개인정보(사용자 이름, 경로)를 마스킹하여 GitHub issue에 안전하게 붙여넣을 수 있습니다.
 
 ## 셸 자동 완성
 

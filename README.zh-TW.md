@@ -240,20 +240,18 @@ go install github.com/vulcanshen/clerk@latest
 | `config set -g <key> <value>` | 設定全域配置值 |
 | `status` | 顯示進行中的 feed process 和中斷的 session |
 | `status --watch` | 即時重新整理狀態（每秒更新） |
-| `retry <slug>` | 重試指定的中斷 session |
-| `retry --all` | 重試所有中斷的 session |
-| `kill <slug>` | 強制終止指定的 feed process |
-| `kill --all` | 強制終止所有 feed process |
+| `status retry <slug>` | 重試指定的中斷 session |
+| `status retry --all` | 重試所有中斷的 session |
+| `status kill <slug>` | 強制終止指定的 feed process |
+| `status kill --all` | 強制終止所有 feed process |
 | `report` | 產生近期摘要報告（預設：當天） |
 | `report --days 7` | 產生跨專案週報 |
-| `diagnosis` | 檢查環境是否正確設定 |
+| `diagnosis` | 檢查環境並自動修復問題 |
 | `diagnosis error` | 顯示錯誤日誌供排查（`--mask` 遮蔽個資） |
 | `diagnosis log` | 顯示所有日誌供排查（`--mask` 遮蔽個資） |
-| `purge` | 刪除所有 clerk 資料（`-y` 跳過確認） |
-| `update` | 顯示更新 clerk 的方式 |
-| `version` | 印出 clerk 版本 |
-| `moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
-| `migrate` | 將資料目錄結構遷移至最新格式（從 v3.0.0 升級後執行） |
+| `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
+| `data purge` | 刪除所有 clerk 資料（`-y` 跳過確認） |
+| `version` | 顯示版本並檢查更新 |
 
 內部指令（由 hook 呼叫，非使用者直接使用）：
 
@@ -333,17 +331,19 @@ clerk config set -g output.language en
 
 ## 疑難排解
 
-Log 存放在 `~/.clerk/log/YYYYMMDD-clerk.log`：
+如果有問題，先執行 diagnosis — 它會檢查環境並自動修復常見問題：
 
 ```bash
-cat ~/.clerk/log/$(date +%Y%m%d)-clerk.log
+clerk diagnosis
 ```
 
-常見問題：
+如果問題仍然存在，匯出錯誤日誌並[提交 issue](https://github.com/vulcanshen/clerk/issues)：
 
-- **沒有產生摘要** — 確認 `claude` 是否在 PATH 中
-- **Hook cancelled** — clerk 已改為 fork 背景執行來避免此問題，更新到最新版
-- **MCP 工具找不到** — 執行 `clerk install mcp` 並重新啟動 session
+```bash
+clerk diagnosis error --mask --days 7
+```
+
+`--mask` 會遮蔽個人資訊（使用者名稱、路徑），輸出可以安全地貼到 GitHub issue。
 
 ## Shell 自動補全
 

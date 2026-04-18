@@ -52,5 +52,4 @@ var purgeCmd = &cobra.Command{
 
 func init() {
 	purgeCmd.Flags().BoolVarP(&purgeYes, "yes", "y", false, "Skip confirmation prompt")
-	rootCmd.AddCommand(purgeCmd)
 }
