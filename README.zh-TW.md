@@ -13,9 +13,9 @@
 
 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-你的 Claude Code session 關掉終端機就消失了。clerk 把它們變成一個你擁有的、可搜尋的知識庫。
-
 **多數 AI 工具是為 AI 而生的。clerk 是為人而生的。**
+
+你的 Claude Code session 關掉終端機就消失了。clerk 把它們變成一個你擁有的、可搜尋的知識庫。
 
 ## 問題
 

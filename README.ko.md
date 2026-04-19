@@ -13,9 +13,9 @@
 
 [English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
 
-Claude Code 세션은 터미널을 닫으면 사라집니다. clerk는 그것을 당신이 소유하는 검색 가능한 지식 베이스로 바꿔줍니다.
-
 **대부분의 AI 도구는 AI를 위해 만들어졌습니다. clerk는 사람을 위해 만들어졌습니다.**
+
+Claude Code 세션은 터미널을 닫으면 사라집니다. clerk는 그것을 당신이 소유하는 검색 가능한 지식 베이스로 바꿔줍니다.
 
 ## 문제
 

@@ -13,9 +13,9 @@
 
 [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Your Claude Code sessions disappear when you close the terminal. clerk turns them into a searchable knowledge base that you own.
-
 **Most AI tools are built for AI. clerk is built for humans.**
+
+Your Claude Code sessions disappear when you close the terminal. clerk turns them into a searchable knowledge base that you own.
 
 ## The Problem
 
