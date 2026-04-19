@@ -110,7 +110,9 @@ sequenceDiagram
     Note over You,Files: 金曜の午後
     You->>clerk: clerk report --days 7
     clerk->>Files: すべての要約を読み取り
-    clerk->>You: 構造化された週次レポート
+    clerk->>CC: 要約を送信しレポートを生成
+    CC-->>clerk: 構造化レポート
+    clerk->>You: 週次レポート
 ```
 
 ### ライフサイクル

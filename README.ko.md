@@ -110,7 +110,9 @@ sequenceDiagram
     Note over You,Files: 금요일 오후
     You->>clerk: clerk report --days 7
     clerk->>Files: 모든 요약 읽기
-    clerk->>You: 구조화된 주간 보고서
+    clerk->>CC: 요약을 보내 보고서 생성
+    CC-->>clerk: 구조화된 보고서
+    clerk->>You: 주간 보고서
 ```
 
 ### 라이프사이클

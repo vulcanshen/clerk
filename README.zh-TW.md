@@ -110,7 +110,9 @@ sequenceDiagram
     Note over You,Files: 週五下午
     You->>clerk: clerk report --days 7
     clerk->>Files: 讀取所有摘要
-    clerk->>You: 結構化週報
+    clerk->>CC: 送出摘要產生報告
+    CC-->>clerk: 結構化報告
+    clerk->>You: 週報
 ```
 
 ### 生命週期

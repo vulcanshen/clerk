@@ -110,7 +110,9 @@ sequenceDiagram
     Note over You,Files: Friday afternoon
     You->>clerk: clerk report --days 7
     clerk->>Files: Read all summaries
-    clerk->>You: Structured weekly report
+    clerk->>CC: Send summaries for report generation
+    CC-->>clerk: Structured report
+    clerk->>You: Weekly report
 ```
 
 ### Lifecycle
