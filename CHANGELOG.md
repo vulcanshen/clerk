@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v4.0.1] - 2026-04-19
+
+### Bug Fixes
+- Atomic summary writes (temp file + rename) prevent data loss on crash
+- Concurrent feed serialization via per-slug file lock
+- `punch` now uses project-level config (`LoadWithCwd`) — fixes session/summary path mismatch for projects with custom `output.dir`
+- `moveto` checks destination non-empty before moving, defers source removal until all copies succeed
+- `saveIndex` write-then-truncate ordering prevents partial file corruption
+- `purge` only counts actually removed directories
+- `toolNames` reset on each `NewServer()` call — no more duplicate tool names
+- `fetchLatestVersion` checks HTTP status code before parsing response
+- `readFrontmatterTags` / `updateSummaryFrontmatter` handle CRLF line endings
+- `readSessionEntries` splits on last space for old-format entries with spaces in cwd
+- `flushActiveSessions` respects per-project `feed.enabled` config
+- `flushActiveSessions` reports flush errors to stderr
+- Feed lock failure now aborts instead of proceeding unlocked
+- `moveto` removes empty source directory after successful move
+
+### Input Validation
+- `log.retention_days` must be >= 1
+- `summary.timeout` must be positive
+- `--days` flag capped at 180 for `report`, `diagnosis error`, `diagnosis log`
+- stdin limited to 1MB for `feed` and `punch` (LimitReader)
+- `ExpandPath` handles `~` without trailing slash
+- `version` command skips comparison for dev builds
+
+### Diagnosis
+- `diagnosis` auto-fixes MCP server and Skills when not installed
+- `diagnosis` shows detailed info: hook binary path, MCP command, skills directory
+- `diagnosis` shows config file paths (global + project if exists)
+- `diagnosis` shows all config values with source (default / global / project)
+- Home directory fail-fast check at startup (`$HOME` must be set)
+
+### Platform
+- Windows: `runtime.KeepAlive` prevents GC-related file descriptor invalidation in flock
+
+### Testing
+- Integration tests: feed pipeline end-to-end, cursor incremental processing, empty transcript skip, concurrent SaveSummary, cursor cleanup boundaries
+- Session entry parsing tests: tab format with spaces, old space format, mixed formats
+
 ## [v4.0.0] - 2026-04-18
 
 ### Breaking Changes
