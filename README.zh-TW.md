@@ -13,18 +13,21 @@
 
 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-你的 Claude Code session 關掉終端機就消失了。clerk 確保你不會忘記自己做過什麼。
+你的 Claude Code session 關掉終端機就消失了。clerk 把它們變成一個你擁有的、可搜尋的知識庫。
 
 ## 問題
 
-如果你每天都在用 Claude Code，你一定遇過這些痛點：
+週五下午，該交週報了。你打開 `git log`，試圖回想這週橫跨三個專案、八個 session、五天裡到底做了什麼。有一半的工作根本不在 git 裡 — 那些是 debug、研究、架構決策、和 Claude 討論的各種權衡取捨，你早就忘了。
 
-- **上下文遺失** — 你忘了加 `-c` 或 `--resume`，然後一切從頭開始。上一個 session 明明有完整的上下文，但要從一堆 session ID 裡找回來？祝你好運。
-- **Session 混亂** — 多個專案、多個 session，同時並行。今天早上在 API server 做了什麼？哪個 session 有那個 auth 修復？完全想不起來。
-- **週報恐慌** — 週五下午，該寫週報了。你翻遍 `git log`，試圖拼湊出這週到底做了什麼。
-- **手動記錄** — 你叫 Claude「存個摘要」，但上次忘了。或是 session 當掉了。或是你關了終端機。上下文就這樣消失了。
+Claude Code 不會跨 session 記憶。而你不應該需要自己記。
 
-這些問題歸根結底就是一件事：**Claude Code 不會跨 session 記憶，而你不應該需要自己記。**
+## 為什麼不直接問 Claude？
+
+你可以試試看。打開 Claude Code，問它「我上週做了什麼？」
+
+它不知道。它只看得到當前 session。要回顧過去，你得自己找到對的 session ID、用 `--resume` 載入、請它摘要，然後對每個專案、每個 session 重複一次。每次 Claude 都要重新讀一遍完整的原始 transcript — 燒掉大量 token 來重建一份本來可以用一個 markdown 檔案存起來的東西。
+
+clerk 的做法不同：每次 session 結束時只要一次 API 呼叫，產生增量摘要，存成純 markdown。到了週五，你的一週已經摘要好了。`clerk report --days 7` 讀取那些摘要，一次生成結構化報告。
 
 ## 解決方案
 
@@ -32,40 +35,30 @@
 clerk install
 ```
 
-就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。你只需要 Claude Code。
+就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。
 
 掛載後，clerk 會在背景安靜地運作：
 
-| 痛點 | clerk 如何解決 |
-|------|--------------|
-| 上下文遺失 | `/clerk-resume` — 立即從任何之前的 session 恢復上下文 |
-| Session 混亂 | 按專案自動產生每日摘要，依日期整理 |
-| 週報 | `clerk report --days 7` — AI 產生的報告，依日期和專案整理，直接貼上就行 |
-| 手動記錄 | 全自動 — 不需要記任何指令，不需要養成任何習慣 |
+| 你得到什麼 | 怎麼做 |
+|-----------|--------|
+| **週報** | `clerk report --days 7` — 依日期和專案整理的結構化報告，直接貼上就行 |
+| **上下文恢復** | `/clerk-resume` — 立即從任何之前的 session 重建上下文 |
+| **可搜尋的歷史** | `/clerk-search` — 跨所有專案用關鍵字搜尋過去的工作 |
+| **每日摘要** | 全自動 — 每個 session 結束時自動產生，依日期和專案整理 |
 
-clerk 是一個**裝完就忘**的工具。安裝一次，每個 session 都會自動摘要、追蹤、標記、並可搜尋。當你需要找回上下文時，只要一個斜線指令就行。需要週報的時候，隨傳隨到：
+安裝一次。每個 session 都會自動摘要、建立索引、可搜尋。不需要記任何指令，不需要養成任何習慣。
 
-```bash
-clerk report --days 7
-```
+## 你的資料，你的工具
 
-> **注意：** clerk 不是 AI 記憶工具。AI 記憶工具是儲存上下文讓 AI 回憶用的。clerk 儲存摘要是給**你**看的 — 按日期整理、可用關鍵字搜尋、隨時可用於你的週報。
+clerk 輸出的是標準的 YAML frontmatter + markdown — 沒有專有格式，沒有鎖定。摘要和索引檔案可以被以下工具讀取：
 
-## 功能特色
+- 任何文字編輯器（vim、VS Code、Sublime）
+- Obsidian（graph view、tag pane 直接可用）
+- Notion（匯入 markdown）
+- grep、ripgrep 或任何命令列工具
+- 你自己的腳本
 
-- **自動摘要** — Claude Code session 結束時自動產生增量摘要
-- **報告產生** — `clerk report --days 7` 產生週報，含總結、依日期、依專案三個視角
-- **上下文恢復** — `/clerk-resume` 從之前的 session 重建上下文
-- **語意搜尋** — `/clerk-search` 透過 AI 語意比對搜尋過去的工作記錄
-- **Obsidian 相容** — 輸出目錄可作為 Obsidian vault，支援 tag graph view
-- **Session 追蹤** — 記錄每次 session 開始，供歷史查詢
-- **標籤系統** — 自動從摘要中擷取關鍵字，建立可搜尋的索引
-- **游標追蹤** — 只處理上次之後的新訊息，節省 token 和時間
-- **Process 管理** — 監控進行中的 feed、強制終止、重試中斷的摘要
-- **專案層級設定** — 按專案停用 feed，覆蓋全域設定
-- **一鍵設定** — `clerk install` 自動配置 hook、MCP server 和 skills
-- 跨平台：macOS、Linux、Windows
-- Shell 自動補全（bash、zsh、fish、powershell）
+就算你把 clerk 和 Claude Code 都移除了，你的摘要還是你的 — 有組織、可搜尋、有關聯。
 
 ## 運作原理
 
@@ -86,7 +79,7 @@ flowchart LR
         J["clerk report"] --> F
     end
 
-    subgraph Obsidian Vault
+    subgraph Your Files
         F --- G
     end
 ```
@@ -113,13 +106,9 @@ flowchart LR
 └── log/                        ← 每日日誌
 ```
 
-## Obsidian 整合
+### 檔案格式
 
-以 Obsidian vault 開啟 `~/.clerk/`。graph view 會顯示多維度的連結 — 標籤、日期、專案、關鍵字都會成為節點連結到你的摘要。
-
-### 摘要格式
-
-每個摘要檔案的 YAML frontmatter 包含所有相關項目：
+每個摘要的 YAML frontmatter 包含所有相關項目：
 
 ```yaml
 ---
@@ -129,15 +118,8 @@ tags:
   - jwt
   - 20260418
   - my-api-server
-  - my
-  - api
-  - server
 ---
 ```
-
-Obsidian 使用這些 tags 來建立 tag pane 和 graph view 篩選。
-
-### 索引格式
 
 每個索引檔案包含指向對應摘要的 markdown 連結：
 
@@ -146,11 +128,11 @@ Obsidian 使用這些 tags 來建立 tag pane 和 graph view 篩選。
 - [my-api-server+20260419](../summary/20260419/my-api-server.md)
 ```
 
-項目會自然重疊 — 如果 "api" 同時是 slug 拆分的字和 AI 提取的標籤，它們會合併成一個 graph 節點，呈現跨專案和主題的關聯。
+項目會自然重疊 — 如果 "api" 同時是專案名稱拆分的字和 AI 提取的標籤，它們指向同一個檔案，建立跨專案和主題的關聯。
 
 ## 報告
 
-週五下午，該交週報了？一行指令：
+週五下午，一行指令：
 
 ```bash
 clerk report --days 7
@@ -165,7 +147,7 @@ clerk 讀取過去 7 天的所有摘要，丟給 Claude 整理，輸出結構化
 輸出到 stdout。存檔、貼上、隨你處理：
 
 ```bash
-clerk report --days 7 > weekly-report.md
+clerk report --days 7 -o weekly-report.md
 ```
 
 預設 `--days 1`（只看當天）— 適合當每日站會摘要。
@@ -292,7 +274,7 @@ go install github.com/vulcanshen/clerk@latest
 ### 設定檔
 
 - 全域：`~/.config/clerk/.clerk.json`
-- 專案：`<cwd>/.clerk.json`（覆蓋全域設定）
+- 專案：當前或任何上層目錄中的 `.clerk.json`（最近的優先）
 
 ### 可用設定
 

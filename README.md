@@ -13,18 +13,21 @@
 
 [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Your Claude Code sessions disappear when you close the terminal. clerk makes sure you never lose track of what you did.
+Your Claude Code sessions disappear when you close the terminal. clerk turns them into a searchable knowledge base that you own.
 
 ## The Problem
 
-If you use Claude Code daily, you've hit these walls:
+It's Friday afternoon. Time for the weekly report. You open `git log` and try to reconstruct what you actually did across three projects, eight sessions, and five days. Half the work isn't even in git — it was debugging, research, architecture decisions, conversations with Claude about trade-offs you've already forgotten.
 
-- **Lost context** — You forgot `-c` or `--resume`, and now you're starting from scratch. Your previous session had all the context, but good luck finding it in a pile of session IDs.
-- **Session chaos** — Multiple projects, multiple sessions, all running in parallel. What did you do on the API server this morning? Which session had the auth fix? No idea.
-- **Weekly report panic** — Friday afternoon, time for the weekly report. You're digging through `git log`, trying to reconstruct what you actually did all week.
-- **Manual bookkeeping** — You told Claude to "save a summary" but forgot last time. Or the session crashed. Or you closed the terminal. The context is gone.
+Claude Code doesn't remember across sessions. And you shouldn't have to.
 
-All of these boil down to one thing: **Claude Code doesn't remember across sessions, and you shouldn't have to.**
+## Why not just ask Claude?
+
+You could try. Open Claude Code and ask "what did I do last week?"
+
+It doesn't know. It only sees the current session. To look back, you'd need to find the right session ID, load it with `--resume`, ask for a summary, then repeat for every session across every project. Each time, Claude re-reads the entire raw transcript — burning tokens to reconstruct what could have been saved in a single markdown file.
+
+clerk takes a different approach: one API call per session, at the moment it ends, producing an incremental summary stored as plain markdown. By Friday, your week is already summarized. `clerk report --days 7` reads those summaries and generates a structured report in one shot.
 
 ## The Solution
 
@@ -32,40 +35,30 @@ All of these boil down to one thing: **Claude Code doesn't remember across sessi
 clerk install
 ```
 
-That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop. All you need is Claude Code.
+That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop.
 
 It hooks into Claude Code and works silently in the background:
 
-| Pain point | How clerk solves it |
-|------------|-------------------|
-| Lost context | `/clerk-resume` — instantly recover context from any previous session |
-| Session chaos | Auto-generated daily summaries per project, organized by date |
-| Weekly reports | `clerk report --days 7` — AI-generated report organized by date and project, ready to paste |
-| Manual bookkeeping | Fully automatic — no commands to remember, no habits to build |
+| What you get | How |
+|--------------|-----|
+| **Weekly reports** | `clerk report --days 7` — structured report by date and project, ready to paste |
+| **Context recovery** | `/clerk-resume` — instantly rebuild context from any previous session |
+| **Searchable history** | `/clerk-search` — find past work by keyword across all projects |
+| **Daily summaries** | Automatic — generated when each session ends, organized by date and project |
 
-clerk is a **set-and-forget** tool. Install once, and every session is automatically summarized, tracked, tagged, and searchable. When you need context back, it's one slash command away. And when it's time for your weekly report, just ask:
+Install once. Every session is automatically summarized, indexed, and searchable. No commands to remember, no habits to build.
 
-```bash
-clerk report --days 7
-```
+## Your data, your tools
 
-> **Note:** clerk is not an AI memory tool. AI memory tools store context for the AI to recall. clerk stores summaries for *you* to read — organized by date, searchable by keyword, ready for your weekly review.
+clerk writes plain markdown with YAML frontmatter — no proprietary format, no lock-in. Summaries and index files are readable by:
 
-## Features
+- Any text editor (vim, VS Code, Sublime)
+- Obsidian (graph view, tag pane work out of the box)
+- Notion (import markdown)
+- grep, ripgrep, or any CLI tool
+- Your own scripts
 
-- **Auto-summarize** — generates an incremental summary when your Claude Code session ends
-- **Report generation** — `clerk report --days 7` produces a weekly report with summary, by-date, and by-project views
-- **Context recovery** — `/clerk-resume` to rebuild context from previous sessions
-- **Semantic search** — `/clerk-search` to find past work by tag with AI-powered semantic matching
-- **Obsidian compatible** — output directory works as an Obsidian vault with tag graph view
-- **Session tracking** — records every session start for history lookup
-- **Tag system** — auto-extracts keywords from summaries for searchable indexing
-- **Cursor tracking** — only processes new messages since the last run, saving tokens and time
-- **Process management** — monitor active feeds, kill stuck processes, retry interrupted ones
-- **Project-level config** — disable feed per-project, override global settings
-- **One-command setup** — `clerk install` wires up hooks, MCP server, and skills
-- Cross-platform: macOS, Linux, Windows
-- Shell completion (bash, zsh, fish, powershell)
+If you uninstall clerk and Claude Code tomorrow, your summaries are still yours — organized, searchable, and linked.
 
 ## How It Works
 
@@ -86,7 +79,7 @@ flowchart LR
         J["clerk report"] --> F
     end
 
-    subgraph Obsidian Vault
+    subgraph Your Files
         F --- G
     end
 ```
@@ -113,13 +106,9 @@ flowchart LR
 └── log/                        ← daily logs
 ```
 
-## Obsidian Integration
+### File format
 
-Open `~/.clerk/` as an Obsidian vault. The graph view shows connections across multiple dimensions — tags, dates, projects, and keywords all appear as nodes linked to your summaries.
-
-### Summary format
-
-Each summary file has YAML frontmatter with all related terms:
+Each summary has YAML frontmatter with all related terms:
 
 ```yaml
 ---
@@ -129,15 +118,8 @@ tags:
   - jwt
   - 20260418
   - my-api-server
-  - my
-  - api
-  - server
 ---
 ```
-
-Obsidian uses these tags for the tag pane and graph view filters.
-
-### Index format
 
 Each index file contains markdown links to matching summaries:
 
@@ -146,11 +128,11 @@ Each index file contains markdown links to matching summaries:
 - [my-api-server+20260419](../summary/20260419/my-api-server.md)
 ```
 
-Terms naturally overlap — if "api" is both a word from the slug and an AI-extracted tag, they merge into one graph node, showing connections across projects and topics.
+Terms naturally overlap — if "api" is both a word from the project slug and an AI-extracted tag, they point to the same file, creating connections across projects and topics.
 
 ## Report
 
-Friday afternoon, time for the weekly report? One command:
+Friday afternoon, one command:
 
 ```bash
 clerk report --days 7
@@ -165,7 +147,7 @@ clerk reads all summaries from the past 7 days, sends them to Claude, and output
 Output goes to stdout. Save it, paste it, or pipe it wherever you need:
 
 ```bash
-clerk report --days 7 > weekly-report.md
+clerk report --days 7 -o weekly-report.md
 ```
 
 Default is `--days 1` (today only) — useful as a daily standup summary.
@@ -293,7 +275,7 @@ Internal commands (called by hooks, not by users):
 ### Config files
 
 - Global: `~/.config/clerk/.clerk.json`
-- Project: `<cwd>/.clerk.json` (overrides global)
+- Project: `.clerk.json` in the current or any parent directory (nearest match wins)
 
 ### Available settings
 
