@@ -69,10 +69,25 @@ func GlobalConfigPath() string {
 	return filepath.Join(home, ".config", "clerk", ".clerk.json")
 }
 
+// ProjectConfigPath walks up from cwd to find the nearest .clerk.json.
+// Returns the path to the found config, or cwd/.clerk.json if none found.
 func ProjectConfigPath(cwd string) string {
 	if cwd == "" {
 		cwd, _ = os.Getwd()
 	}
+	dir := cwd
+	for {
+		candidate := filepath.Join(dir, ".clerk.json")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // reached root
+		}
+		dir = parent
+	}
+	// fallback: return cwd/.clerk.json (may not exist)
 	return filepath.Join(cwd, ".clerk.json")
 }
 

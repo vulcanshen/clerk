@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### New Features
+- `clerk report` now shows step-by-step progress with spinner (only in terminal, silent when piped)
+- Project config (`.clerk.json`) lookup walks up directories — works from subdirectories
+
 ## [v4.0.1] - 2026-04-19
 
 ### Bug Fixes

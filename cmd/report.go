@@ -12,7 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
+	"github.com/vulcanshen/clerk/internal/logger"
 	"github.com/vulcanshen/clerk/internal/mcpserver"
+	"github.com/vulcanshen/clerk/internal/progress"
 )
 
 var reportDays int
@@ -31,29 +33,40 @@ var reportCmd = &cobra.Command{
 			return fmt.Errorf("--days must be between 1 and 180")
 		}
 
+		p := progress.New()
+
+		// Step 1: Load config
+		p.Start("Loading config")
 		cfg, err := config.Load()
 		if err != nil {
+			p.Fail(err)
 			return fmt.Errorf("loading config: %w", err)
 		}
+		p.Done()
 
+		// Step 2: Flush active sessions (conditional)
 		if reportActive {
-			fmt.Fprintln(os.Stderr, "Flushing active sessions (this will use additional Claude API calls)...")
+			p.Start("Flushing active sessions")
 			flushActiveSessions(cfg)
+			p.Done()
 		}
 
+		// Step 3: Read summaries
+		p.Start("Reading summaries")
 		summaryDir := filepath.Join(config.ExpandPath(cfg.Output.Dir), "summary")
 
-		entries, err := os.ReadDir(summaryDir)
+		dirEntries, err := os.ReadDir(summaryDir)
 		if err != nil {
 			if os.IsNotExist(err) {
+				p.Fail(fmt.Errorf("no summaries found"))
 				return fmt.Errorf("no summaries found. Run some sessions with clerk feed first")
 			}
+			p.Fail(err)
 			return fmt.Errorf("reading summary directory: %w", err)
 		}
 
 		cutoff := time.Now().AddDate(0, 0, -reportDays+1).Format("20060102")
 
-		// collect summaries grouped by date and slug
 		type entry struct {
 			date    string
 			slug    string
@@ -61,7 +74,7 @@ var reportCmd = &cobra.Command{
 		}
 		var all []entry
 
-		for _, e := range entries {
+		for _, e := range dirEntries {
 			if !e.IsDir() || !dateDirPattern.MatchString(e.Name()) {
 				continue
 			}
@@ -93,6 +106,7 @@ var reportCmd = &cobra.Command{
 		}
 
 		if len(all) == 0 {
+			p.Fail(fmt.Errorf("no summaries in the last %d day(s)", reportDays))
 			return fmt.Errorf("no summaries found in the last %d day(s)", reportDays)
 		}
 
@@ -103,29 +117,38 @@ var reportCmd = &cobra.Command{
 			return all[i].slug < all[j].slug
 		})
 
-		// build input for prompt
+		startDate := all[0].date
+		endDate := all[len(all)-1].date
+		p.Done()
+
+		// Step 4: Build prompt
+		p.Start("Building prompt")
 		var sb strings.Builder
 		for _, e := range all {
 			fmt.Fprintf(&sb, "## [%s] %s\n\n%s\n\n", e.date, e.slug, strings.TrimSpace(e.content))
 		}
-
-		startDate := all[0].date
-		endDate := all[len(all)-1].date
-
 		prompt := buildReportPrompt(sb.String(), startDate, endDate, cfg.Output.Language)
+		p.Done()
 
-		fmt.Fprintf(os.Stderr, "Generating report (%d summaries, %s ~ %s)...\n", len(all), formatDate(startDate), formatDate(endDate))
-
+		// Step 5: Call Claude
+		p.Start(fmt.Sprintf("Generating report (%d summaries, %s ~ %s)", len(all), formatDate(startDate), formatDate(endDate)))
 		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 		if err != nil {
+			p.Fail(err)
+			logger.Errorf(cfg, "report: claude -p failed: %v", err)
 			return fmt.Errorf("claude -p failed: %w", err)
 		}
+		p.Done()
 
+		// Output
 		if reportOutput != "" {
+			p.Start(fmt.Sprintf("Saving to %s", reportOutput))
 			if err := os.WriteFile(reportOutput, []byte(output+"\n"), 0644); err != nil {
+				p.Fail(err)
+				logger.Errorf(cfg, "report: write file failed: %v", err)
 				return fmt.Errorf("writing report file: %w", err)
 			}
-			fmt.Fprintf(os.Stderr, "Report saved to %s\n", reportOutput)
+			p.Done()
 		} else {
 			fmt.Println(output)
 		}
