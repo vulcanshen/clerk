@@ -24,7 +24,7 @@ var feedCmd = &cobra.Command{
 			return nil
 		}
 
-		data, err := io.ReadAll(os.Stdin)
+		data, err := io.ReadAll(io.LimitReader(os.Stdin, 1024*1024)) // 1MB limit
 		if err != nil {
 			return fmt.Errorf("reading stdin: %w", err)
 		}

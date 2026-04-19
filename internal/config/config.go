@@ -139,14 +139,21 @@ func applyKeyValue(cfg *Config, key, value string) error {
 	case "summary.model":
 		cfg.Summary.Model = value
 	case "summary.timeout":
-		if _, err := time.ParseDuration(value); err != nil {
+		d, err := time.ParseDuration(value)
+		if err != nil {
 			return fmt.Errorf("invalid value for summary.timeout: %s (use format like 5m, 2m30s, 1h)", value)
+		}
+		if d <= 0 {
+			return fmt.Errorf("invalid value for summary.timeout: must be positive (e.g. 5m, 2m30s, 1h)")
 		}
 		cfg.Summary.Timeout = value
 	case "log.retention_days":
 		var days int
 		if _, err := fmt.Sscanf(value, "%d", &days); err != nil {
 			return fmt.Errorf("invalid value for log.retention_days: %s (must be an integer)", value)
+		}
+		if days < 1 {
+			return fmt.Errorf("invalid value for log.retention_days: must be at least 1")
 		}
 		cfg.Log.RetentionDays = days
 	case "feed.enabled":
@@ -310,6 +317,10 @@ func LoadSources() []ConfigSource {
 }
 
 func ExpandPath(path string) string {
+	if path == "~" {
+		home, _ := os.UserHomeDir()
+		return home
+	}
 	if strings.HasPrefix(path, "~/") {
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, path[2:])

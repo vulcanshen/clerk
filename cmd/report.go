@@ -27,8 +27,8 @@ var reportCmd = &cobra.Command{
 			return nil
 		}
 
-		if reportDays < 1 {
-			return fmt.Errorf("--days must be at least 1")
+		if reportDays < 1 || reportDays > 180 {
+			return fmt.Errorf("--days must be between 1 and 180")
 		}
 
 		cfg, err := config.Load()
@@ -62,7 +62,7 @@ var reportCmd = &cobra.Command{
 		var all []entry
 
 		for _, e := range entries {
-			if !e.IsDir() || len(e.Name()) != 8 {
+			if !e.IsDir() || !dateDirPattern.MatchString(e.Name()) {
 				continue
 			}
 			if e.Name() < cutoff {
@@ -181,6 +181,7 @@ Summaries:
 func flushActiveSessions(cfg config.Config) {
 	allSessions, err := mcpserver.ReadAllSessionEntries(cfg)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not read session entries: %v\n", err)
 		return
 	}
 
@@ -201,13 +202,23 @@ func flushActiveSessions(cfg config.Config) {
 				continue
 			}
 
-			inputData, _ := json.Marshal(feed.HookInput{
+			projCfg, err := config.LoadWithCwd(entry.Cwd)
+			if err != nil || !config.IsFeedEnabled(projCfg) {
+				continue
+			}
+
+			inputData, err := json.Marshal(feed.HookInput{
 				SessionID:      entry.SessionID,
 				TranscriptPath: entry.TranscriptPath,
 				Cwd:            entry.Cwd,
 			})
+			if err != nil {
+				continue
+			}
 
-			feed.Run(inputData, cfg)
+			if err := feed.Run(inputData, projCfg); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to flush session for %s: %v\n", entry.Cwd, err)
+			}
 		}
 	}
 }

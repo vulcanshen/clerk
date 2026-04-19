@@ -310,8 +310,12 @@ func CallClaude(prompt string, model string, timeout string) (string, error) {
 }
 
 func summaryPath(cfg config.Config, cwd string) string {
+	return summaryPathForDate(cfg, cwd, time.Now().Format("20060102"))
+}
+
+func summaryPathForDate(cfg config.Config, cwd string, date string) string {
 	dir := config.ExpandPath(cfg.Output.Dir)
-	dateDir := filepath.Join(dir, "summary", time.Now().Format("20060102"))
+	dateDir := filepath.Join(dir, "summary", date)
 	slug := CwdToSlug(cwd)
 	return filepath.Join(dateDir, slug+".md")
 }
@@ -447,15 +451,16 @@ func saveIndex(cfg config.Config, summaryFilePath string, terms []string) error 
 			cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
 		}
 
-		// overwrite with cleaned content
+		// overwrite with cleaned content (truncate after write to avoid corrupt partial writes)
 		content := strings.Join(cleaned, "\n") + "\n"
-		f.Truncate(0)
 		f.Seek(0, 0)
-		if _, err := f.WriteString(content); err != nil {
+		n, err := f.WriteString(content)
+		if err != nil {
 			platform.FlockUnlock(f)
 			f.Close()
 			continue
 		}
+		f.Truncate(int64(n))
 
 		platform.FlockUnlock(f)
 		f.Close()
@@ -464,26 +469,14 @@ func saveIndex(cfg config.Config, summaryFilePath string, terms []string) error 
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
-	path := summaryPath(cfg, cwd)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	return saveSummaryToPath(summaryPath(cfg, cwd), cwd, summary, tags)
+}
+
+func saveSummaryToPath(path string, cwd string, summary string, tags []string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
-
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("opening output file: %w", err)
-	}
-	defer f.Close()
-
-	if err := platform.FlockExclusive(f); err != nil {
-		return fmt.Errorf("locking output file: %w", err)
-	}
-	locked := true
-	defer func() {
-		if locked {
-			platform.FlockUnlock(f)
-		}
-	}()
 
 	// YAML frontmatter with tags for Obsidian
 	var sb strings.Builder
@@ -498,8 +491,27 @@ func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) e
 	timestamp := time.Now().Format("15:04:05")
 	fmt.Fprintf(&sb, "# %s\n\n> Last updated: %s\n\n%s\n", CwdToSlug(cwd), timestamp, summary)
 
-	_, err = f.WriteString(sb.String())
-	return err
+	// Atomic write: temp file + rename to prevent data loss on crash
+	tmp, err := os.CreateTemp(dir, ".clerk-summary-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+
+	if _, err := tmp.WriteString(sb.String()); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("writing summary: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("closing temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("renaming temp file: %w", err)
+	}
+	return nil
 }
 
 func runningDir(cfg config.Config) string {
@@ -666,6 +678,23 @@ func Run(inputData []byte, cfg config.Config) error {
 		defer removeRunningState(statePath)
 	}
 
+	// Lock per-slug to prevent concurrent feeds for the same project from racing
+	lockPath := filepath.Join(config.ExpandPath(cfg.Output.Dir), "running", slug+".lock")
+	os.MkdirAll(filepath.Dir(lockPath), 0755)
+	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644)
+	if err == nil {
+		if err := platform.FlockExclusive(lockFile); err != nil {
+			lockFile.Close()
+			logger.Errorf(cfg, "failed to acquire lock for %s: %v, skipping", slug, err)
+			return nil
+		}
+		defer func() {
+			platform.FlockUnlock(lockFile)
+			lockFile.Close()
+			os.Remove(lockPath)
+		}()
+	}
+
 	priorSummary := ReadExistingSummary(cfg, input.Cwd)
 	if priorSummary != "" {
 		logger.Info(cfg, "found prior summary, will merge")
@@ -717,16 +746,21 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 	}
 
 	summary, tags := ParseSummaryAndTags(output)
+
+	// Use original session date, not today
 	date := time.Now().Format("20060102")
+	if t, err := time.Parse(time.RFC3339, orphan.State.StartedAt); err == nil {
+		date = t.Format("20060102")
+	}
 	terms := BuildTerms(tags, orphan.State.Cwd, date)
 
-	if err := SaveSummary(cfg, orphan.State.Cwd, summary, terms); err != nil {
+	sPath := summaryPathForDate(cfg, orphan.State.Cwd, date)
+	if err := saveSummaryToPath(sPath, orphan.State.Cwd, summary, terms); err != nil {
 		logger.Errorf(cfg, "retry save failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}
 
 	if len(terms) > 0 {
-		sPath := summaryPath(cfg, orphan.State.Cwd)
 		saveIndex(cfg, sPath, terms)
 	}
 

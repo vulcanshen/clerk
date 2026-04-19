@@ -14,6 +14,10 @@ var diagnosisLogCmd = &cobra.Command{
 	Use:   "log",
 	Short: "Show all logs for troubleshooting",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if logDays < 1 || logDays > 180 {
+			return fmt.Errorf("--days must be between 1 and 180")
+		}
+
 		cfg, err := config.Load()
 		if err != nil {
 			return fmt.Errorf("loading config: %w", err)

@@ -41,6 +41,9 @@ var purgeCmd = &cobra.Command{
 		removed := 0
 		for _, d := range dirs {
 			path := filepath.Join(root, d)
+			if _, err := os.Stat(path); err != nil {
+				continue
+			}
 			if err := os.RemoveAll(path); err == nil {
 				removed++
 			}

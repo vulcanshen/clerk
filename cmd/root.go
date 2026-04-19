@@ -13,6 +13,12 @@ var rootCmd = &cobra.Command{
 	Use:   "clerk",
 	Short: "The Claude Code Clerk — auto-summarize your sessions",
 	Long:  "clerk is the Claude Code Clerk that automatically summarizes your sessions and saves them as organized markdown files.",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if home, err := os.UserHomeDir(); err != nil || home == "" {
+			fmt.Fprintln(os.Stderr, "fatal: cannot determine home directory — is $HOME set?")
+			os.Exit(1)
+		}
+	},
 }
 
 func Execute() {

@@ -20,6 +20,7 @@ func addTool(s *server.MCPServer, tool mcp.Tool, handler server.ToolHandlerFunc)
 }
 
 func NewServer(version string) *server.MCPServer {
+	toolNames = nil
 	s := server.NewMCPServer(
 		"clerk",
 		version,

@@ -24,7 +24,7 @@ var updateCmd = &cobra.Command{
 		} else {
 			fmt.Printf("Latest version:  %s\n\n", latest)
 
-			if Version == latest {
+			if Version != "dev" && Version == latest {
 				fmt.Println("Already up to date.")
 				return
 			}
@@ -82,6 +82,10 @@ func fetchLatestVersion() (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("GitHub API returned %d", resp.StatusCode)
+	}
 
 	var release struct {
 		TagName string `json:"tag_name"`

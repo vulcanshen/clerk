@@ -205,7 +205,7 @@ func readFrontmatterTags(path string) []string {
 	var tags []string
 
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimRight(scanner.Text(), "\r")
 		if line == "---" {
 			if inFrontmatter {
 				break // end of frontmatter
@@ -240,7 +240,7 @@ func updateSummaryFrontmatter(path string, terms []string) {
 		return
 	}
 
-	content := string(data)
+	content := strings.ReplaceAll(string(data), "\r\n", "\n")
 
 	// Strip existing frontmatter
 	body := content

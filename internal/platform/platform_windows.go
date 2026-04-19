@@ -5,6 +5,7 @@ package platform
 import (
 	"os"
 	"os/exec"
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -42,6 +43,7 @@ func FlockExclusive(f *os.File) error {
 		0xFFFFFFFF, 0xFFFFFFFF,
 		uintptr(unsafe.Pointer(ol)),
 	)
+	runtime.KeepAlive(f)
 	if r1 == 0 {
 		return err
 	}
@@ -56,6 +58,7 @@ func FlockUnlock(f *os.File) error {
 		0xFFFFFFFF, 0xFFFFFFFF,
 		uintptr(unsafe.Pointer(ol)),
 	)
+	runtime.KeepAlive(f)
 	if r1 == 0 {
 		return err
 	}

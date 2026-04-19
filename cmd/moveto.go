@@ -36,7 +36,12 @@ var movetoCmd = &cobra.Command{
 			return fmt.Errorf("destination is the same as current output directory")
 		}
 
-		// create dest parent
+		// check dest doesn't already have data
+		if entries, err := os.ReadDir(dest); err == nil && len(entries) > 0 {
+			return fmt.Errorf("destination %s already exists and is not empty", dest)
+		}
+
+		// create dest
 		if err := os.MkdirAll(dest, 0755); err != nil {
 			return fmt.Errorf("creating destination: %w", err)
 		}
@@ -47,19 +52,30 @@ var movetoCmd = &cobra.Command{
 			return fmt.Errorf("reading source directory: %w", err)
 		}
 
+		// track entries that were copied (not renamed) for deferred removal
+		var copied []string
+
 		for _, entry := range entries {
 			srcPath := filepath.Join(src, entry.Name())
 			destPath := filepath.Join(dest, entry.Name())
 
 			// try rename first (fast, same filesystem)
 			if err := os.Rename(srcPath, destPath); err != nil {
-				// cross-filesystem: copy then remove
+				// cross-filesystem: copy all first, remove sources after all succeed
 				if err := copyEntry(srcPath, destPath, entry); err != nil {
 					return fmt.Errorf("moving %s: %w", entry.Name(), err)
 				}
-				os.RemoveAll(srcPath)
+				copied = append(copied, srcPath)
 			}
 		}
+
+		// all copies succeeded, now remove sources
+		for _, p := range copied {
+			os.RemoveAll(p)
+		}
+
+		// remove empty source directory
+		os.Remove(src)
 
 		// update global config
 		if err := config.Set("output.dir", args[0], true); err != nil {

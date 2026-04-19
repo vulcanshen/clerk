@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
 )
+
+var dateDirPattern = regexp.MustCompile(`^\d{8}$`)
 
 func sessionsDir(cfg config.Config) string {
 	return filepath.Join(config.ExpandPath(cfg.Output.Dir), "sessions")
@@ -76,12 +79,13 @@ func readSessionEntries(cfg config.Config, slug string) ([]SessionEntry, error) 
 					entry.TranscriptPath = parts[1]
 				}
 			} else {
-				parts := strings.SplitN(after, " ", 2)
-				if len(parts) == 2 {
-					entry.Cwd = parts[0]
-					entry.TranscriptPath = parts[1]
+				// old format: split on last space (transcript path has no spaces)
+				lastSpace := strings.LastIndex(after, " ")
+				if lastSpace > 0 {
+					entry.Cwd = after[:lastSpace]
+					entry.TranscriptPath = after[lastSpace+1:]
 				} else {
-					entry.TranscriptPath = parts[0]
+					entry.TranscriptPath = after
 				}
 			}
 		}
@@ -157,7 +161,7 @@ func findSummaryPaths(cfg config.Config, slug string) []string {
 	}
 
 	for _, e := range entries {
-		if !e.IsDir() || len(e.Name()) != 8 {
+		if !e.IsDir() || !dateDirPattern.MatchString(e.Name()) {
 			continue
 		}
 		p := filepath.Join(root, e.Name(), slug+".md")
