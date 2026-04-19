@@ -15,6 +15,8 @@
 
 Your Claude Code sessions disappear when you close the terminal. clerk turns them into a searchable knowledge base that you own.
 
+**Most AI tools are built for AI. clerk is built for humans.**
+
 ## The Problem
 
 It's Friday afternoon. Time for the weekly report. You open `git log` and try to reconstruct what you actually did across three projects, eight sessions, and five days. Half the work isn't even in git — it was debugging, research, architecture decisions, conversations with Claude about trade-offs you've already forgotten.
