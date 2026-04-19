@@ -69,19 +69,48 @@ flowchart LR
         C[Session End] -->|hook| D[clerk feed]
     end
 
-    B --> E[sessions/]
-    D --> F[summary/]
-    D --> G[index/]
+    subgraph Your Files
+        E[sessions/]
+        F[summary/]
+        G[index/]
+    end
+
+    B --> E
+    D --> F
+    D --> G
 
     subgraph User Commands
         H["/clerk-resume"] -->|MCP| F
         I["/clerk-search"] -->|MCP| G
         J["clerk report"] --> F
     end
+```
 
-    subgraph Your Files
-        F --- G
-    end
+### ユーザージャーニー
+
+```mermaid
+sequenceDiagram
+    actor You as あなた
+    participant CC as Claude Code
+    participant clerk
+    participant Files as あなたのファイル
+
+    Note over You,Files: 日常の作業（自動）
+    You->>CC: コーディングセッション開始
+    CC->>clerk: SessionStart hook
+    clerk->>Files: セッション ID を記録
+
+    You->>CC: 開発、デバッグ、議論...
+    You->>CC: セッションを閉じる
+    CC->>clerk: SessionEnd hook
+    clerk->>Files: 要約 + インデックスを生成
+
+    Note over You,Files: 数日・複数プロジェクトで繰り返し...
+
+    Note over You,Files: 金曜の午後
+    You->>clerk: clerk report --days 7
+    clerk->>Files: すべての要約を読み取り
+    clerk->>You: 構造化された週次レポート
 ```
 
 ### ライフサイクル

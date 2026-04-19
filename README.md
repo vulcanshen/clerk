@@ -69,19 +69,48 @@ flowchart LR
         C[Session End] -->|hook| D[clerk feed]
     end
 
-    B --> E[sessions/]
-    D --> F[summary/]
-    D --> G[index/]
+    subgraph Your Files
+        E[sessions/]
+        F[summary/]
+        G[index/]
+    end
+
+    B --> E
+    D --> F
+    D --> G
 
     subgraph User Commands
         H["/clerk-resume"] -->|MCP| F
         I["/clerk-search"] -->|MCP| G
         J["clerk report"] --> F
     end
+```
 
-    subgraph Your Files
-        F --- G
-    end
+### User Journey
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant CC as Claude Code
+    participant clerk
+    participant Files as Your Files
+
+    Note over You,Files: Daily work (automatic)
+    You->>CC: Start coding session
+    CC->>clerk: SessionStart hook
+    clerk->>Files: Record session ID
+
+    You->>CC: Work, debug, discuss...
+    You->>CC: Close session
+    CC->>clerk: SessionEnd hook
+    clerk->>Files: Generate summary + index
+
+    Note over You,Files: Repeat across days and projects...
+
+    Note over You,Files: Friday afternoon
+    You->>clerk: clerk report --days 7
+    clerk->>Files: Read all summaries
+    clerk->>You: Structured weekly report
 ```
 
 ### Lifecycle

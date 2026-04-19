@@ -69,19 +69,48 @@ flowchart LR
         C[Session End] -->|hook| D[clerk feed]
     end
 
-    B --> E[sessions/]
-    D --> F[summary/]
-    D --> G[index/]
+    subgraph Your Files
+        E[sessions/]
+        F[summary/]
+        G[index/]
+    end
+
+    B --> E
+    D --> F
+    D --> G
 
     subgraph User Commands
         H["/clerk-resume"] -->|MCP| F
         I["/clerk-search"] -->|MCP| G
         J["clerk report"] --> F
     end
+```
 
-    subgraph Your Files
-        F --- G
-    end
+### 사용자 여정
+
+```mermaid
+sequenceDiagram
+    actor You as 당신
+    participant CC as Claude Code
+    participant clerk
+    participant Files as 당신의 파일
+
+    Note over You,Files: 일상 작업 (자동)
+    You->>CC: 코딩 세션 시작
+    CC->>clerk: SessionStart hook
+    clerk->>Files: 세션 ID 기록
+
+    You->>CC: 개발, 디버깅, 논의...
+    You->>CC: 세션 종료
+    CC->>clerk: SessionEnd hook
+    clerk->>Files: 요약 + 인덱스 생성
+
+    Note over You,Files: 여러 날, 여러 프로젝트에서 반복...
+
+    Note over You,Files: 금요일 오후
+    You->>clerk: clerk report --days 7
+    clerk->>Files: 모든 요약 읽기
+    clerk->>You: 구조화된 주간 보고서
 ```
 
 ### 라이프사이클
