@@ -117,7 +117,7 @@ Output the redacted log lines only, no explanation.
 
 	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error: --mask failed (Claude API error). Raw output suppressed to protect personal information.")
+		fmt.Fprintln(os.Stderr, "Error: log masking failed (Claude API error). Raw output suppressed to protect personal information.")
 		return ""
 	}
 	return output

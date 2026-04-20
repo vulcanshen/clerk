@@ -14,7 +14,7 @@ import (
 
 var dateDirPattern = regexp.MustCompile(`^\d{8}$`)
 
-// Migration functions are called by diagnosis for auto-fix.
+// Migration functions are called by register for auto-fix.
 
 // migrateHiddenDirs renames .tags→tags, .sessions→sessions, .cursor→cursor, .running→running, .log→log.
 func migrateHiddenDirs(root string) (int, error) {

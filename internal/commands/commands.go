@@ -56,17 +56,6 @@ If the tools are available:
 	},
 }
 
-// IsInstalled checks if clerk skills are currently installed.
-func IsInstalled() bool {
-	dir := filepath.Join(SkillsDir(), clerkSkills[0].name)
-	_, err := os.Stat(dir)
-	return err == nil
-}
-
-func ForceInstall() error {
-	return Install()
-}
-
 // WriteSkills writes all skill files without printing output.
 func WriteSkills() error {
 	for _, s := range clerkSkills {

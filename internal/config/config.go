@@ -91,10 +91,6 @@ func ProjectConfigPath(cwd string) string {
 	return filepath.Join(cwd, ".clerk.json")
 }
 
-// ConfigPath returns the global config path (for backward compatibility with config show)
-func ConfigPath() string {
-	return GlobalConfigPath()
-}
 
 func loadFile(path string, cfg *Config) error {
 	data, err := os.ReadFile(path)
@@ -246,23 +242,6 @@ func saveRawToPath(path string, raw map[string]interface{}) error {
 	return os.WriteFile(path, append(data, '\n'), 0644)
 }
 
-func saveToPath(path string, cfg Config) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("creating config directory: %w", err)
-	}
-
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshaling config: %w", err)
-	}
-
-	return os.WriteFile(path, append(data, '\n'), 0644)
-}
-
-// Save saves to global config (backward compat)
-func Save(cfg Config) error {
-	return saveToPath(GlobalConfigPath(), cfg)
-}
 
 // ConfigSource describes where a config value comes from.
 type ConfigSource struct {
