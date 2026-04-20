@@ -34,7 +34,7 @@ clerk 的做法不同：每次 session 結束時只要一次 API 呼叫，產生
 ## 解決方案
 
 ```bash
-clerk install
+clerk register
 ```
 
 就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。
@@ -248,7 +248,7 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 然後設定 hook、MCP server 和 skills：
 
 ```bash
-clerk install
+clerk register
 ```
 
 ### 套件管理器
@@ -270,11 +270,8 @@ go install github.com/vulcanshen/clerk@latest
 
 | 指令 | 說明 |
 |------|------|
-| `install` | 安裝所有元件（hook + mcp + skills），加 `--force` 可強制重裝 |
-| `install hook` | 僅安裝 SessionStart/SessionEnd hook |
-| `install mcp` | 僅註冊 MCP server |
-| `install skills` | 僅安裝斜線指令 skills |
-| `uninstall` | 移除所有元件 |
+| `register` | 將 clerk 註冊到 Claude Code 並驗證環境 |
+| `unregister` | 從 Claude Code 取消註冊 clerk |
 | `config` | 顯示目前的設定（等同 `config show`） |
 | `config show` | 顯示合併後的設定與檔案路徑 |
 | `config set <key> <value>` | 設定專案層級的配置值 |
@@ -287,9 +284,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill --all` | 強制終止所有 feed process |
 | `report` | 產生近期摘要報告（預設：當天） |
 | `report --days 7` | 產生跨專案週報 |
-| `diagnosis` | 檢查環境並自動修復問題 |
-| `diagnosis error` | 顯示錯誤日誌供排查（`--mask` 遮蔽個資） |
-| `diagnosis log` | 顯示所有日誌供排查（`--mask` 遮蔽個資） |
+| `logs` | 顯示所有日誌供排查 |
+| `logs --error` | 僅顯示錯誤日誌 |
+| `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |
 | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
 | `data purge` | 刪除所有 clerk 資料（`-y` 跳過確認） |
 | `version` | 顯示版本並檢查更新 |
@@ -355,7 +352,7 @@ clerk config set -g output.language en
 
 ## MCP 工具
 
-安裝 MCP server 後可用（`clerk install mcp`）。這些由 Claude Code 透過 skill 呼叫，不需要直接使用：
+安裝後可用（`clerk register`）。這些由 Claude Code 透過 skill 呼叫，不需要直接使用：
 
 | 工具 | 說明 |
 |------|------|
@@ -365,7 +362,7 @@ clerk config set -g output.language en
 
 ## Skills
 
-安裝 skills 後可用（`clerk install skills`）：
+安裝後可用（`clerk register`）：
 
 | Skill | 說明 |
 |-------|------|
@@ -377,16 +374,16 @@ clerk config set -g output.language en
 如果有問題，先執行 diagnosis — 它會檢查環境並自動修復常見問題：
 
 ```bash
-clerk diagnosis
+clerk register
 ```
 
 如果問題仍然存在，匯出錯誤日誌並[提交 issue](https://github.com/vulcanshen/clerk/issues)：
 
 ```bash
-clerk diagnosis error --mask --days 7
+clerk logs --error --days 7
 ```
 
-`--mask` 會遮蔽個人資訊（使用者名稱、路徑），輸出可以安全地貼到 GitHub issue。
+日誌預設自動遮蔽個資，輸出可以安全地貼到 GitHub issue。
 
 ## Shell 自動補全
 

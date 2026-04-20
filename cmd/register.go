@@ -11,14 +11,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/commands"
 	"github.com/vulcanshen/clerk/internal/config"
+	"github.com/vulcanshen/clerk/internal/feed"
 	"github.com/vulcanshen/clerk/internal/hook"
 	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 )
 
-var diagnosisCmd = &cobra.Command{
-	Use:   "diagnosis",
-	Short: "Check environment and auto-fix issues",
+var registerCmd = &cobra.Command{
+	Use:   "register",
+	Short: "Register clerk with Claude Code and verify environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		issues := 0
 		fixed := 0
@@ -51,7 +52,7 @@ var diagnosisCmd = &cobra.Command{
 				if err := hook.ForceInstall(); err != nil {
 					fmt.Printf("Hook:        FAILED — %v\n", err)
 					if cfgErr == nil {
-						logger.Errorf(cfg, "diagnosis: hook fix failed: %v", err)
+						logger.Errorf(cfg, "register: hook fix failed: %v", err)
 					}
 					issues++
 				} else {
@@ -59,7 +60,6 @@ var diagnosisCmd = &cobra.Command{
 					fixed++
 				}
 			} else {
-				// Verify hook binary exists
 				binPath := extractHookBinary()
 				if binPath != "" {
 					if _, err := os.Stat(binPath); os.IsNotExist(err) {
@@ -79,43 +79,60 @@ var diagnosisCmd = &cobra.Command{
 				}
 			}
 		} else {
-			fmt.Printf("Hook:        NOT INSTALLED — run 'clerk install'\n")
-			issues++
+			fmt.Printf("Hook:        FIXING — not installed\n")
+			if err := hook.ForceInstall(); err != nil {
+				fmt.Printf("Hook:        FAILED — %v\n", err)
+				if cfgErr == nil {
+					logger.Errorf(cfg, "register: hook fix failed: %v", err)
+				}
+				issues++
+			} else {
+				fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
+				fixed++
+			}
 		}
 
 		// MCP
+		mcpIssue := ""
 		if mcpinstall.IsInstalled() {
-			fmt.Printf("MCP:         OK (%s mcp)\n", exe)
+			mcpIssue = mcpinstall.CheckPath()
 		} else {
-			fmt.Printf("MCP:         FIXING — not registered\n")
+			mcpIssue = "not registered"
+		}
+		if mcpIssue == "" {
+			if exe != "" {
+				fmt.Printf("MCP:         OK (%s mcp)\n", exe)
+			} else {
+				fmt.Printf("MCP:         OK\n")
+			}
+		} else {
+			fmt.Printf("MCP:         FIXING — %s\n", mcpIssue)
 			if err := mcpinstall.ForceInstall(); err != nil {
 				fmt.Printf("MCP:         FAILED — %v\n", err)
 				if cfgErr == nil {
-					logger.Errorf(cfg, "diagnosis: mcp fix failed: %v", err)
+					logger.Errorf(cfg, "register: mcp fix failed: %v", err)
 				}
 				issues++
 			} else {
-				fmt.Printf("MCP:         FIXED → %s mcp\n", exe)
+				if exe != "" {
+					fmt.Printf("MCP:         FIXED → %s mcp\n", exe)
+				} else {
+					fmt.Printf("MCP:         FIXED\n")
+				}
 				fixed++
 			}
 		}
 
-		// Skills
+		// Skills — always write latest content
 		skillsDir := commands.SkillsDir()
-		if commands.IsInstalled() {
-			fmt.Printf("Skills:      OK (%s)\n", skillsDir)
-		} else {
-			fmt.Printf("Skills:      FIXING — not installed\n")
-			if err := commands.Install(); err != nil {
-				fmt.Printf("Skills:      FAILED — %v\n", err)
-				if cfgErr == nil {
-					logger.Errorf(cfg, "diagnosis: skills fix failed: %v", err)
-				}
-				issues++
-			} else {
-				fmt.Printf("Skills:      FIXED → %s\n", skillsDir)
-				fixed++
+		if err := commands.WriteSkills(); err != nil {
+			fmt.Printf("Skills:      FAILED — %v\n", err)
+			if cfgErr == nil {
+				logger.Errorf(cfg, "register: skills fix failed: %v", err)
 			}
+			issues++
+		} else {
+			fmt.Printf("Skills:      OK (%s)\n", skillsDir)
 		}
 
 		// Output dir
@@ -132,29 +149,26 @@ var diagnosisCmd = &cobra.Command{
 			} else {
 				fmt.Printf("Output dir:  OK (%s)\n", outDir)
 
-				// Auto-fix: rename hidden directories
 				if n, err := migrateHiddenDirs(outDir); err != nil {
 					fmt.Printf("Migration:   FAILED — %v\n", err)
-					logger.Errorf(cfg, "diagnosis: hidden dir migration failed: %v", err)
+					logger.Errorf(cfg, "register: hidden dir migration failed: %v", err)
 					issues++
 				} else if n > 0 {
 					fmt.Printf("Migration:   FIXED — renamed %d hidden directories\n", n)
 					fixed++
 				}
 
-				// Auto-fix: move YYYYMMDD dirs into summary/
 				if n, err := migrateSummaryDirs(outDir); err != nil {
 					fmt.Printf("Migration:   FAILED — %v\n", err)
-					logger.Errorf(cfg, "diagnosis: summary dir migration failed: %v", err)
+					logger.Errorf(cfg, "register: summary dir migration failed: %v", err)
 					issues++
 				} else if n > 0 {
 					fixed++
 				}
 
-				// Auto-fix: rename tags/ to index/
 				if n, err := migrateTagsToIndex(outDir); err != nil {
 					fmt.Printf("Migration:   FAILED — %v\n", err)
-					logger.Errorf(cfg, "diagnosis: tags to index migration failed: %v", err)
+					logger.Errorf(cfg, "register: tags to index migration failed: %v", err)
 					issues++
 				} else if n > 0 {
 					fixed++
@@ -184,6 +198,27 @@ var diagnosisCmd = &cobra.Command{
 			}
 		}
 
+		// Claude API test
+		fmt.Println()
+		fmt.Printf("Claude API:  testing...")
+		testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
+		testPrompt := feed.BuildPrompt(testConv, "", "en")
+		testOut, err := feed.CallClaude(testPrompt, "", "1m")
+		if err != nil {
+			fmt.Printf("\rClaude API:  FAILED — %v\n", err)
+			issues++
+		} else {
+			summary, tags := feed.ParseSummaryAndTags(testOut)
+			if strings.TrimSpace(summary) == "" {
+				fmt.Printf("\rClaude API:  FAILED — empty summary (API format may have changed)\n")
+				issues++
+			} else if len(tags) == 0 {
+				fmt.Printf("\rClaude API:  WARNING — summary OK but no tags extracted\n")
+			} else {
+				fmt.Printf("\rClaude API:  OK (%d tags)\n", len(tags))
+			}
+		}
+
 		// Summary
 		fmt.Println()
 		if issues == 0 && fixed == 0 {
@@ -192,7 +227,7 @@ var diagnosisCmd = &cobra.Command{
 			fmt.Printf("Fixed %d issue(s). All checks passed now.\n", fixed)
 		} else {
 			fmt.Printf("%d issue(s) found, %d fixed.\n", issues, fixed)
-			fmt.Println("If issues persist, run 'clerk diagnosis error --mask' and report to GitHub.")
+			fmt.Println("If issues persist, run 'clerk logs --error --mask' and report to GitHub.")
 		}
 	},
 }
@@ -303,5 +338,5 @@ func checkMigration(outDir string) bool {
 }
 
 func init() {
-	rootCmd.AddCommand(diagnosisCmd)
+	rootCmd.AddCommand(registerCmd)
 }

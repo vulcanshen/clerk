@@ -34,7 +34,7 @@ clerk のアプローチは異なります：セッション終了時に1回の 
 ## 解決策
 
 ```bash
-clerk install
+clerk register
 ```
 
 以上です。clerk は完全にローカルで動作します — リモートサービスへの接続なし、アカウント不要、データがマシンの外に出ることはありません。
@@ -249,7 +249,7 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 次にフック、MCP サーバー、スキルを設定します：
 
 ```bash
-clerk install
+clerk register
 ```
 
 ### パッケージマネージャー
@@ -271,11 +271,8 @@ go install github.com/vulcanshen/clerk@latest
 
 | コマンド | 説明 |
 |----------|------|
-| `install` | すべてのコンポーネントをインストール（hook + mcp + skills）、`--force` で再インストール |
-| `install hook` | SessionStart/SessionEnd フックのみをインストール |
-| `install mcp` | MCP サーバーのみを登録 |
-| `install skills` | スラッシュコマンドスキルのみをインストール |
-| `uninstall` | すべてのコンポーネントを削除 |
+| `register` | clerk を Claude Code に登録し環境を検証 |
+| `unregister` | clerk を Claude Code から登録解除 |
 | `config` | 現在の設定を表示（`config show` のエイリアス） |
 | `config show` | マージされた設定とファイルパスを表示 |
 | `config set <key> <value>` | プロジェクトレベルの設定値を変更 |
@@ -288,9 +285,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
 | `report` | 最近の要約からレポートを生成（デフォルト：当日） |
 | `report --days 7` | プロジェクト横断の週次レポート |
-| `diagnosis` | 環境をチェックし問題を自動修復 |
-| `diagnosis error` | トラブルシューティング用のエラーログを表示（`--mask` で個人情報をマスク） |
-| `diagnosis log` | トラブルシューティング用の全ログを表示（`--mask` で個人情報をマスク） |
+| `logs` | トラブルシューティング用の全ログを表示 |
+| `logs --error` | エラーログのみ表示 |
+| `logs --no-mask` | 個人情報をマスクせず生ログを表示 |
 | `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
 | `data purge` | すべての clerk データを削除（`-y` で確認スキップ） |
 | `version` | バージョン表示とアップデート確認 |
@@ -356,7 +353,7 @@ clerk config set -g output.language en
 
 ## MCP ツール
 
-MCP サーバーのインストール後に利用可能（`clerk install mcp`）。これらは Claude Code がスキルを通じて呼び出すもので、直接使用する必要はありません：
+インストール後に利用可能（`clerk register`）。これらは Claude Code がスキルを通じて呼び出すもので、直接使用する必要はありません：
 
 | ツール | 説明 |
 |--------|------|
@@ -366,7 +363,7 @@ MCP サーバーのインストール後に利用可能（`clerk install mcp`）
 
 ## スキル
 
-スキルのインストール後に利用可能（`clerk install skills`）：
+インストール後に利用可能（`clerk register`）：
 
 | スキル | 説明 |
 |--------|------|
@@ -378,16 +375,16 @@ MCP サーバーのインストール後に利用可能（`clerk install mcp`）
 問題が発生した場合、まず diagnosis を実行してください — 環境をチェックし、一般的な問題を自動修復します：
 
 ```bash
-clerk diagnosis
+clerk register
 ```
 
 問題が解決しない場合、エラーログをエクスポートして [issue を作成](https://github.com/vulcanshen/clerk/issues)してください：
 
 ```bash
-clerk diagnosis error --mask --days 7
+clerk logs --error --days 7
 ```
 
-`--mask` フラグは個人情報（ユーザー名、パス）をマスクするため、GitHub issue に安全に貼り付けできます。
+ログはデフォルトで個人情報が自動マスクされます。GitHub issue に安全に貼り付けできます。
 
 ## シェル補完
 

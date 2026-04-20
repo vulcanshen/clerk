@@ -34,7 +34,7 @@ clerk takes a different approach: one API call per session, at the moment it end
 ## The Solution
 
 ```bash
-clerk install
+clerk register
 ```
 
 That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop.
@@ -249,7 +249,7 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 Then set up the hooks, MCP server, and skills:
 
 ```bash
-clerk install
+clerk register
 ```
 
 ### Package Managers
@@ -271,11 +271,8 @@ go install github.com/vulcanshen/clerk@latest
 
 | Command | Description |
 |---------|-------------|
-| `install` | Install all components (hook + mcp + skills), use `--force` to reinstall |
-| `install hook` | Install SessionStart/SessionEnd hooks only |
-| `install mcp` | Register MCP server only |
-| `install skills` | Install slash command skills only |
-| `uninstall` | Remove all components |
+| `register` | Register clerk with Claude Code and verify environment |
+| `unregister` | Unregister clerk from Claude Code |
 | `config` | Show current configuration (alias for `config show`) |
 | `config show` | Show merged configuration and file paths |
 | `config set <key> <value>` | Set project-level config value |
@@ -288,9 +285,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill --all` | Kill all active feed processes |
 | `report` | Generate a report from recent summaries (default: today) |
 | `report --days 7` | Weekly report across all projects |
-| `diagnosis` | Check environment and auto-fix issues |
-| `diagnosis error` | Show error logs for troubleshooting (`--mask` to redact personal info) |
-| `diagnosis log` | Show all logs for troubleshooting (`--mask` to redact personal info) |
+| `logs` | Show all logs for troubleshooting |
+| `logs --error` | Show error logs only |
+| `logs --no-mask` | Show raw logs without redacting personal info |
 | `data moveto <path>` | Move clerk data to a new directory and update config |
 | `data purge` | Delete all clerk data (`-y` to skip confirmation) |
 | `version` | Show current version and check for updates |
@@ -356,7 +353,7 @@ clerk config set -g output.language en
 
 ## MCP Tools
 
-Available when MCP server is installed (`clerk install mcp`). These are called by Claude Code through skills — you don't need to invoke them directly.
+Available when installed (`clerk register`). These are called by Claude Code through skills — you don't need to invoke them directly.
 
 | Tool | Description |
 |------|-------------|
@@ -366,7 +363,7 @@ Available when MCP server is installed (`clerk install mcp`). These are called b
 
 ## Skills
 
-Available when skills are installed (`clerk install skills`):
+Available when installed (`clerk register`):
 
 | Skill | Description |
 |-------|-------------|
@@ -375,19 +372,19 @@ Available when skills are installed (`clerk install skills`):
 
 ## Troubleshooting
 
-If something isn't working, run diagnosis first — it checks your environment and auto-fixes common issues:
+If something isn't working, run register first — it checks your environment and auto-fixes common issues:
 
 ```bash
-clerk diagnosis
+clerk register
 ```
 
 If the problem persists, export error logs and [open an issue](https://github.com/vulcanshen/clerk/issues):
 
 ```bash
-clerk diagnosis error --mask --days 7
+clerk logs --error --days 7
 ```
 
-The `--mask` flag redacts personal information (usernames, paths) so the output is safe to paste in a GitHub issue.
+Logs are automatically redacted (personal info masked) by default. The output is safe to paste in a GitHub issue.
 
 ## Shell Completion
 

@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file.
 - `clerk report` now shows step-by-step progress with spinner (only in terminal, silent when piped)
 - Project config (`.clerk.json`) lookup walks up directories — works from subdirectories
 
+### Breaking Changes
+- `install` / `uninstall` → `register` / `unregister`
+- `diagnosis` merged into `register` (register now checks, installs, and verifies everything)
+- `diagnosis claude` merged into `register` (Claude API test runs automatically)
+- `diagnosis error` / `diagnosis log` → `clerk logs --error` / `clerk logs`
+- `install hook`, `install mcp`, `install skills` subcommands removed
+- `uninstall hook`, `uninstall mcp`, `uninstall skills` subcommands removed
+
 ## [v4.0.1] - 2026-04-19
 
 ### Bug Fixes

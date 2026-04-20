@@ -26,7 +26,7 @@ description: Recover context from previous Claude Code sessions using clerk MCP 
 disable-model-invocation: true
 ---
 
-First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-resume tool is not available, tell the user to run "clerk install mcp" and restart the session.
+First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-resume tool is not available, tell the user to run "clerk register" and restart the session.
 
 If the tool is available:
 1. Call the clerk-resume MCP tool with cwd set to the current project's absolute working directory
@@ -43,7 +43,7 @@ description: Search previous Claude Code sessions by keyword using clerk MCP too
 disable-model-invocation: true
 ---
 
-First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-index-list tool is not available, tell the user to run "clerk install mcp" and restart the session.
+First, check if the clerk MCP server is available by looking for "clerk" in your MCP tools. If the clerk-index-list tool is not available, tell the user to run "clerk register" and restart the session.
 
 If the tools are available:
 1. Ask the user what keyword or topic they want to search for (if not already provided as an argument)
@@ -67,7 +67,8 @@ func ForceInstall() error {
 	return Install()
 }
 
-func Install() error {
+// WriteSkills writes all skill files without printing output.
+func WriteSkills() error {
 	for _, s := range clerkSkills {
 		dir := filepath.Join(SkillsDir(), s.name)
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -78,7 +79,13 @@ func Install() error {
 			return fmt.Errorf("writing skill %s: %w", s.name, err)
 		}
 	}
+	return nil
+}
 
+func Install() error {
+	if err := WriteSkills(); err != nil {
+		return err
+	}
 	fmt.Printf("  skill:   installed (%d skills: %s)\n", len(clerkSkills), skillNames())
 	return nil
 }

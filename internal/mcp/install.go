@@ -20,6 +20,26 @@ func IsInstalled() bool {
 	return strings.Contains(string(output), "clerk")
 }
 
+// CheckPath verifies the registered MCP server points to the current executable.
+// Returns empty string if OK, or a description of the problem.
+func CheckPath() string {
+	c := exec.Command("claude", "mcp", "list")
+	output, err := c.Output()
+	if err != nil {
+		return ""
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	exe = filepath.ToSlash(exe)
+	// check if the output contains the current executable path
+	if !strings.Contains(string(output), exe) {
+		return "MCP server points to a different executable"
+	}
+	return ""
+}
+
 func ForceInstall() error {
 	Uninstall()
 	return Install()

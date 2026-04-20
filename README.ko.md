@@ -34,7 +34,7 @@ clerk의 접근 방식은 다릅니다: 세션 종료 시 1회의 API 호출로 
 ## 해결책
 
 ```bash
-clerk install
+clerk register
 ```
 
 끝입니다. clerk는 완전히 로컬에서 실행됩니다 — 원격 서비스 연결 없음, 계정 불필요, 데이터가 컴퓨터 밖으로 나가지 않습니다.
@@ -249,7 +249,7 @@ irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 그런 다음 훅, MCP 서버, 스킬을 설정합니다:
 
 ```bash
-clerk install
+clerk register
 ```
 
 ### 패키지 관리자
@@ -271,11 +271,8 @@ go install github.com/vulcanshen/clerk@latest
 
 | 명령어 | 설명 |
 |--------|------|
-| `install` | 모든 컴포넌트 설치 (hook + mcp + skills), `--force`로 재설치 |
-| `install hook` | SessionStart/SessionEnd 훅만 설치 |
-| `install mcp` | MCP 서버만 등록 |
-| `install skills` | 슬래시 명령어 스킬만 설치 |
-| `uninstall` | 모든 컴포넌트 제거 |
+| `register` | clerk를 Claude Code에 등록하고 환경 검증 |
+| `unregister` | clerk를 Claude Code에서 등록 해제 |
 | `config` | 현재 설정 표시 (`config show`의 별칭) |
 | `config show` | 병합된 설정과 파일 경로 표시 |
 | `config set <key> <value>` | 프로젝트 레벨 설정 값 변경 |
@@ -288,9 +285,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
 | `report` | 최근 요약에서 보고서 생성 (기본: 당일) |
 | `report --days 7` | 프로젝트 간 주간 보고서 |
-| `diagnosis` | 환경 확인 및 문제 자동 수정 |
-| `diagnosis error` | 문제 해결을 위한 오류 로그 표시 (`--mask`로 개인정보 마스킹) |
-| `diagnosis log` | 문제 해결을 위한 전체 로그 표시 (`--mask`로 개인정보 마스킹) |
+| `logs` | 문제 해결을 위한 전체 로그 표시 |
+| `logs --error` | 오류 로그만 표시 |
+| `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
 | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
 | `data purge` | 모든 clerk 데이터 삭제 (`-y`로 확인 건너뛰기) |
 | `version` | 버전 표시 및 업데이트 확인 |
@@ -356,7 +353,7 @@ clerk config set -g output.language en
 
 ## MCP 도구
 
-MCP 서버 설치 후 사용 가능 (`clerk install mcp`). Claude Code가 스킬을 통해 호출하므로 직접 사용할 필요 없습니다:
+설치 후 사용 가능 (`clerk register`). Claude Code가 스킬을 통해 호출하므로 직접 사용할 필요 없습니다:
 
 | 도구 | 설명 |
 |------|------|
@@ -366,7 +363,7 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`). Claude Code가 스킬
 
 ## 스킬
 
-스킬 설치 후 사용 가능 (`clerk install skills`):
+설치 후 사용 가능 (`clerk register`):
 
 | 스킬 | 설명 |
 |------|------|
@@ -378,16 +375,16 @@ MCP 서버 설치 후 사용 가능 (`clerk install mcp`). Claude Code가 스킬
 문제가 발생하면 먼저 diagnosis를 실행하세요 — 환경을 확인하고 일반적인 문제를 자동 수정합니다:
 
 ```bash
-clerk diagnosis
+clerk register
 ```
 
 문제가 지속되면 오류 로그를 내보내고 [issue를 제출](https://github.com/vulcanshen/clerk/issues)하세요:
 
 ```bash
-clerk diagnosis error --mask --days 7
+clerk logs --error --days 7
 ```
 
-`--mask` 플래그는 개인정보(사용자 이름, 경로)를 마스킹하여 GitHub issue에 안전하게 붙여넣을 수 있습니다.
+로그는 기본적으로 개인정보가 자동 마스킹됩니다. GitHub issue에 안전하게 붙여넣을 수 있습니다.
 
 ## 셸 자동 완성
 
