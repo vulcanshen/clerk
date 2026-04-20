@@ -227,7 +227,7 @@ var registerCmd = &cobra.Command{
 			fmt.Printf("Fixed %d issue(s). All checks passed now.\n", fixed)
 		} else {
 			fmt.Printf("%d issue(s) found, %d fixed.\n", issues, fixed)
-			fmt.Println("If issues persist, run 'clerk logs --error --mask' and report to GitHub.")
+			fmt.Println("If issues persist, run 'clerk logs --error' and report to GitHub.")
 		}
 	},
 }
