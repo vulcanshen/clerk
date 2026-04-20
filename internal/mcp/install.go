@@ -33,9 +33,23 @@ func CheckPath() string {
 		return ""
 	}
 	exe = filepath.ToSlash(exe)
-	// check if the output contains the current executable path
 	if !strings.Contains(string(output), exe) {
-		return "MCP server points to a different executable"
+		// extract old path from output: "clerk: /old/path mcp - ✓ Connected"
+		old := ""
+		for _, line := range strings.Split(string(output), "\n") {
+			if strings.HasPrefix(line, "clerk:") {
+				parts := strings.TrimPrefix(line, "clerk:")
+				parts = strings.TrimSpace(parts)
+				if idx := strings.Index(parts, " - "); idx > 0 {
+					old = parts[:idx]
+				}
+				break
+			}
+		}
+		if old != "" {
+			return fmt.Sprintf("MCP points to %s (expected %s mcp)", old, exe)
+		}
+		return fmt.Sprintf("MCP points to a different executable (expected %s mcp)", exe)
 	}
 	return ""
 }

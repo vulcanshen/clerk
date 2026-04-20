@@ -45,9 +45,6 @@ func migrateHiddenDirs(root string) (int, error) {
 		renamed++
 	}
 
-	if renamed > 0 {
-		fmt.Printf("Renamed %d hidden directories to non-hidden\n", renamed)
-	}
 	return renamed, nil
 }
 
@@ -89,7 +86,6 @@ func migrateSummaryDirs(root string) (int, error) {
 		moved++
 	}
 
-	fmt.Printf("Migrated %d date directories into summary/\n", moved)
 	return moved, nil
 }
 
@@ -124,12 +120,6 @@ func migrateTagsToIndex(root string) (int, error) {
 	rebuilt, err := rebuildIndex(root, cfg)
 	if err != nil {
 		return 0, err
-	}
-
-	if hasTags {
-		fmt.Printf("Migrated tags/ to index/ (%d summaries rebuilt)\n", rebuilt)
-	} else if rebuilt > 0 {
-		fmt.Printf("Rebuilt index/ (%d summaries)\n", rebuilt)
 	}
 
 	if hasTags || rebuilt > 0 {

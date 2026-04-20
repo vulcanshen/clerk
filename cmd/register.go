@@ -15,6 +15,7 @@ import (
 	"github.com/vulcanshen/clerk/internal/hook"
 	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
+	"github.com/vulcanshen/clerk/internal/progress"
 )
 
 var registerCmd = &cobra.Command{
@@ -163,6 +164,7 @@ var registerCmd = &cobra.Command{
 					logger.Errorf(cfg, "register: summary dir migration failed: %v", err)
 					issues++
 				} else if n > 0 {
+					fmt.Printf("Migration:   FIXED — moved %d date directories into summary/\n", n)
 					fixed++
 				}
 
@@ -171,6 +173,7 @@ var registerCmd = &cobra.Command{
 					logger.Errorf(cfg, "register: tags to index migration failed: %v", err)
 					issues++
 				} else if n > 0 {
+					fmt.Printf("Migration:   FIXED — rebuilt index from summaries\n")
 					fixed++
 				}
 
@@ -200,22 +203,23 @@ var registerCmd = &cobra.Command{
 
 		// Claude API test
 		fmt.Println()
-		fmt.Printf("Claude API:  testing...")
+		p := progress.New()
+		p.Start("Claude API test")
 		testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
 		testPrompt := feed.BuildPrompt(testConv, "", "en")
 		testOut, err := feed.CallClaude(testPrompt, "", "1m")
 		if err != nil {
-			fmt.Printf("\rClaude API:  FAILED — %v\n", err)
+			p.Fail(err)
 			issues++
 		} else {
 			summary, tags := feed.ParseSummaryAndTags(testOut)
 			if strings.TrimSpace(summary) == "" {
-				fmt.Printf("\rClaude API:  FAILED — empty summary (API format may have changed)\n")
+				p.Fail(fmt.Errorf("empty summary (API format may have changed)"))
 				issues++
 			} else if len(tags) == 0 {
-				fmt.Printf("\rClaude API:  WARNING — summary OK but no tags extracted\n")
+				p.DoneMsg("Claude API:  WARNING — summary OK but no tags extracted")
 			} else {
-				fmt.Printf("\rClaude API:  OK (%d tags)\n", len(tags))
+				p.DoneMsg(fmt.Sprintf("Claude API:  OK (%d tags)", len(tags)))
 			}
 		}
 

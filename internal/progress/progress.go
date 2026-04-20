@@ -69,6 +69,18 @@ func (s *Steps) Done() {
 	fmt.Fprintf(os.Stderr, "\r✓ %s\n", s.label)
 }
 
+// DoneMsg marks the current step as complete with a custom message.
+func (s *Steps) DoneMsg(msg string) {
+	if !s.enabled {
+		return
+	}
+	if s.stop != nil {
+		close(s.stop)
+		s.wg.Wait()
+	}
+	fmt.Fprintf(os.Stderr, "\r✓ %s\n", msg)
+}
+
 // Fail marks the current step as failed with an error.
 func (s *Steps) Fail(err error) {
 	if !s.enabled {
