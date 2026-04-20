@@ -48,7 +48,7 @@ clerk register
 | **可搜尋的歷史** | `/clerk-search` — 跨所有專案用關鍵字搜尋過去的工作 |
 | **每日摘要** | 全自動 — 每個 session 結束時自動產生，依日期和專案整理 |
 
-安裝一次。每個 session 都會自動摘要、建立索引、可搜尋。不需要記任何指令，不需要養成任何習慣。
+註冊一次。每個 session 都會自動摘要、建立索引、可搜尋。不需要記任何指令，不需要養成任何習慣。
 
 ## 你的資料，你的工具
 
@@ -364,7 +364,7 @@ clerk config set -g output.language en
 
 ## MCP 工具
 
-安裝後可用（`clerk register`）。這些由 Claude Code 透過 skill 呼叫，不需要直接使用：
+註冊後可用（`clerk register`）。這些由 Claude Code 透過 skill 呼叫，不需要直接使用：
 
 | 工具 | 說明 |
 |------|------|
@@ -374,7 +374,7 @@ clerk config set -g output.language en
 
 ## Skills
 
-安裝後可用（`clerk register`）：
+註冊後可用（`clerk register`）：
 
 | Skill | 說明 |
 |-------|------|

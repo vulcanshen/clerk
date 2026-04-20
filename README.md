@@ -48,7 +48,7 @@ After registering, clerk works silently in the background:
 | **Searchable history** | `/clerk-search` — find past work by keyword across all projects |
 | **Daily summaries** | Automatic — generated when each session ends, organized by date and project |
 
-Install once. Every session is automatically summarized, indexed, and searchable. No commands to remember, no habits to build.
+Register once. Every session is automatically summarized, indexed, and searchable. No commands to remember, no habits to build.
 
 ## Your data, your tools
 
@@ -365,7 +365,7 @@ clerk config set -g output.language en
 
 ## MCP Tools
 
-Available when installed (`clerk register`). These are called by Claude Code through skills — you don't need to invoke them directly.
+Available when registered (`clerk register`). These are called by Claude Code through skills — you don't need to invoke them directly.
 
 | Tool | Description |
 |------|-------------|
@@ -375,7 +375,7 @@ Available when installed (`clerk register`). These are called by Claude Code thr
 
 ## Skills
 
-Available when installed (`clerk register`):
+Available when registered (`clerk register`):
 
 | Skill | Description |
 |-------|-------------|
