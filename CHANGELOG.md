@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - `uninstall hook`, `uninstall mcp`, `uninstall skills` subcommands removed
 - `data purge` removed — use `rm -rf ~/.clerk/` instead
 - Old commands (`install`, `uninstall`, `diagnosis`) show deprecation message and exit with error
+- `logs` masks personal info by default (`--no-mask` to show raw)
+
+### CI
+- Upgrade GitHub Actions: checkout v4→v6, setup-go v5→v6, goreleaser-action v6→v7
 
 ## [v4.0.1] - 2026-04-19
 
