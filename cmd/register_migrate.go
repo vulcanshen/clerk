@@ -256,7 +256,26 @@ func updateSummaryFrontmatter(path string, terms []string) {
 	}
 	sb.WriteString(strings.TrimLeft(body, "\n"))
 
-	if err := os.WriteFile(path, []byte(sb.String()), 0644); err != nil {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".clerk-migrate-*.tmp")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to update frontmatter for %s: %v\n", path, err)
+		return
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.WriteString(sb.String()); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		fmt.Fprintf(os.Stderr, "Warning: failed to update frontmatter for %s: %v\n", path, err)
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		fmt.Fprintf(os.Stderr, "Warning: failed to update frontmatter for %s: %v\n", path, err)
+		return
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
 		fmt.Fprintf(os.Stderr, "Warning: failed to update frontmatter for %s: %v\n", path, err)
 	}
 }

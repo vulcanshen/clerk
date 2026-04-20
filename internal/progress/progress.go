@@ -43,15 +43,16 @@ func (s *Steps) Start(label string) {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
 		i := 0
 		for {
 			select {
 			case <-s.stop:
 				return
-			default:
+			case <-ticker.C:
 				fmt.Fprintf(os.Stderr, "\r%c %s", spinnerChars[i%len(spinnerChars)], s.label)
 				i++
-				time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}()

@@ -230,7 +230,8 @@ func Set(key, value string, global bool) error {
 }
 
 func saveRawToPath(path string, raw map[string]interface{}) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("creating config directory: %w", err)
 	}
 
@@ -239,7 +240,26 @@ func saveRawToPath(path string, raw map[string]interface{}) error {
 		return fmt.Errorf("marshaling config: %w", err)
 	}
 
-	return os.WriteFile(path, append(data, '\n'), 0644)
+	tmp, err := os.CreateTemp(dir, ".clerk-config-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+
+	if _, err := tmp.Write(append(data, '\n')); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("writing config: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("closing temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("renaming config: %w", err)
+	}
+	return nil
 }
 
 
@@ -315,7 +335,7 @@ func ExpandPath(path string) string {
 		home, _ := os.UserHomeDir()
 		return home
 	}
-	if strings.HasPrefix(path, "~/") {
+	if strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "~\\") {
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, path[2:])
 	}

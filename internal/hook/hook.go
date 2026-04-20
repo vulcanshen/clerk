@@ -46,7 +46,8 @@ func readSettings() (map[string]interface{}, error) {
 
 func writeSettings(settings map[string]interface{}) error {
 	path := settingsPath()
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("creating settings directory: %w", err)
 	}
 
@@ -55,7 +56,26 @@ func writeSettings(settings map[string]interface{}) error {
 		return fmt.Errorf("marshaling settings: %w", err)
 	}
 
-	return os.WriteFile(path, append(data, '\n'), 0644)
+	tmp, err := os.CreateTemp(dir, ".settings-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+
+	if _, err := tmp.Write(append(data, '\n')); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("writing settings: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("closing temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("renaming settings: %w", err)
+	}
+	return nil
 }
 
 // IsInstalled checks if clerk hooks are currently installed.
