@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 - `diagnosis error` / `diagnosis log` → `clerk logs --error` / `clerk logs`
 - `install hook`, `install mcp`, `install skills` subcommands removed
 - `uninstall hook`, `uninstall mcp`, `uninstall skills` subcommands removed
+- `data purge` removed — use `rm -rf ~/.clerk/` instead
+- Old commands (`install`, `uninstall`, `diagnosis`) show deprecation message and exit with error
 
 ## [v4.0.1] - 2026-04-19
 

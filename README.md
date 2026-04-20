@@ -291,7 +291,6 @@ go install github.com/vulcanshen/clerk@latest
 | `logs --error` | Show error logs only |
 | `logs --no-mask` | Show raw logs without redacting personal info |
 | `data moveto <path>` | Move clerk data to a new directory and update config |
-| `data purge` | Delete all clerk data (`-y` to skip confirmation) |
 | `version` | Show current version and check for updates |
 
 Internal commands (called by hooks, not by users):
@@ -311,6 +310,7 @@ Internal commands (called by hooks, not by users):
 | `diagnosis` | `register` |
 | `diagnosis error` | `logs --error` |
 | `diagnosis log` | `logs` |
+| `data purge` | removed — use `rm -rf ~/.clerk/` |
 
 ## Configuration
 

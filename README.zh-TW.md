@@ -290,7 +290,6 @@ go install github.com/vulcanshen/clerk@latest
 | `logs --error` | 僅顯示錯誤日誌 |
 | `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |
 | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
-| `data purge` | 刪除所有 clerk 資料（`-y` 跳過確認） |
 | `version` | 顯示版本並檢查更新 |
 
 內部指令（由 hook 呼叫，非使用者直接使用）：
@@ -310,6 +309,7 @@ go install github.com/vulcanshen/clerk@latest
 | `diagnosis` | `register` |
 | `diagnosis error` | `logs --error` |
 | `diagnosis log` | `logs` |
+| `data purge` | 已移除 — 使用 `rm -rf ~/.clerk/` |
 
 ## 設定
 

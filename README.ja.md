@@ -291,7 +291,6 @@ go install github.com/vulcanshen/clerk@latest
 | `logs --error` | エラーログのみ表示 |
 | `logs --no-mask` | 個人情報をマスクせず生ログを表示 |
 | `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
-| `data purge` | すべての clerk データを削除（`-y` で確認スキップ） |
 | `version` | バージョン表示とアップデート確認 |
 
 内部コマンド（フックから呼び出されるもので、ユーザーが直接使用するものではありません）：
@@ -311,6 +310,7 @@ go install github.com/vulcanshen/clerk@latest
 | `diagnosis` | `register` |
 | `diagnosis error` | `logs --error` |
 | `diagnosis log` | `logs` |
+| `data purge` | 廃止 — `rm -rf ~/.clerk/` を使用 |
 
 ## 設定
 

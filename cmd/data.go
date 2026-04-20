@@ -11,6 +11,5 @@ var dataCmd = &cobra.Command{
 
 func init() {
 	dataCmd.AddCommand(movetoCmd)
-	dataCmd.AddCommand(purgeCmd)
 	rootCmd.AddCommand(dataCmd)
 }

@@ -291,7 +291,6 @@ go install github.com/vulcanshen/clerk@latest
 | `logs --error` | 오류 로그만 표시 |
 | `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
 | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
-| `data purge` | 모든 clerk 데이터 삭제 (`-y`로 확인 건너뛰기) |
 | `version` | 버전 표시 및 업데이트 확인 |
 
 내부 명령어 (훅에서 호출되며, 사용자가 직접 사용하지 않음):
@@ -311,6 +310,7 @@ go install github.com/vulcanshen/clerk@latest
 | `diagnosis` | `register` |
 | `diagnosis error` | `logs --error` |
 | `diagnosis log` | `logs` |
+| `data purge` | 제거됨 — `rm -rf ~/.clerk/` 사용 |
 
 ## 설정
 
