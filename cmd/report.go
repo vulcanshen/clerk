@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -208,9 +209,16 @@ func flushActiveSessions(cfg config.Config) {
 		return
 	}
 
+	// Collect unique sessions to flush
+	type flushJob struct {
+		inputData []byte
+		projCfg   config.Config
+		cwd       string
+	}
+
 	seen := make(map[string]bool)
+	var jobs []flushJob
 	for _, entries := range allSessions {
-		// iterate in reverse to get the latest entry per cwd
 		for i := len(entries) - 1; i >= 0; i-- {
 			entry := entries[i]
 			if entry.TranscriptPath == "" || entry.Cwd == "" {
@@ -239,11 +247,22 @@ func flushActiveSessions(cfg config.Config) {
 				continue
 			}
 
-			if err := feed.Run(inputData, projCfg); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to flush session for %s: %v\n", entry.Cwd, err)
-			}
+			jobs = append(jobs, flushJob{inputData: inputData, projCfg: projCfg, cwd: entry.Cwd})
 		}
 	}
+
+	// Run all feed.Run calls in parallel — each has its own slug lock
+	var wg sync.WaitGroup
+	for _, job := range jobs {
+		wg.Add(1)
+		go func(j flushJob) {
+			defer wg.Done()
+			if err := feed.Run(j.inputData, j.projCfg); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to flush session for %s: %v\n", j.cwd, err)
+			}
+		}(job)
+	}
+	wg.Wait()
 }
 
 func init() {

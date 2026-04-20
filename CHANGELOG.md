@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v5.0.1] - 2026-04-20
+
+### Performance
+- `clerk report --active`: flush active sessions in parallel (N sessions: N×5s → ~5s)
+- `saveIndex`: write term files in parallel with goroutines, shared `sync.Map` stat cache
+- `clerk register`: MCP check reduced from 2 `claude mcp list` calls to 1
+- `clerk register`: `settings.json` read once and cached for all hook checks
+
+### Bug Fixes
+- `register`: hook FIXED message now shows updated path (was showing stale cached path)
+- `register`: MCP FIXING message shows old path when pointing to different executable
+- `register`: Claude API test shows spinner instead of appearing frozen
+- `register`: migration output unified (FIXING/FIXED/FAILED format, no duplicate prints)
+
+## [v5.0.0] - 2026-04-20
+
 ### New Features
 - `clerk report` now shows step-by-step progress with spinner (only in terminal, silent when piped)
 - Project config (`.clerk.json`) lookup walks up directories — works from subdirectories

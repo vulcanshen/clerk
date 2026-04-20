@@ -45,9 +45,12 @@ var registerCmd = &cobra.Command{
 
 		cfg, cfgErr := config.Load()
 
+		// Read settings.json once for all hook checks
+		settings, _ := readSettingsJSON()
+
 		// Hook
 		if hook.IsInstalled() {
-			hookIssue := checkHookPath()
+			hookIssue := checkHookPathWith(settings)
 			if hookIssue != "" {
 				fmt.Printf("Hook:        FIXING — %s\n", hookIssue)
 				if err := hook.ForceInstall(); err != nil {
@@ -57,11 +60,12 @@ var registerCmd = &cobra.Command{
 					}
 					issues++
 				} else {
-					fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
+					fresh, _ := readSettingsJSON()
+					fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 					fixed++
 				}
 			} else {
-				binPath := extractHookBinary()
+				binPath := extractHookBinaryFrom(settings)
 				if binPath != "" {
 					if _, err := os.Stat(binPath); os.IsNotExist(err) {
 						fmt.Printf("Hook:        FIXING — binary not found at %s\n", binPath)
@@ -69,7 +73,8 @@ var registerCmd = &cobra.Command{
 							fmt.Printf("Hook:        FAILED — %v\n", err)
 							issues++
 						} else {
-							fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
+							fresh, _ := readSettingsJSON()
+							fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 							fixed++
 						}
 					} else {
@@ -88,16 +93,15 @@ var registerCmd = &cobra.Command{
 				}
 				issues++
 			} else {
-				fmt.Printf("Hook:        FIXED → %s\n", extractHookBinary())
+				fresh, _ := readSettingsJSON()
+				fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 				fixed++
 			}
 		}
 
-		// MCP
-		mcpIssue := ""
-		if mcpinstall.IsInstalled() {
-			mcpIssue = mcpinstall.CheckPath()
-		} else {
+		// MCP (single `claude mcp list` call)
+		mcpInstalled, mcpIssue := mcpinstall.CheckStatus()
+		if !mcpInstalled {
 			mcpIssue = "not registered"
 		}
 		if mcpIssue == "" {
@@ -284,9 +288,8 @@ func extractHookCommands(settings map[string]interface{}) []string {
 	return cmds
 }
 
-func extractHookBinary() string {
-	settings, err := readSettingsJSON()
-	if err != nil {
+func extractHookBinaryFrom(settings map[string]interface{}) string {
+	if settings == nil {
 		return ""
 	}
 	for _, cmd := range extractHookCommands(settings) {
@@ -300,9 +303,8 @@ func extractHookBinary() string {
 	return ""
 }
 
-func checkHookPath() string {
-	settings, err := readSettingsJSON()
-	if err != nil {
+func checkHookPathWith(settings map[string]interface{}) string {
+	if settings == nil {
 		return ""
 	}
 	for _, cmd := range extractHookCommands(settings) {

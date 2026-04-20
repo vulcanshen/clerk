@@ -10,48 +10,44 @@ import (
 	"github.com/vulcanshen/clerk/internal/mcpserver"
 )
 
-// IsInstalled checks if clerk MCP server is currently registered.
-func IsInstalled() bool {
+// CheckStatus runs `claude mcp list` once and returns whether clerk is
+// registered (installed) and any path mismatch issue (empty string if OK).
+func CheckStatus() (installed bool, issue string) {
 	c := exec.Command("claude", "mcp", "list")
 	output, err := c.Output()
 	if err != nil {
-		return false
+		return false, ""
 	}
-	return strings.Contains(string(output), "clerk")
-}
+	if !strings.Contains(string(output), "clerk") {
+		return false, ""
+	}
 
-// CheckPath verifies the registered MCP server points to the current executable.
-// Returns empty string if OK, or a description of the problem.
-func CheckPath() string {
-	c := exec.Command("claude", "mcp", "list")
-	output, err := c.Output()
-	if err != nil {
-		return ""
-	}
+	// installed — now check path
 	exe, err := os.Executable()
 	if err != nil {
-		return ""
+		return true, ""
 	}
 	exe = filepath.ToSlash(exe)
-	if !strings.Contains(string(output), exe) {
-		// extract old path from output: "clerk: /old/path mcp - ✓ Connected"
-		old := ""
-		for _, line := range strings.Split(string(output), "\n") {
-			if strings.HasPrefix(line, "clerk:") {
-				parts := strings.TrimPrefix(line, "clerk:")
-				parts = strings.TrimSpace(parts)
-				if idx := strings.Index(parts, " - "); idx > 0 {
-					old = parts[:idx]
-				}
-				break
-			}
-		}
-		if old != "" {
-			return fmt.Sprintf("MCP points to %s (expected %s mcp)", old, exe)
-		}
-		return fmt.Sprintf("MCP points to a different executable (expected %s mcp)", exe)
+	if strings.Contains(string(output), exe) {
+		return true, ""
 	}
-	return ""
+
+	// extract old path from output: "clerk: /old/path mcp - ✓ Connected"
+	old := ""
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.HasPrefix(line, "clerk:") {
+			parts := strings.TrimPrefix(line, "clerk:")
+			parts = strings.TrimSpace(parts)
+			if idx := strings.Index(parts, " - "); idx > 0 {
+				old = parts[:idx]
+			}
+			break
+		}
+	}
+	if old != "" {
+		return true, fmt.Sprintf("MCP points to %s (expected %s mcp)", old, exe)
+	}
+	return true, fmt.Sprintf("MCP points to a different executable (expected %s mcp)", exe)
 }
 
 func ForceInstall() error {

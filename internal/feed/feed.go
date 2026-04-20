@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/vulcanshen/clerk/internal/config"
@@ -400,72 +401,94 @@ func saveIndex(cfg config.Config, summaryFilePath string, terms []string) error 
 		return fmt.Errorf("creating index directory: %w", err)
 	}
 
+	mdLink := indexMarkdownLink(dir, summaryFilePath)
+
+	// Cache os.Stat results for stale link checking across all terms
+	statCache := &sync.Map{}
+	fileExists := func(absPath string) bool {
+		if v, ok := statCache.Load(absPath); ok {
+			return v.(bool)
+		}
+		_, err := os.Stat(absPath)
+		exists := err == nil
+		statCache.Store(absPath, exists)
+		return exists
+	}
+
+	var wg sync.WaitGroup
 	for _, term := range terms {
 		if strings.Contains(term, "..") || strings.Contains(term, "/") || strings.Contains(term, "\\") {
 			continue
 		}
-		termFile := filepath.Join(dir, term+".md")
+		wg.Add(1)
+		go func(term string) {
+			defer wg.Done()
+			saveIndexTerm(dir, term, mdLink, fileExists)
+		}(term)
+	}
+	wg.Wait()
+	return nil
+}
 
-		f, err := os.OpenFile(termFile, os.O_CREATE|os.O_RDWR, 0644)
-		if err != nil {
+func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
+	termFile := filepath.Join(dir, term+".md")
+
+	f, err := os.OpenFile(termFile, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return
+	}
+
+	if err := platform.FlockExclusive(f); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to lock index file %s: %v\n", term, err)
+		f.Close()
+		return
+	}
+
+	// read existing content through locked file descriptor
+	f.Seek(0, 0)
+	existing, _ := io.ReadAll(f)
+	lines := strings.Split(string(existing), "\n")
+	var cleaned []string
+	found := false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
 			continue
 		}
-
-		if err := platform.FlockExclusive(f); err != nil {
-			fmt.Fprintf(os.Stderr, "warning: failed to lock index file %s: %v\n", term, err)
-			f.Close()
-			continue
-		}
-
-		mdLink := indexMarkdownLink(dir, summaryFilePath)
-
-		// read existing content through locked file descriptor
-		f.Seek(0, 0)
-		existing, _ := io.ReadAll(f)
-		lines := strings.Split(string(existing), "\n")
-		var cleaned []string
-		found := false
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if trimmed == "" {
-				continue
-			}
-			// check for stale entries by extracting link path
-			if start := strings.Index(trimmed, "]("); start != -1 {
-				end := strings.Index(trimmed[start:], ")")
-				if end != -1 {
-					relPath := trimmed[start+2 : start+end]
-					absPath := filepath.Join(dir, relPath)
-					if _, err := os.Stat(absPath); err != nil {
-						continue // stale entry
-					}
+		// check for stale entries by extracting link path
+		if start := strings.Index(trimmed, "]("); start != -1 {
+			end := strings.Index(trimmed[start:], ")")
+			if end != -1 {
+				relPath := trimmed[start+2 : start+end]
+				absPath := filepath.Join(dir, relPath)
+				if !fileExists(absPath) {
+					continue // stale entry
 				}
 			}
-			if strings.Contains(trimmed, mdLink) {
-				found = true
-			}
-			cleaned = append(cleaned, line)
 		}
-
-		if !found {
-			cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
+		if strings.Contains(trimmed, mdLink) {
+			found = true
 		}
+		cleaned = append(cleaned, line)
+	}
 
-		// overwrite with cleaned content (truncate after write to avoid corrupt partial writes)
-		content := strings.Join(cleaned, "\n") + "\n"
-		f.Seek(0, 0)
-		n, err := f.WriteString(content)
-		if err != nil {
-			platform.FlockUnlock(f)
-			f.Close()
-			continue
-		}
-		f.Truncate(int64(n))
+	if !found {
+		cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
+	}
 
+	// overwrite with cleaned content (truncate after write to avoid corrupt partial writes)
+	content := strings.Join(cleaned, "\n") + "\n"
+	f.Seek(0, 0)
+	n, err := f.WriteString(content)
+	if err != nil {
 		platform.FlockUnlock(f)
 		f.Close()
+		return
 	}
-	return nil
+	f.Truncate(int64(n))
+
+	platform.FlockUnlock(f)
+	f.Close()
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
