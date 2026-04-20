@@ -39,7 +39,7 @@ clerk register
 
 That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop.
 
-It hooks into Claude Code and works silently in the background:
+After registering, clerk works silently in the background:
 
 | What you get | How |
 |--------------|-----|
@@ -234,6 +234,8 @@ Migrated from Vue 2 to Vue 3, replaced Vuex with Pinia, updated all unit tests.
 
 ### Quick Install
 
+**Step 1:** Download the clerk binary
+
 macOS / Linux / Git Bash:
 
 ```bash
@@ -246,7 +248,7 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-Then set up the hooks, MCP server, and skills:
+**Step 2:** Register with Claude Code
 
 ```bash
 clerk register
@@ -382,7 +384,7 @@ Available when installed (`clerk register`):
 
 ## Troubleshooting
 
-If something isn't working, run register first — it checks your environment and auto-fixes common issues:
+If something isn't working, re-run `register` — it checks your environment and auto-fixes common issues:
 
 ```bash
 clerk register
@@ -394,7 +396,7 @@ If the problem persists, export error logs and [open an issue](https://github.co
 clerk logs --error --days 7
 ```
 
-Logs are automatically redacted (personal info masked) by default. The output is safe to paste in a GitHub issue.
+Logs are automatically redacted (paths, usernames) by default. The output is safe to paste in a GitHub issue. Use `--no-mask` to see the raw content.
 
 ## Shell Completion
 

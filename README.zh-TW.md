@@ -39,7 +39,7 @@ clerk register
 
 就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。
 
-掛載後，clerk 會在背景安靜地運作：
+註冊後，clerk 會在背景安靜地運作：
 
 | 你得到什麼 | 怎麼做 |
 |-----------|--------|
@@ -233,6 +233,8 @@ clerk report --days 7 --active
 
 ### 快速安裝
 
+**第一步：** 下載 clerk binary
+
 macOS / Linux / Git Bash：
 
 ```bash
@@ -245,7 +247,7 @@ Windows（PowerShell）：
 irm https://raw.githubusercontent.com/vulcanshen/clerk/main/install.ps1 | iex
 ```
 
-然後設定 hook、MCP server 和 skills：
+**第二步：** 註冊到 Claude Code
 
 ```bash
 clerk register
@@ -381,7 +383,7 @@ clerk config set -g output.language en
 
 ## 疑難排解
 
-如果有問題，先執行 diagnosis — 它會檢查環境並自動修復常見問題：
+如果有問題，重新執行 `register` — 它會檢查環境並自動修復常見問題：
 
 ```bash
 clerk register
@@ -393,7 +395,7 @@ clerk register
 clerk logs --error --days 7
 ```
 
-日誌預設自動遮蔽個資，輸出可以安全地貼到 GitHub issue。
+日誌預設自動遮蔽個資（路徑、使用者名稱等），輸出可以直接貼到 GitHub issue。需要看原始內容時加 `--no-mask`。
 
 ## Shell 自動補全
 
