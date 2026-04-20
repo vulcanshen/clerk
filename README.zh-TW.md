@@ -283,7 +283,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill <slug>` | 強制終止指定的 feed process |
 | `status kill --all` | 強制終止所有 feed process |
 | `report` | 產生近期摘要報告（預設：當天） |
-| `report --days 7` | 產生跨專案週報 |
+| `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | `logs` | 顯示所有日誌供排查 |
 | `logs --error` | 僅顯示錯誤日誌 |
 | `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |

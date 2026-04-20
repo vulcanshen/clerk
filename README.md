@@ -284,7 +284,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill <slug>` | Kill a specific active feed process |
 | `status kill --all` | Kill all active feed processes |
 | `report` | Generate a report from recent summaries (default: today) |
-| `report --days 7` | Weekly report across all projects |
+| `report --days 7 -o weekly.md` | Weekly report across all projects |
 | `logs` | Show all logs for troubleshooting |
 | `logs --error` | Show error logs only |
 | `logs --no-mask` | Show raw logs without redacting personal info |

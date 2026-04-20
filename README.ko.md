@@ -284,7 +284,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
 | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
 | `report` | 최근 요약에서 보고서 생성 (기본: 당일) |
-| `report --days 7` | 프로젝트 간 주간 보고서 |
+| `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
 | `logs` | 문제 해결을 위한 전체 로그 표시 |
 | `logs --error` | 오류 로그만 표시 |
 | `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
