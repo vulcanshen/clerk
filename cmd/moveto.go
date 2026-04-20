@@ -14,6 +14,9 @@ var movetoCmd = &cobra.Command{
 	Use:   "moveto <path>",
 	Short: "Move clerk data to a new directory and update config",
 	Args:  cobra.ExactArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return nil, cobra.ShellCompDirectiveFilterDirs
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dest := config.ExpandPath(args[0])
 

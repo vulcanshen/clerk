@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
+	"github.com/vulcanshen/clerk/internal/progress"
 )
 
 var logsDays int
@@ -115,11 +116,15 @@ Output the redacted log lines only, no explanation.
 
 %s`, raw)
 
+	p := progress.New()
+	p.Start("Redacting personal information")
 	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error: log masking failed (Claude API error). Raw output suppressed to protect personal information.")
+		p.Fail(err)
+		fmt.Fprintln(os.Stderr, "Raw output suppressed to protect personal information.")
 		return ""
 	}
+	p.Done()
 	return output
 }
 

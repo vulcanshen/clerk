@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### New Features
+- `clerk status --json` — structured JSON output for scripting
+- `clerk config show --json` — pure JSON config output for machine consumption
+- `clerk report -o` now supports tab completion for `.md`/`.txt` files
+- `clerk data moveto` now supports tab completion for directories
+- `clerk logs` shows spinner while redacting personal information via Claude API
+
+### Bug Fixes
+- `report -o ~/file.md`: tilde (`~`) is now expanded correctly (was writing to literal `~` directory)
+- `register` now exits non-zero when issues remain unresolved (was always exit 0)
+- `register` output moved to stderr (was polluting stdout)
+- `punch` sessions file now uses file locking to prevent corruption from concurrent writes
+- `writeCursor` now uses atomic write (temp+rename) to prevent cursor corruption on crash
+- `status --json` outputs `[]` instead of `null` when no sessions exist
+- `report --active` flush limited to 5 concurrent Claude API calls (was unbounded)
+
 ## [v5.0.1] - 2026-04-20
 
 ### Performance

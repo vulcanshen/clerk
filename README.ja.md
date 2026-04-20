@@ -277,10 +277,12 @@ go install github.com/vulcanshen/clerk@latest
 | `unregister` | clerk を Claude Code から登録解除 |
 | `config` | 現在の設定を表示（`config show` のエイリアス） |
 | `config show` | マージされた設定とファイルパスを表示 |
+| `config show --json` | 設定をJSON形式で出力 |
 | `config set <key> <value>` | プロジェクトレベルの設定値を変更 |
 | `config set -g <key> <value>` | グローバル設定値を変更 |
 | `status` | アクティブな feed プロセスと中断されたセッションを表示 |
 | `status --watch` | ステータスをリアルタイム更新（毎秒） |
+| `status --json` | ステータスをJSON形式で出力 |
 | `status retry <slug>` | 指定した中断セッションを再試行 |
 | `status retry --all` | すべての中断セッションを再試行 |
 | `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |

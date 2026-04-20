@@ -276,10 +276,12 @@ go install github.com/vulcanshen/clerk@latest
 | `unregister` | 從 Claude Code 取消註冊 clerk |
 | `config` | 顯示目前的設定（等同 `config show`） |
 | `config show` | 顯示合併後的設定與檔案路徑 |
+| `config show --json` | 以 JSON 格式輸出設定 |
 | `config set <key> <value>` | 設定專案層級的配置值 |
 | `config set -g <key> <value>` | 設定全域配置值 |
 | `status` | 顯示進行中的 feed process 和中斷的 session |
 | `status --watch` | 即時重新整理狀態（每秒更新） |
+| `status --json` | 以 JSON 格式輸出狀態 |
 | `status retry <slug>` | 重試指定的中斷 session |
 | `status retry --all` | 重試所有中斷的 session |
 | `status kill <slug>` | 強制終止指定的 feed process |

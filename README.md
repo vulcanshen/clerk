@@ -277,10 +277,12 @@ go install github.com/vulcanshen/clerk@latest
 | `unregister` | Unregister clerk from Claude Code |
 | `config` | Show current configuration (alias for `config show`) |
 | `config show` | Show merged configuration and file paths |
+| `config show --json` | Output configuration in JSON format |
 | `config set <key> <value>` | Set project-level config value |
 | `config set -g <key> <value>` | Set global config value |
 | `status` | Show active feed processes and interrupted sessions |
 | `status --watch` | Live-refresh status every second |
+| `status --json` | Output status in JSON format |
 | `status retry <slug>` | Retry a specific interrupted session |
 | `status retry --all` | Retry all interrupted sessions |
 | `status kill <slug>` | Kill a specific active feed process |

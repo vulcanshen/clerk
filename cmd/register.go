@@ -21,26 +21,28 @@ import (
 var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register clerk with Claude Code and verify environment",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		issues := 0
 		fixed := 0
+
+		w := os.Stderr
 
 		// Executable
 		exe, err := os.Executable()
 		if err != nil || exe == "" {
-			fmt.Printf("Executable:  (unable to detect)\n")
+			fmt.Fprintf(w, "Executable:  (unable to detect)\n")
 		} else {
-			fmt.Printf("Executable:  %s\n", exe)
+			fmt.Fprintf(w, "Executable:  %s\n", exe)
 		}
-		fmt.Printf("Version:     %s\n", Version)
+		fmt.Fprintf(w, "Version:     %s\n", Version)
 
 		// Claude CLI
 		claudeOut, err := exec.Command("claude", "--version").Output()
 		if err != nil {
-			fmt.Printf("Claude CLI:  NOT FOUND — clerk requires Claude Code to be installed\n")
+			fmt.Fprintf(w, "Claude CLI:  NOT FOUND — clerk requires Claude Code to be installed\n")
 			issues++
 		} else {
-			fmt.Printf("Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
+			fmt.Fprintf(w, "Claude CLI:  OK (%s)\n", strings.TrimSpace(string(claudeOut)))
 		}
 
 		cfg, cfgErr := config.Load()
@@ -52,49 +54,49 @@ var registerCmd = &cobra.Command{
 		if hook.IsInstalled() {
 			hookIssue := checkHookPathWith(settings)
 			if hookIssue != "" {
-				fmt.Printf("Hook:        FIXING — %s\n", hookIssue)
+				fmt.Fprintf(w, "Hook:        FIXING — %s\n", hookIssue)
 				if err := hook.ForceInstall(); err != nil {
-					fmt.Printf("Hook:        FAILED — %v\n", err)
+					fmt.Fprintf(w, "Hook:        FAILED — %v\n", err)
 					if cfgErr == nil {
 						logger.Errorf(cfg, "register: hook fix failed: %v", err)
 					}
 					issues++
 				} else {
 					fresh, _ := readSettingsJSON()
-					fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
+					fmt.Fprintf(w, "Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 					fixed++
 				}
 			} else {
 				binPath := extractHookBinaryFrom(settings)
 				if binPath != "" {
 					if _, err := os.Stat(binPath); os.IsNotExist(err) {
-						fmt.Printf("Hook:        FIXING — binary not found at %s\n", binPath)
+						fmt.Fprintf(w, "Hook:        FIXING — binary not found at %s\n", binPath)
 						if err := hook.ForceInstall(); err != nil {
-							fmt.Printf("Hook:        FAILED — %v\n", err)
+							fmt.Fprintf(w, "Hook:        FAILED — %v\n", err)
 							issues++
 						} else {
 							fresh, _ := readSettingsJSON()
-							fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
+							fmt.Fprintf(w, "Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 							fixed++
 						}
 					} else {
-						fmt.Printf("Hook:        OK (%s)\n", binPath)
+						fmt.Fprintf(w, "Hook:        OK (%s)\n", binPath)
 					}
 				} else {
-					fmt.Printf("Hook:        OK\n")
+					fmt.Fprintf(w, "Hook:        OK\n")
 				}
 			}
 		} else {
-			fmt.Printf("Hook:        FIXING — not installed\n")
+			fmt.Fprintf(w, "Hook:        FIXING — not installed\n")
 			if err := hook.ForceInstall(); err != nil {
-				fmt.Printf("Hook:        FAILED — %v\n", err)
+				fmt.Fprintf(w, "Hook:        FAILED — %v\n", err)
 				if cfgErr == nil {
 					logger.Errorf(cfg, "register: hook fix failed: %v", err)
 				}
 				issues++
 			} else {
 				fresh, _ := readSettingsJSON()
-				fmt.Printf("Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
+				fmt.Fprintf(w, "Hook:        FIXED → %s\n", extractHookBinaryFrom(fresh))
 				fixed++
 			}
 		}
@@ -106,23 +108,23 @@ var registerCmd = &cobra.Command{
 		}
 		if mcpIssue == "" {
 			if exe != "" {
-				fmt.Printf("MCP:         OK (%s mcp)\n", exe)
+				fmt.Fprintf(w, "MCP:         OK (%s mcp)\n", exe)
 			} else {
-				fmt.Printf("MCP:         OK\n")
+				fmt.Fprintf(w, "MCP:         OK\n")
 			}
 		} else {
-			fmt.Printf("MCP:         FIXING — %s\n", mcpIssue)
+			fmt.Fprintf(w, "MCP:         FIXING — %s\n", mcpIssue)
 			if err := mcpinstall.ForceInstall(); err != nil {
-				fmt.Printf("MCP:         FAILED — %v\n", err)
+				fmt.Fprintf(w, "MCP:         FAILED — %v\n", err)
 				if cfgErr == nil {
 					logger.Errorf(cfg, "register: mcp fix failed: %v", err)
 				}
 				issues++
 			} else {
 				if exe != "" {
-					fmt.Printf("MCP:         FIXED → %s mcp\n", exe)
+					fmt.Fprintf(w, "MCP:         FIXED → %s mcp\n", exe)
 				} else {
-					fmt.Printf("MCP:         FIXED\n")
+					fmt.Fprintf(w, "MCP:         FIXED\n")
 				}
 				fixed++
 			}
@@ -131,82 +133,82 @@ var registerCmd = &cobra.Command{
 		// Skills — always write latest content
 		skillsDir := commands.SkillsDir()
 		if err := commands.WriteSkills(); err != nil {
-			fmt.Printf("Skills:      FAILED — %v\n", err)
+			fmt.Fprintf(w, "Skills:      FAILED — %v\n", err)
 			if cfgErr == nil {
 				logger.Errorf(cfg, "register: skills fix failed: %v", err)
 			}
 			issues++
 		} else {
-			fmt.Printf("Skills:      OK (%s)\n", skillsDir)
+			fmt.Fprintf(w, "Skills:      OK (%s)\n", skillsDir)
 		}
 
 		// Output dir
 		if cfgErr != nil {
-			fmt.Printf("Config:      ERROR — %v\n", cfgErr)
+			fmt.Fprintf(w, "Config:      ERROR — %v\n", cfgErr)
 			issues++
 		} else {
 			outDir := config.ExpandPath(cfg.Output.Dir)
 			if info, err := os.Stat(outDir); err != nil {
-				fmt.Printf("Output dir:  NOT FOUND — %s (will be created on first feed)\n", outDir)
+				fmt.Fprintf(w, "Output dir:  NOT FOUND — %s (will be created on first feed)\n", outDir)
 			} else if !info.IsDir() {
-				fmt.Printf("Output dir:  ERROR — %s exists but is not a directory\n", outDir)
+				fmt.Fprintf(w, "Output dir:  ERROR — %s exists but is not a directory\n", outDir)
 				issues++
 			} else {
-				fmt.Printf("Output dir:  OK (%s)\n", outDir)
+				fmt.Fprintf(w, "Output dir:  OK (%s)\n", outDir)
 
 				if n, err := migrateHiddenDirs(outDir); err != nil {
-					fmt.Printf("Migration:   FAILED — %v\n", err)
+					fmt.Fprintf(w, "Migration:   FAILED — %v\n", err)
 					logger.Errorf(cfg, "register: hidden dir migration failed: %v", err)
 					issues++
 				} else if n > 0 {
-					fmt.Printf("Migration:   FIXED — renamed %d hidden directories\n", n)
+					fmt.Fprintf(w, "Migration:   FIXED — renamed %d hidden directories\n", n)
 					fixed++
 				}
 
 				if n, err := migrateSummaryDirs(outDir); err != nil {
-					fmt.Printf("Migration:   FAILED — %v\n", err)
+					fmt.Fprintf(w, "Migration:   FAILED — %v\n", err)
 					logger.Errorf(cfg, "register: summary dir migration failed: %v", err)
 					issues++
 				} else if n > 0 {
-					fmt.Printf("Migration:   FIXED — moved %d date directories into summary/\n", n)
+					fmt.Fprintf(w, "Migration:   FIXED — moved %d date directories into summary/\n", n)
 					fixed++
 				}
 
 				if n, err := migrateTagsToIndex(outDir); err != nil {
-					fmt.Printf("Migration:   FAILED — %v\n", err)
+					fmt.Fprintf(w, "Migration:   FAILED — %v\n", err)
 					logger.Errorf(cfg, "register: tags to index migration failed: %v", err)
 					issues++
 				} else if n > 0 {
-					fmt.Printf("Migration:   FIXED — rebuilt index from summaries\n")
+					fmt.Fprintf(w, "Migration:   FIXED — rebuilt index from summaries\n")
 					fixed++
 				}
 
 				if !checkMigration(outDir) {
-					fmt.Printf("Migration:   OK\n")
+					fmt.Fprintf(w, "Migration:   OK\n")
 				}
 			}
 
 			// Config details
-			fmt.Println()
-			fmt.Printf("Config files:\n")
-			fmt.Printf("  global:    %s\n", config.GlobalConfigPath())
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "Config files:\n")
+			fmt.Fprintf(w, "  global:    %s\n", config.GlobalConfigPath())
 			projectCfg := config.ProjectConfigPath("")
 			if _, err := os.Stat(projectCfg); err == nil {
-				fmt.Printf("  project:   %s\n", projectCfg)
+				fmt.Fprintf(w, "  project:   %s\n", projectCfg)
 			}
-			fmt.Println()
-			fmt.Printf("Config values:\n")
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "Config values:\n")
 			for _, s := range config.LoadSources() {
 				if s.Value == "" {
-					fmt.Printf("  %-20s (not set)\n", s.Key)
+					fmt.Fprintf(w, "  %-20s (not set)\n", s.Key)
 				} else {
-					fmt.Printf("  %-20s %s  ← %s\n", s.Key, s.Value, s.Source)
+					fmt.Fprintf(w, "  %-20s %s  ← %s\n", s.Key, s.Value, s.Source)
 				}
 			}
 		}
 
 		// Claude API test
-		fmt.Println()
+		fmt.Fprintln(w)
 		p := progress.New()
 		p.Start("Claude API test")
 		testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
@@ -228,15 +230,18 @@ var registerCmd = &cobra.Command{
 		}
 
 		// Summary
-		fmt.Println()
+		fmt.Fprintln(w)
 		if issues == 0 && fixed == 0 {
-			fmt.Println("All checks passed.")
+			fmt.Fprintln(w, "All checks passed.")
 		} else if issues == 0 && fixed > 0 {
-			fmt.Printf("Fixed %d issue(s). All checks passed now.\n", fixed)
+			fmt.Fprintf(w, "Fixed %d issue(s). All checks passed now.\n", fixed)
 		} else {
-			fmt.Printf("%d issue(s) found, %d fixed.\n", issues, fixed)
-			fmt.Println("If issues persist, run 'clerk logs --error' and report to GitHub.")
+			fmt.Fprintf(w, "%d issue(s) found, %d fixed.\n", issues, fixed)
+			fmt.Fprintln(w, "If issues persist, run 'clerk logs --error' and report to GitHub.")
+			cmd.SilenceErrors = true
+			return fmt.Errorf("%d issue(s) could not be resolved", issues)
 		}
+		return nil
 	},
 }
 

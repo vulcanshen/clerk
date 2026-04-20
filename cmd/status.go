@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 )
 
 var watchFlag bool
+var statusJSON bool
 
 const (
 	colorBold  = "\033[1m"
@@ -27,6 +29,10 @@ var statusCmd = &cobra.Command{
 		cfg, err := config.Load()
 		if err != nil {
 			return err
+		}
+
+		if statusJSON {
+			return printStatusJSON(cfg)
 		}
 
 		if !watchFlag {
@@ -53,6 +59,49 @@ var statusCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+func printStatusJSON(cfg config.Config) error {
+	type jsonEntry struct {
+		PID       int    `json:"pid,omitempty"`
+		Slug      string `json:"slug"`
+		StartedAt string `json:"started_at"`
+		Status    string `json:"status"`
+	}
+
+	entries := make([]jsonEntry, 0)
+
+	states, err := feed.RunningStates(cfg)
+	if err != nil {
+		return err
+	}
+	for _, s := range states {
+		entries = append(entries, jsonEntry{
+			PID:       s.PID,
+			Slug:      s.Slug,
+			StartedAt: s.StartedAt.Format(time.RFC3339),
+			Status:    "active",
+		})
+	}
+
+	orphans, err := feed.OrphanStates(cfg)
+	if err != nil {
+		return err
+	}
+	for _, o := range orphans {
+		entries = append(entries, jsonEntry{
+			Slug:      o.State.Slug,
+			StartedAt: o.State.StartedAt,
+			Status:    "interrupted",
+		})
+	}
+
+	data, err := json.MarshalIndent(entries, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
+	return nil
 }
 
 func printStatus(cfg config.Config) error {
@@ -140,6 +189,7 @@ func formatDuration(d time.Duration) string {
 
 func init() {
 	statusCmd.Flags().BoolVarP(&watchFlag, "watch", "w", false, "Watch mode: refresh every second")
+	statusCmd.Flags().BoolVar(&statusJSON, "json", false, "Output in JSON format")
 	statusCmd.AddCommand(retryCmd)
 	statusCmd.AddCommand(killCmd)
 	rootCmd.AddCommand(statusCmd)

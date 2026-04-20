@@ -9,6 +9,7 @@ import (
 
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
+	"github.com/vulcanshen/clerk/internal/platform"
 )
 
 func sessionsDir(cfg config.Config) string {
@@ -34,11 +35,16 @@ func Run(data []byte, cfg config.Config) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		return fmt.Errorf("creating sessions subdirectory: %w", err)
 	}
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return fmt.Errorf("opening sessions file: %w", err)
 	}
 	defer f.Close()
+
+	if err := platform.FlockExclusive(f); err != nil {
+		return fmt.Errorf("locking sessions file: %w", err)
+	}
+	defer platform.FlockUnlock(f)
 
 	ts := time.Now().Format("2006-01-02 15:04:05")
 	_, err = fmt.Fprintf(f, "- %s `%s`\t%s\t%s\n", ts, input.SessionID, input.Cwd, input.TranscriptPath)

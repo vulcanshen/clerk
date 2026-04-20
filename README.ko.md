@@ -277,10 +277,12 @@ go install github.com/vulcanshen/clerk@latest
 | `unregister` | clerk를 Claude Code에서 등록 해제 |
 | `config` | 현재 설정 표시 (`config show`의 별칭) |
 | `config show` | 병합된 설정과 파일 경로 표시 |
+| `config show --json` | JSON 형식으로 설정 출력 |
 | `config set <key> <value>` | 프로젝트 레벨 설정 값 변경 |
 | `config set -g <key> <value>` | 전역 설정 값 변경 |
 | `status` | 활성 feed 프로세스와 중단된 세션 표시 |
 | `status --watch` | 실시간 상태 업데이트 (매초) |
+| `status --json` | JSON 형식으로 상태 출력 |
 | `status retry <slug>` | 지정한 중단 세션 재시도 |
 | `status retry --all` | 모든 중단 세션 재시도 |
 | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |

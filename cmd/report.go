@@ -34,6 +34,10 @@ var reportCmd = &cobra.Command{
 			return fmt.Errorf("--days must be between 1 and 180")
 		}
 
+		if reportOutput != "" {
+			reportOutput = config.ExpandPath(reportOutput)
+		}
+
 		p := progress.New()
 
 		// Step 1: Load config
@@ -276,12 +280,15 @@ func flushActiveSessions(cfg config.Config) {
 		}
 	}
 
-	// Run all feed.Run calls in parallel — each has its own slug lock
+	// Run feed.Run calls in parallel with bounded concurrency
+	sem := make(chan struct{}, 5)
 	var wg sync.WaitGroup
 	for _, job := range jobs {
 		wg.Add(1)
 		go func(j flushJob) {
 			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
 			if err := feed.Run(j.inputData, j.projCfg); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: failed to flush session for %s: %v\n", j.cwd, err)
 			}
@@ -294,5 +301,6 @@ func init() {
 	reportCmd.Flags().IntVar(&reportDays, "days", 1, "Number of days to include (default: today only)")
 	reportCmd.Flags().BoolVar(&reportActive, "active", false, "Include active sessions (uses extra Claude API calls)")
 	reportCmd.Flags().StringVarP(&reportOutput, "output", "o", "", "Save report to file instead of stdout")
+	reportCmd.MarkFlagFilename("output", "md", "txt")
 	rootCmd.AddCommand(reportCmd)
 }

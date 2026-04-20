@@ -10,6 +10,8 @@ import (
 	"github.com/vulcanshen/clerk/internal/logger"
 )
 
+var configShowJSON bool
+
 var configShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show current configuration",
@@ -17,6 +19,15 @@ var configShowCmd = &cobra.Command{
 		cfg, err := config.Load()
 		if err != nil {
 			return err
+		}
+
+		if configShowJSON {
+			data, err := json.MarshalIndent(cfg, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(data))
+			return nil
 		}
 
 		exe, _ := os.Executable()
@@ -36,5 +47,6 @@ var configShowCmd = &cobra.Command{
 }
 
 func init() {
+	configShowCmd.Flags().BoolVar(&configShowJSON, "json", false, "Output in JSON format")
 	configCmd.AddCommand(configShowCmd)
 }

@@ -107,8 +107,24 @@ func writeCursor(cfg config.Config, cwd string, lineCount int) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("creating cursor directory: %w", err)
 	}
-	if err := os.WriteFile(cursorPath(cfg, cwd), []byte(strconv.Itoa(lineCount)), 0644); err != nil {
+	path := cursorPath(cfg, cwd)
+	tmp, err := os.CreateTemp(dir, ".cursor-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating cursor temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.WriteString(strconv.Itoa(lineCount)); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
 		return fmt.Errorf("writing cursor: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("closing cursor temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("renaming cursor: %w", err)
 	}
 	cleanOldCursors(cfg)
 	return nil
