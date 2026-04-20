@@ -299,6 +299,16 @@ go install github.com/vulcanshen/clerk@latest
 | `punch` | 在 session 開始時記錄 session ID |
 | `mcp` | 啟動 MCP stdio server |
 
+### v5.0.0 移除的指令
+
+| 舊指令 | 新指令 |
+|--------|--------|
+| `install` | `register` |
+| `uninstall` | `unregister` |
+| `diagnosis` | `register` |
+| `diagnosis error` | `logs --error` |
+| `diagnosis log` | `logs` |
+
 ## 設定
 
 ### 設定檔

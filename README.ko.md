@@ -300,6 +300,16 @@ go install github.com/vulcanshen/clerk@latest
 | `punch` | 세션 시작 시 세션 ID 기록 |
 | `mcp` | MCP stdio 서버 시작 |
 
+### v5.0.0에서 제거된 명령어
+
+| 이전 | 현재 |
+|------|------|
+| `install` | `register` |
+| `uninstall` | `unregister` |
+| `diagnosis` | `register` |
+| `diagnosis error` | `logs --error` |
+| `diagnosis log` | `logs` |
+
 ## 설정
 
 ### 설정 파일

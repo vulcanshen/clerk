@@ -300,6 +300,16 @@ go install github.com/vulcanshen/clerk@latest
 | `punch` | セッション開始時にセッション ID を記録 |
 | `mcp` | MCP stdio サーバーを起動 |
 
+### v5.0.0 で廃止されたコマンド
+
+| 旧コマンド | 新コマンド |
+|-----------|-----------|
+| `install` | `register` |
+| `uninstall` | `unregister` |
+| `diagnosis` | `register` |
+| `diagnosis error` | `logs --error` |
+| `diagnosis log` | `logs` |
+
 ## 設定
 
 ### 設定ファイル

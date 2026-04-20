@@ -300,6 +300,16 @@ Internal commands (called by hooks, not by users):
 | `punch` | Record session ID on session start |
 | `mcp` | Start MCP stdio server |
 
+### Dropped in v5.0.0
+
+| Old | New |
+|-----|-----|
+| `install` | `register` |
+| `uninstall` | `unregister` |
+| `diagnosis` | `register` |
+| `diagnosis error` | `logs --error` |
+| `diagnosis log` | `logs` |
+
 ## Configuration
 
 ### Config files
