@@ -39,6 +39,8 @@ clerk register
 
 就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。
 
+> **關於 token 消耗：** clerk 使用你已登入的 Claude Code 來產生摘要和報告（透過 `claude -p`）。每個 session 結束時會消耗一次 API 額度產生摘要，每次執行 `clerk report` 也會消耗一次。摘要只處理新增的對話內容（cursor tracking），不會重複讀取舊資料。如果你在意額度，可以設定 `summary.model` 為 `haiku` 或在特定專案中停用 feed（`clerk config set feed.enabled false`）。
+
 註冊後，clerk 會在背景安靜地運作：
 
 | 你得到什麼 | 怎麼做 |

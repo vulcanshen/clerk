@@ -202,7 +202,7 @@ func Install() error {
 	punchExists := hasHook(hooks, "SessionStart", "punch")
 
 	if feedExists && punchExists {
-		fmt.Println("  hook: already installed")
+		fmt.Fprintln(os.Stderr, "  hook: already installed")
 		return nil
 	}
 
@@ -219,7 +219,7 @@ func Install() error {
 		return err
 	}
 
-	fmt.Println("  hook: installed (SessionStart + SessionEnd)")
+	fmt.Fprintln(os.Stderr, "  hook: installed (SessionStart + SessionEnd)")
 	return nil
 }
 
@@ -231,7 +231,7 @@ func Uninstall() error {
 
 	hooks, _ := settings["hooks"].(map[string]interface{})
 	if hooks == nil {
-		fmt.Println("  hook: not installed")
+		fmt.Fprintln(os.Stderr, "  hook: not installed")
 		return nil
 	}
 
@@ -239,7 +239,7 @@ func Uninstall() error {
 	punchRemoved := removeHook(hooks, "SessionStart", "punch")
 
 	if !feedRemoved && !punchRemoved {
-		fmt.Println("  hook: not installed")
+		fmt.Fprintln(os.Stderr, "  hook: not installed")
 		return nil
 	}
 
@@ -253,6 +253,6 @@ func Uninstall() error {
 		return err
 	}
 
-	fmt.Println("  hook: removed (SessionStart + SessionEnd)")
+	fmt.Fprintln(os.Stderr, "  hook: removed (SessionStart + SessionEnd)")
 	return nil
 }

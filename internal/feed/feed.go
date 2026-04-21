@@ -492,16 +492,29 @@ func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
 		cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
 	}
 
-	// overwrite with cleaned content (truncate after write to avoid corrupt partial writes)
+	// Atomic write: temp file + rename while holding flock
 	content := strings.Join(cleaned, "\n") + "\n"
-	f.Seek(0, 0)
-	n, err := f.WriteString(content)
+	tmp, err := os.CreateTemp(dir, ".index-*.tmp")
 	if err != nil {
 		platform.FlockUnlock(f)
 		f.Close()
 		return
 	}
-	f.Truncate(int64(n))
+	tmpPath := tmp.Name()
+	if _, err := tmp.WriteString(content); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		platform.FlockUnlock(f)
+		f.Close()
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		platform.FlockUnlock(f)
+		f.Close()
+		return
+	}
+	os.Rename(tmpPath, termFile)
 
 	platform.FlockUnlock(f)
 	f.Close()
@@ -574,7 +587,26 @@ func writeRunningState(cfg config.Config, slug, cwd, conversation string) (strin
 	}
 	pid := fmt.Sprintf("%d", os.Getpid())
 	path := filepath.Join(dir, pid)
-	return path, os.WriteFile(path, data, 0644)
+
+	tmp, err := os.CreateTemp(dir, ".running-*.tmp")
+	if err != nil {
+		return "", fmt.Errorf("creating running state temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		return "", fmt.Errorf("writing running state: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		return "", fmt.Errorf("closing running state temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return "", fmt.Errorf("renaming running state: %w", err)
+	}
+	return path, nil
 }
 
 func removeRunningState(path string) {

@@ -68,7 +68,7 @@ func Install() error {
 
 	if err != nil {
 		if strings.Contains(string(output), "already exists") {
-			fmt.Println("  mcp:   already installed")
+			fmt.Fprintln(os.Stderr, "  mcp:   already installed")
 			return nil
 		}
 		return fmt.Errorf("failed to register MCP server: %s", strings.TrimSpace(string(output)))
@@ -76,7 +76,7 @@ func Install() error {
 
 	// trigger tool registration to get names
 	mcpserver.NewServer("")
-	fmt.Printf("  mcp:   installed (%s)\n", strings.Join(mcpserver.ToolNames(), ", "))
+	fmt.Fprintf(os.Stderr, "  mcp:   installed (%s)\n", strings.Join(mcpserver.ToolNames(), ", "))
 	return nil
 }
 
@@ -85,10 +85,10 @@ func Uninstall() error {
 	c.Stderr = os.Stderr
 
 	if err := c.Run(); err != nil {
-		fmt.Println("  mcp:  not installed")
+		fmt.Fprintln(os.Stderr, "  mcp:  not installed")
 		return nil
 	}
 
-	fmt.Println("  mcp:  removed")
+	fmt.Fprintln(os.Stderr, "  mcp:  removed")
 	return nil
 }

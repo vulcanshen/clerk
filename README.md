@@ -39,6 +39,8 @@ clerk register
 
 That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop.
 
+> **About token usage:** clerk uses your authenticated Claude Code (`claude -p`) to generate summaries and reports. Each session end triggers one API call for the summary, and each `clerk report` invocation is another call. Summaries only process new transcript content (cursor tracking), not the entire history. If you're on a tight quota, set `summary.model` to `haiku` or disable feed per-project (`clerk config set feed.enabled false`).
+
 After registering, clerk works silently in the background:
 
 | What you get | How |

@@ -39,6 +39,8 @@ clerk register
 
 끝입니다. clerk는 완전히 로컬에서 실행됩니다 — 원격 서비스 연결 없음, 계정 불필요, 데이터가 컴퓨터 밖으로 나가지 않습니다.
 
+> **토큰 소비에 대해:** clerk는 인증된 Claude Code(`claude -p`)를 사용하여 요약과 보고서를 생성합니다. 세션 종료 시 요약을 위한 API 호출이 1회, `clerk report` 실행마다 추가 1회 발생합니다. 요약은 커서 트래킹으로 새로운 대화 내용만 처리하며, 전체 기록을 다시 읽지 않습니다. 쿼터가 걱정된다면 `summary.model`을 `haiku`로 설정하거나 프로젝트별로 feed를 비활성화할 수 있습니다(`clerk config set feed.enabled false`).
+
 등록 후, clerk는 백그라운드에서 조용히 작동합니다:
 
 | 얻을 수 있는 것 | 방법 |

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v5.0.2] - 2026-04-21
+
 ### New Features
 - `clerk status --json` — structured JSON output for scripting
 - `clerk config show --json` — pure JSON config output for machine consumption
@@ -19,6 +21,12 @@ All notable changes to this project will be documented in this file.
 - `writeCursor` now uses atomic write (temp+rename) to prevent cursor corruption on crash
 - `status --json` outputs `[]` instead of `null` when no sessions exist
 - `report --active` flush limited to 5 concurrent Claude API calls (was unbounded)
+- `writeRunningState` now uses atomic write (temp+rename)
+- `saveIndex` term files now use atomic write (temp+rename) instead of write+truncate
+- `hook.go` and `mcp/install.go` output moved to stderr (was stdout)
+
+### Documentation
+- All READMEs: added token usage disclosure (API calls, cursor tracking, haiku option)
 
 ## [v5.0.1] - 2026-04-20
 
