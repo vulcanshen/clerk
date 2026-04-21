@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### New Features
+- `clerk report` now auto-saves to `<output.dir>/reports/clerk-report-YYYYMMDD-Nd.md` when run in terminal
+- When piped (`clerk report | pbcopy`), outputs to stdout as before
+- `-o` flag overrides the default path; duplicate filenames get auto-incrementing suffix (`-1`, `-2`, ...)
+
 ## [v5.0.2] - 2026-04-21
 
 ### New Features

@@ -145,13 +145,17 @@ var reportCmd = &cobra.Command{
 		}
 		p.Done()
 
+		// Determine output target
+		outPath := reportOutput
+		if outPath == "" && isStdoutTerminal() {
+			outPath = defaultReportPath(cfg, reportDays)
+		}
+
 		// Output
-		if reportOutput != "" {
-			p.Start(fmt.Sprintf("Saving to %s", reportOutput))
-			dir := filepath.Dir(reportOutput)
-			if dir != "" && dir != "." {
-				os.MkdirAll(dir, 0755)
-			}
+		if outPath != "" {
+			p.Start(fmt.Sprintf("Saving to %s", outPath))
+			dir := filepath.Dir(outPath)
+			os.MkdirAll(dir, 0755)
 			tmp, err := os.CreateTemp(dir, ".clerk-report-*.tmp")
 			if err != nil {
 				p.Fail(err)
@@ -172,18 +176,45 @@ var reportCmd = &cobra.Command{
 				logger.Errorf(cfg, "report: close temp file failed: %v", err)
 				return fmt.Errorf("writing report file: %w", err)
 			}
-			if err := os.Rename(tmpPath, reportOutput); err != nil {
+			if err := os.Rename(tmpPath, outPath); err != nil {
 				os.Remove(tmpPath)
 				p.Fail(err)
 				logger.Errorf(cfg, "report: rename file failed: %v", err)
 				return fmt.Errorf("writing report file: %w", err)
 			}
 			p.Done()
+			fmt.Fprintf(os.Stderr, "Saved to %s\n", outPath)
 		} else {
 			fmt.Println(output)
 		}
 		return nil
 	},
+}
+
+func isStdoutTerminal() bool {
+	info, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
+}
+
+func defaultReportPath(cfg config.Config, days int) string {
+	dir := filepath.Join(config.ExpandPath(cfg.Output.Dir), "reports")
+	date := time.Now().Format("20060102")
+	base := fmt.Sprintf("clerk-report-%s-%dd", date, days)
+
+	path := filepath.Join(dir, base+".md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return path
+	}
+
+	for i := 1; ; i++ {
+		path = filepath.Join(dir, fmt.Sprintf("%s-%d.md", base, i))
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return path
+		}
+	}
 }
 
 func formatDate(yyyymmdd string) string {
@@ -300,7 +331,7 @@ func flushActiveSessions(cfg config.Config) {
 func init() {
 	reportCmd.Flags().IntVar(&reportDays, "days", 1, "Number of days to include (default: today only)")
 	reportCmd.Flags().BoolVar(&reportActive, "active", false, "Include active sessions (uses extra Claude API calls)")
-	reportCmd.Flags().StringVarP(&reportOutput, "output", "o", "", "Save report to file instead of stdout")
+	reportCmd.Flags().StringVarP(&reportOutput, "output", "o", "", "Save report to specific file (default: auto-save to output.dir/reports/)")
 	reportCmd.MarkFlagFilename("output", "md", "txt")
 	rootCmd.AddCommand(reportCmd)
 }

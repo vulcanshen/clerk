@@ -289,7 +289,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | すべての中断セッションを再試行 |
 | `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
 | `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
-| `report` | 最近の要約からレポートを生成（デフォルト：当日） |
+| `report` | レポートを生成し `reports/` に自動保存（パイプ時: stdout） |
 | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
 | `logs` | トラブルシューティング用の全ログを表示 |
 | `logs --error` | エラーログのみ表示 |

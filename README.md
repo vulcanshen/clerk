@@ -289,7 +289,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | Retry all interrupted sessions |
 | `status kill <slug>` | Kill a specific active feed process |
 | `status kill --all` | Kill all active feed processes |
-| `report` | Generate a report from recent summaries (default: today) |
+| `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
 | `report --days 7 -o weekly.md` | Weekly report across all projects |
 | `logs` | Show all logs for troubleshooting |
 | `logs --error` | Show error logs only |

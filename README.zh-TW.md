@@ -288,7 +288,7 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | 重試所有中斷的 session |
 | `status kill <slug>` | 強制終止指定的 feed process |
 | `status kill --all` | 強制終止所有 feed process |
-| `report` | 產生近期摘要報告（預設：當天） |
+| `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
 | `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | `logs` | 顯示所有日誌供排查 |
 | `logs --error` | 僅顯示錯誤日誌 |
