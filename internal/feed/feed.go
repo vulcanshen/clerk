@@ -492,7 +492,7 @@ func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
 		cleaned = append(cleaned, fmt.Sprintf("- %s", mdLink))
 	}
 
-	// Atomic write: temp file + rename while holding flock
+	// Atomic write: write to temp, close lock file (Windows requires target not open), then rename
 	content := strings.Join(cleaned, "\n") + "\n"
 	tmp, err := os.CreateTemp(dir, ".index-*.tmp")
 	if err != nil {
@@ -514,10 +514,11 @@ func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
 		f.Close()
 		return
 	}
-	os.Rename(tmpPath, termFile)
 
+	// Release lock and close before rename — Windows cannot rename over an open file
 	platform.FlockUnlock(f)
 	f.Close()
+	os.Rename(tmpPath, termFile)
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
