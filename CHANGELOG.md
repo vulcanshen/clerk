@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 - `config show` non-JSON mode now displays key-value format instead of raw JSON
 - `unregister` output moved to stderr
 - Command table in all READMEs now shows API token usage per command
+- `summary.instruction` config — custom instructions appended to feed prompt via `--append-system-prompt`
+- `output.language` now passed via `--append-system-prompt` (system-level) instead of in user prompt
 
 ### Bug Fixes
 - `config set output.dir` now converts relative paths to absolute (based on cwd)

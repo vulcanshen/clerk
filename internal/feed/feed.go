@@ -235,10 +235,8 @@ func CwdToSlug(cwd string) string {
 	return rel
 }
 
-func BuildPrompt(conversation, priorSummary, language string) string {
+func BuildPrompt(conversation, priorSummary string) string {
 	return fmt.Sprintf(`You are a session summarizer for a Claude Code conversation.
-
-Output language: %s
 
 You receive:
 1. A prior summary (may be empty on first run)
@@ -272,7 +270,7 @@ Rules:
 - If a prior item was extended in new messages, update it in-place rather than adding a new bullet
 - In Version Log, count versions by listing, not by calculation
 - Keep the summary concise — merge and condense older items as the summary grows
-- Section titles and all content must be in the specified output language
+- Section titles and all content must be in the output language specified in system instructions
 
 After the summary, output a tag line in this exact format:
 <!-- CLERK:TAGS -->
@@ -292,13 +290,27 @@ Prior summary:
 %s
 
 New messages:
-%s`, language, priorSummary, conversation)
+%s`, priorSummary, conversation)
 }
 
-func CallClaude(prompt string, model string, timeout string) (string, error) {
+func BuildSystemPrompt(language, instruction string) string {
+	var parts []string
+	if language != "" {
+		parts = append(parts, "Output language: "+language)
+	}
+	if instruction != "" {
+		parts = append(parts, instruction)
+	}
+	return strings.Join(parts, "\n")
+}
+
+func CallClaude(prompt, model, timeout, systemPrompt string) (string, error) {
 	args := []string{"-p"}
 	if model != "" {
 		args = append(args, "--model", model)
+	}
+	if systemPrompt != "" {
+		args = append(args, "--append-system-prompt", systemPrompt)
 	}
 
 	dur, err := time.ParseDuration(timeout)
@@ -773,8 +785,9 @@ func Run(inputData []byte, cfg config.Config) error {
 	}
 
 	logger.Info(cfg, "calling claude -p for summary...")
-	prompt := BuildPrompt(conversation, priorSummary, cfg.Output.Language)
-	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
+	prompt := BuildPrompt(conversation, priorSummary)
+	sysPrompt := BuildSystemPrompt(cfg.Output.Language, cfg.Summary.Instruction)
+	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
 	if err != nil {
 		logger.Errorf(cfg, "claude -p failed: %v", err)
 		return err
@@ -810,8 +823,9 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 	logger.Infof(cfg, "retrying summary for %s", orphan.State.Slug)
 
 	priorSummary := ReadExistingSummary(cfg, orphan.State.Cwd)
-	prompt := BuildPrompt(orphan.State.Conversation, priorSummary, cfg.Output.Language)
-	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
+	prompt := BuildPrompt(orphan.State.Conversation, priorSummary)
+	sysPrompt := BuildSystemPrompt(cfg.Output.Language, cfg.Summary.Instruction)
+	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
 	if err != nil {
 		logger.Errorf(cfg, "retry claude -p failed for %s: %v", orphan.State.Slug, err)
 		return err

@@ -118,7 +118,7 @@ Output the redacted log lines only, no explanation.
 
 	p := progress.New()
 	p.Start("Redacting personal information")
-	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
+	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, "")
 	if err != nil {
 		p.Fail(err)
 		fmt.Fprintln(os.Stderr, "Raw output suppressed to protect personal information.")

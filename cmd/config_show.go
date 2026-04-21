@@ -39,9 +39,9 @@ var configShowCmd = &cobra.Command{
 
 		printOrNotSet := func(key, val string) {
 			if val == "" {
-				fmt.Printf("%-18s (not set)\n", key)
+				fmt.Printf("%-22s (not set)\n", key)
 			} else {
-				fmt.Printf("%-18s %s\n", key, val)
+				fmt.Printf("%-22s %s\n", key, val)
 			}
 		}
 
@@ -49,11 +49,12 @@ var configShowCmd = &cobra.Command{
 		printOrNotSet("output.language", cfg.Output.Language)
 		printOrNotSet("summary.model", cfg.Summary.Model)
 		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
-		fmt.Printf("%-18s %d\n", "log.retention", cfg.Log.RetentionDays)
+		printOrNotSet("summary.instruction", cfg.Summary.Instruction)
+		fmt.Printf("%-22s %d\n", "log.retention_days", cfg.Log.RetentionDays)
 		if cfg.Feed.Enabled != nil {
-			fmt.Printf("%-18s %v\n", "feed.enabled", *cfg.Feed.Enabled)
+			fmt.Printf("%-22s %v\n", "feed.enabled", *cfg.Feed.Enabled)
 		} else {
-			fmt.Printf("%-18s true (default)\n", "feed.enabled")
+			fmt.Printf("%-22s true (default)\n", "feed.enabled")
 		}
 		return nil
 	},

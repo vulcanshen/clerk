@@ -15,8 +15,9 @@ type OutputConfig struct {
 }
 
 type SummaryConfig struct {
-	Model   string `json:"model"`
-	Timeout string `json:"timeout"`
+	Model       string `json:"model"`
+	Timeout     string `json:"timeout"`
+	Instruction string `json:"instruction"`
 }
 
 type LogConfig struct {
@@ -136,6 +137,7 @@ func ValidKeys() []string {
 		"output.language",
 		"summary.model",
 		"summary.timeout",
+		"summary.instruction",
 		"log.retention_days",
 		"feed.enabled",
 	}
@@ -166,6 +168,8 @@ func applyKeyValue(cfg *Config, key, value string) error {
 			}
 		}
 		cfg.Summary.Model = value
+	case "summary.instruction":
+		cfg.Summary.Instruction = value
 	case "summary.timeout":
 		d, err := time.ParseDuration(value)
 		if err != nil {
@@ -336,6 +340,7 @@ func LoadSources() []ConfigSource {
 		{"output.language", def.Output.Language, global.Output.Language, project.Output.Language},
 		{"summary.model", def.Summary.Model, global.Summary.Model, project.Summary.Model},
 		{"summary.timeout", def.Summary.Timeout, global.Summary.Timeout, project.Summary.Timeout},
+		{"summary.instruction", def.Summary.Instruction, global.Summary.Instruction, project.Summary.Instruction},
 		{"log.retention_days", fmt.Sprintf("%d", def.Log.RetentionDays), fmt.Sprintf("%d", global.Log.RetentionDays), fmt.Sprintf("%d", project.Log.RetentionDays)},
 		{"feed.enabled", feedStr(def.Feed.Enabled), feedStr(global.Feed.Enabled), feedStr(project.Feed.Enabled)},
 	}

@@ -356,6 +356,7 @@ go install github.com/vulcanshen/clerk@latest
 | `output.language` | `en` | 摘要輸出語言 |
 | `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
 | `summary.timeout` | `5m` | `claude -p` 的逾時時間（如 5m、2m30s、1h） |
+| `summary.instruction` | `""` | 附加到摘要 prompt 的自訂指令（透過 `--append-system-prompt`） |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
 | `feed.enabled` | `true` | 啟用/停用此專案的 feed |
 

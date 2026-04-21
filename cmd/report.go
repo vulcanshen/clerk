@@ -137,7 +137,7 @@ var reportCmd = &cobra.Command{
 
 		// Step 5: Call Claude
 		p.Start(fmt.Sprintf("Generating report (%d summaries, %s ~ %s)", len(all), formatDate(startDate), formatDate(endDate)))
-		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout)
+		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, "")
 		if err != nil {
 			p.Fail(err)
 			logger.Errorf(cfg, "report: claude -p failed: %v", err)

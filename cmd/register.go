@@ -212,8 +212,8 @@ var registerCmd = &cobra.Command{
 		p := progress.New()
 		p.Start("Claude API test")
 		testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
-		testPrompt := feed.BuildPrompt(testConv, "", "en")
-		testOut, err := feed.CallClaude(testPrompt, "", "1m")
+		testPrompt := feed.BuildPrompt(testConv, "")
+		testOut, err := feed.CallClaude(testPrompt, "", "1m", "")
 		if err != nil {
 			p.Fail(err)
 			issues++

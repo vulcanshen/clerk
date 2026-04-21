@@ -169,10 +169,7 @@ func TestFilterConversation(t *testing.T) {
 }
 
 func TestBuildPrompt(t *testing.T) {
-	prompt := BuildPrompt("conv", "prior", "en")
-	if !strings.Contains(prompt, "en") {
-		t.Error("prompt should contain language")
-	}
+	prompt := BuildPrompt("conv", "prior")
 	if !strings.Contains(prompt, "conv") {
 		t.Error("prompt should contain conversation")
 	}
@@ -181,6 +178,29 @@ func TestBuildPrompt(t *testing.T) {
 	}
 	if !strings.Contains(prompt, "CLERK:TAGS") {
 		t.Error("prompt should contain CLERK:TAGS instruction")
+	}
+}
+
+func TestBuildSystemPrompt(t *testing.T) {
+	// both language and instruction
+	sp := BuildSystemPrompt("zh-TW", "focus on architecture")
+	if sp != "Output language: zh-TW\nfocus on architecture" {
+		t.Errorf("unexpected system prompt: %q", sp)
+	}
+	// language only
+	sp = BuildSystemPrompt("en", "")
+	if sp != "Output language: en" {
+		t.Errorf("unexpected system prompt: %q", sp)
+	}
+	// instruction only
+	sp = BuildSystemPrompt("", "be concise")
+	if sp != "be concise" {
+		t.Errorf("unexpected system prompt: %q", sp)
+	}
+	// both empty
+	sp = BuildSystemPrompt("", "")
+	if sp != "" {
+		t.Errorf("expected empty, got: %q", sp)
 	}
 }
 

@@ -125,7 +125,7 @@ func TestFeedPipelineEndToEnd(t *testing.T) {
 	}
 
 	// BuildPrompt
-	prompt := BuildPrompt(conversation, "", "en")
+	prompt := BuildPrompt(conversation, "")
 	if !strings.Contains(prompt, "login feature") {
 		t.Error("prompt should contain conversation text")
 	}
