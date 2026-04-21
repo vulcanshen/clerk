@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v5.1.0] - 2026-04-21
 
 ### New Features
 - `clerk export` — list available slugs and dates for export
