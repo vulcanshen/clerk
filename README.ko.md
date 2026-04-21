@@ -291,8 +291,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | 모든 중단 세션 재시도 |
 | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
 | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
-| `summary` | 요약이 있는 모든 프로젝트 slug 목록 표시 |
-| `summary <slug>` | 지정 프로젝트의 전체 날짜 요약을 통합 표시 |
+| `export` | 내보내기 가능한 slug과 날짜 목록 표시 |
+| `export --summary <slug>` | 지정 프로젝트의 요약을 통합 내보내기 (전체 날짜) |
+| `export --date <YYYYMMDD>` | 지정 날짜의 요약을 통합 내보내기 (전체 프로젝트) |
 | `report` | 보고서를 생성하고 `reports/`에 자동 저장 (파이프 시: stdout) |
 | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
 | `logs` | 문제 해결을 위한 전체 로그 표시 |

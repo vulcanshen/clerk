@@ -291,8 +291,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | すべての中断セッションを再試行 |
 | `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
 | `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
-| `summary` | 要約のあるすべてのプロジェクトslugを一覧表示 |
-| `summary <slug>` | 指定プロジェクトの全日付の要約を統合表示 |
+| `export` | エクスポート可能なslugと日付を一覧表示 |
+| `export --summary <slug>` | 指定プロジェクトの要約を統合エクスポート（全日付） |
+| `export --date <YYYYMMDD>` | 指定日付の要約を統合エクスポート（全プロジェクト） |
 | `report` | レポートを生成し `reports/` に自動保存（パイプ時: stdout） |
 | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
 | `logs` | トラブルシューティング用の全ログを表示 |

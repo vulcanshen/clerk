@@ -291,8 +291,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | Retry all interrupted sessions |
 | `status kill <slug>` | Kill a specific active feed process |
 | `status kill --all` | Kill all active feed processes |
-| `summary` | List all project slugs with summaries |
-| `summary <slug>` | View merged summaries across all dates for a project |
+| `export` | List available slugs and dates |
+| `export --summary <slug>` | Export merged summaries for a project (across all dates) |
+| `export --date <YYYYMMDD>` | Export merged summaries for a date (across all projects) |
 | `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
 | `report --days 7 -o weekly.md` | Weekly report across all projects |
 | `logs` | Show all logs for troubleshooting |

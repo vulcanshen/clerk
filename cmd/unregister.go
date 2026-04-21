@@ -18,7 +18,7 @@ var unregisterCmd = &cobra.Command{
 	Use:   "unregister",
 	Short: "Unregister clerk from Claude Code",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Unregistering clerk...")
+		fmt.Fprintln(os.Stderr, "Unregistering clerk...")
 		if err := hook.Uninstall(); err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ var unregisterCmd = &cobra.Command{
 		cfg, cfgErr := config.Load()
 		if cfgErr == nil {
 			outDir := config.ExpandPath(cfg.Output.Dir)
-			fmt.Printf("\nAlso remove clerk data at %s? (y/N): ", outDir)
+			fmt.Fprintf(os.Stderr, "\nAlso remove clerk data at %s? (y/N): ", outDir)
 			reader := bufio.NewReader(os.Stdin)
 			answer, _ := reader.ReadString('\n')
 			answer = strings.TrimSpace(strings.ToLower(answer))
@@ -46,11 +46,11 @@ var unregisterCmd = &cobra.Command{
 						fmt.Fprintf(os.Stderr, "Warning: failed to remove %s: %v\n", d, err)
 					}
 				}
-				fmt.Printf("Removed data from %s\n", outDir)
+				fmt.Fprintf(os.Stderr, "Removed data from %s\n", outDir)
 			}
 		}
 
-		fmt.Println("\nDone.")
+		fmt.Fprintln(os.Stderr, "\nDone.")
 		return nil
 	},
 }

@@ -290,8 +290,9 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | 重試所有中斷的 session |
 | `status kill <slug>` | 強制終止指定的 feed process |
 | `status kill --all` | 強制終止所有 feed process |
-| `summary` | 列出所有有摘要的專案 slug |
-| `summary <slug>` | 檢視指定專案跨日期的合併摘要 |
+| `export` | 列出可匯出的 slug 和日期 |
+| `export --summary <slug>` | 匯出指定專案的合併摘要（跨日期） |
+| `export --date <YYYYMMDD>` | 匯出指定日期的合併摘要（跨專案） |
 | `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
 | `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | `logs` | 顯示所有日誌供排查 |
