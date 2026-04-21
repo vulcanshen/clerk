@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### New Features
+- `clerk summary` — list all project slugs with summaries
+- `clerk summary <slug>` — view merged summaries across all dates for a project (auto-saves like report)
 - `clerk report` now auto-saves to `<output.dir>/reports/clerk-report-YYYYMMDD-Nd.md` when run in terminal
 - When piped (`clerk report | pbcopy`), outputs to stdout as before
 - `-o` flag overrides the default path; duplicate filenames get auto-incrementing suffix (`-1`, `-2`, ...)
+- `config show` non-JSON mode now displays key-value format instead of raw JSON
+- `atomicWriteFile` shared helper for report and summary output
 
 ## [v5.0.2] - 2026-04-21
 

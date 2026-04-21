@@ -37,11 +37,24 @@ var configShowCmd = &cobra.Command{
 		fmt.Printf("Project config: %s\n", config.ProjectConfigPath(""))
 		fmt.Printf("Log path:       %s\n\n", logger.LogPath(cfg))
 
-		data, err := json.MarshalIndent(cfg, "", "  ")
-		if err != nil {
-			return err
+		printOrNotSet := func(key, val string) {
+			if val == "" {
+				fmt.Printf("%-18s (not set)\n", key)
+			} else {
+				fmt.Printf("%-18s %s\n", key, val)
+			}
 		}
-		fmt.Println(string(data))
+
+		printOrNotSet("output.dir", cfg.Output.Dir)
+		printOrNotSet("output.language", cfg.Output.Language)
+		printOrNotSet("summary.model", cfg.Summary.Model)
+		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
+		fmt.Printf("%-18s %d\n", "log.retention", cfg.Log.RetentionDays)
+		if cfg.Feed.Enabled != nil {
+			fmt.Printf("%-18s %v\n", "feed.enabled", *cfg.Feed.Enabled)
+		} else {
+			fmt.Printf("%-18s true (default)\n", "feed.enabled")
+		}
 		return nil
 	},
 }

@@ -131,6 +131,8 @@ sequenceDiagram
 
 ### 데이터 구조
 
+**slug**는 작업 디렉토리에서 생성된 파일 시스템 안전 식별자입니다 — 예: `/Users/you/projects/my-app`은 `projects-my-app`이 됩니다. 홈 접두사를 제거하고, 소문자로 변환하고, `/`를 `-`로 대체합니다.
+
 ```
 ~/.clerk/
 ├── summary/YYYYMMDD/slug.md    ← 프로젝트별 일일 요약
@@ -289,6 +291,8 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | 모든 중단 세션 재시도 |
 | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
 | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
+| `summary` | 요약이 있는 모든 프로젝트 slug 목록 표시 |
+| `summary <slug>` | 지정 프로젝트의 전체 날짜 요약을 통합 표시 |
 | `report` | 보고서를 생성하고 `reports/`에 자동 저장 (파이프 시: stdout) |
 | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
 | `logs` | 문제 해결을 위한 전체 로그 표시 |

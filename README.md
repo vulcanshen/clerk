@@ -131,6 +131,8 @@ sequenceDiagram
 
 ### Data structure
 
+A **slug** is a filesystem-safe identifier derived from your working directory — e.g. `/Users/you/projects/my-app` becomes `projects-my-app`. It strips the home prefix, lowercases, and replaces `/` with `-`.
+
 ```
 ~/.clerk/
 ├── summary/YYYYMMDD/slug.md    ← daily summaries per project
@@ -289,6 +291,8 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | Retry all interrupted sessions |
 | `status kill <slug>` | Kill a specific active feed process |
 | `status kill --all` | Kill all active feed processes |
+| `summary` | List all project slugs with summaries |
+| `summary <slug>` | View merged summaries across all dates for a project |
 | `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
 | `report --days 7 -o weekly.md` | Weekly report across all projects |
 | `logs` | Show all logs for troubleshooting |

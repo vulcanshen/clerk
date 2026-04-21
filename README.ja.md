@@ -131,6 +131,8 @@ sequenceDiagram
 
 ### データ構造
 
+**slug** は作業ディレクトリから生成されるファイルシステム安全な識別子です — 例えば `/Users/you/projects/my-app` は `projects-my-app` になります。ホームプレフィックスを除去し、小文字化し、`/` を `-` に置換します。
+
 ```
 ~/.clerk/
 ├── summary/YYYYMMDD/slug.md    ← プロジェクトごとの日次要約
@@ -289,6 +291,8 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | すべての中断セッションを再試行 |
 | `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
 | `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
+| `summary` | 要約のあるすべてのプロジェクトslugを一覧表示 |
+| `summary <slug>` | 指定プロジェクトの全日付の要約を統合表示 |
 | `report` | レポートを生成し `reports/` に自動保存（パイプ時: stdout） |
 | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
 | `logs` | トラブルシューティング用の全ログを表示 |

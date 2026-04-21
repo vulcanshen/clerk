@@ -131,6 +131,8 @@ sequenceDiagram
 
 ### 資料結構
 
+**slug** 是從工作目錄產生的檔案系統安全識別碼 — 例如 `/Users/you/projects/my-app` 會變成 `projects-my-app`。去除 home 前綴、轉小寫、`/` 替換為 `-`。
+
 ```
 ~/.clerk/
 ├── summary/YYYYMMDD/slug.md    ← 每日每專案摘要
@@ -288,6 +290,8 @@ go install github.com/vulcanshen/clerk@latest
 | `status retry --all` | 重試所有中斷的 session |
 | `status kill <slug>` | 強制終止指定的 feed process |
 | `status kill --all` | 強制終止所有 feed process |
+| `summary` | 列出所有有摘要的專案 slug |
+| `summary <slug>` | 檢視指定專案跨日期的合併摘要 |
 | `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
 | `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | `logs` | 顯示所有日誌供排查 |

@@ -154,32 +154,10 @@ var reportCmd = &cobra.Command{
 		// Output
 		if outPath != "" {
 			p.Start(fmt.Sprintf("Saving to %s", outPath))
-			dir := filepath.Dir(outPath)
-			os.MkdirAll(dir, 0755)
-			tmp, err := os.CreateTemp(dir, ".clerk-report-*.tmp")
-			if err != nil {
+			os.MkdirAll(filepath.Dir(outPath), 0755)
+			if err := atomicWriteFile(outPath, output+"\n"); err != nil {
 				p.Fail(err)
-				logger.Errorf(cfg, "report: create temp file failed: %v", err)
-				return fmt.Errorf("writing report file: %w", err)
-			}
-			tmpPath := tmp.Name()
-			if _, err := tmp.WriteString(output + "\n"); err != nil {
-				tmp.Close()
-				os.Remove(tmpPath)
-				p.Fail(err)
-				logger.Errorf(cfg, "report: write file failed: %v", err)
-				return fmt.Errorf("writing report file: %w", err)
-			}
-			if err := tmp.Close(); err != nil {
-				os.Remove(tmpPath)
-				p.Fail(err)
-				logger.Errorf(cfg, "report: close temp file failed: %v", err)
-				return fmt.Errorf("writing report file: %w", err)
-			}
-			if err := os.Rename(tmpPath, outPath); err != nil {
-				os.Remove(tmpPath)
-				p.Fail(err)
-				logger.Errorf(cfg, "report: rename file failed: %v", err)
+				logger.Errorf(cfg, "report: write failed: %v", err)
 				return fmt.Errorf("writing report file: %w", err)
 			}
 			p.Done()
