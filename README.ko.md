@@ -275,40 +275,42 @@ go install github.com/vulcanshen/clerk@latest
 
 ## 명령어 목록
 
-| 명령어 | 설명 |
-|--------|------|
-| `register` | clerk를 Claude Code에 등록하고 환경 검증 |
-| `unregister` | clerk를 Claude Code에서 등록 해제 |
-| `config` | 현재 설정 표시 (`config show`의 별칭) |
-| `config show` | 병합된 설정과 파일 경로 표시 |
-| `config show --json` | JSON 형식으로 설정 출력 |
-| `config set <key> <value>` | 프로젝트 레벨 설정 값 변경 |
-| `config set -g <key> <value>` | 전역 설정 값 변경 |
-| `status` | 활성 feed 프로세스와 중단된 세션 표시 |
-| `status --watch` | 실시간 상태 업데이트 (매초) |
-| `status --json` | JSON 형식으로 상태 출력 |
-| `status retry <slug>` | 지정한 중단 세션 재시도 |
-| `status retry --all` | 모든 중단 세션 재시도 |
-| `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
-| `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
-| `export` | 내보내기 가능한 slug과 날짜 목록 표시 |
-| `export --summary <slug>` | 지정 프로젝트의 요약을 통합 내보내기 (전체 날짜) |
-| `export --date <YYYYMMDD>` | 지정 날짜의 요약을 통합 내보내기 (전체 프로젝트) |
-| `report` | 보고서를 생성하고 `reports/`에 자동 저장 (파이프 시: stdout) |
-| `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
-| `logs` | 문제 해결을 위한 전체 로그 표시 |
-| `logs --error` | 오류 로그만 표시 |
-| `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
-| `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
-| `version` | 버전 표시 및 업데이트 확인 |
+| API | 명령어 | 설명 |
+|:---:|--------|------|
+| * | `register` | clerk를 Claude Code에 등록하고 환경 검증 |
+| | `unregister` | clerk를 Claude Code에서 등록 해제 |
+| | `config` | 현재 설정 표시 (`config show`의 별칭) |
+| | `config show` | 병합된 설정과 파일 경로 표시 |
+| | `config show --json` | JSON 형식으로 설정 출력 |
+| | `config set <key> <value>` | 프로젝트 레벨 설정 값 변경 |
+| | `config set -g <key> <value>` | 전역 설정 값 변경 |
+| | `status` | 활성 feed 프로세스와 중단된 세션 표시 |
+| | `status --watch` | 실시간 상태 업데이트 (매초) |
+| | `status --json` | JSON 형식으로 상태 출력 |
+| * | `status retry <slug>` | 지정한 중단 세션 재시도 |
+| * | `status retry --all` | 모든 중단 세션 재시도 |
+| | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
+| | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
+| | `export` | 내보내기 가능한 slug과 날짜 목록 표시 |
+| | `export --summary <slug>` | 지정 프로젝트의 요약을 통합 내보내기 (전체 날짜) |
+| | `export --date <YYYYMMDD>` | 지정 날짜의 요약을 통합 내보내기 (전체 프로젝트) |
+| * | `report` | 보고서를 생성하고 `reports/`에 자동 저장 (파이프 시: stdout) |
+| * | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
+| * | `logs` | 문제 해결을 위한 전체 로그 표시 |
+| * | `logs --error` | 오류 로그만 표시 |
+| | `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
+| | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
+| | `version` | 버전 표시 및 업데이트 확인 |
+
+`*` = Claude API 사용 (토큰 소비)
 
 내부 명령어 (훅에서 호출되며, 사용자가 직접 사용하지 않음):
 
-| 명령어 | 설명 |
-|--------|------|
-| `feed` | 세션 트랜스크립트를 처리하고 요약 생성 |
-| `punch` | 세션 시작 시 세션 ID 기록 |
-| `mcp` | MCP stdio 서버 시작 |
+| API | 명령어 | 설명 |
+|:---:|--------|------|
+| * | `feed` | 세션 트랜스크립트를 처리하고 요약 생성 |
+| | `punch` | 세션 시작 시 세션 ID 기록 |
+| | `mcp` | MCP stdio 서버 시작 |
 
 ### v5.0.0에서 제거된 명령어
 

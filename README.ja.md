@@ -275,40 +275,42 @@ go install github.com/vulcanshen/clerk@latest
 
 ## コマンド一覧
 
-| コマンド | 説明 |
-|----------|------|
-| `register` | clerk を Claude Code に登録し環境を検証 |
-| `unregister` | clerk を Claude Code から登録解除 |
-| `config` | 現在の設定を表示（`config show` のエイリアス） |
-| `config show` | マージされた設定とファイルパスを表示 |
-| `config show --json` | 設定をJSON形式で出力 |
-| `config set <key> <value>` | プロジェクトレベルの設定値を変更 |
-| `config set -g <key> <value>` | グローバル設定値を変更 |
-| `status` | アクティブな feed プロセスと中断されたセッションを表示 |
-| `status --watch` | ステータスをリアルタイム更新（毎秒） |
-| `status --json` | ステータスをJSON形式で出力 |
-| `status retry <slug>` | 指定した中断セッションを再試行 |
-| `status retry --all` | すべての中断セッションを再試行 |
-| `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
-| `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
-| `export` | エクスポート可能なslugと日付を一覧表示 |
-| `export --summary <slug>` | 指定プロジェクトの要約を統合エクスポート（全日付） |
-| `export --date <YYYYMMDD>` | 指定日付の要約を統合エクスポート（全プロジェクト） |
-| `report` | レポートを生成し `reports/` に自動保存（パイプ時: stdout） |
-| `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
-| `logs` | トラブルシューティング用の全ログを表示 |
-| `logs --error` | エラーログのみ表示 |
-| `logs --no-mask` | 個人情報をマスクせず生ログを表示 |
-| `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
-| `version` | バージョン表示とアップデート確認 |
+| API | コマンド | 説明 |
+|:---:|----------|------|
+| * | `register` | clerk を Claude Code に登録し環境を検証 |
+| | `unregister` | clerk を Claude Code から登録解除 |
+| | `config` | 現在の設定を表示（`config show` のエイリアス） |
+| | `config show` | マージされた設定とファイルパスを表示 |
+| | `config show --json` | 設定をJSON形式で出力 |
+| | `config set <key> <value>` | プロジェクトレベルの設定値を変更 |
+| | `config set -g <key> <value>` | グローバル設定値を変更 |
+| | `status` | アクティブな feed プロセスと中断されたセッションを表示 |
+| | `status --watch` | ステータスをリアルタイム更新（毎秒） |
+| | `status --json` | ステータスをJSON形式で出力 |
+| * | `status retry <slug>` | 指定した中断セッションを再試行 |
+| * | `status retry --all` | すべての中断セッションを再試行 |
+| | `status kill <slug>` | 指定したアクティブ feed プロセスを強制終了 |
+| | `status kill --all` | すべてのアクティブ feed プロセスを強制終了 |
+| | `export` | エクスポート可能なslugと日付を一覧表示 |
+| | `export --summary <slug>` | 指定プロジェクトの要約を統合エクスポート（全日付） |
+| | `export --date <YYYYMMDD>` | 指定日付の要約を統合エクスポート（全プロジェクト） |
+| * | `report` | レポートを生成し `reports/` に自動保存（パイプ時: stdout） |
+| * | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
+| * | `logs` | トラブルシューティング用の全ログを表示 |
+| * | `logs --error` | エラーログのみ表示 |
+| | `logs --no-mask` | 個人情報をマスクせず生ログを表示 |
+| | `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
+| | `version` | バージョン表示とアップデート確認 |
+
+`*` = Claude APIを使用（トークンを消費）
 
 内部コマンド（フックから呼び出されるもので、ユーザーが直接使用するものではありません）：
 
-| コマンド | 説明 |
-|----------|------|
-| `feed` | セッションのトランスクリプトを処理し要約を生成 |
-| `punch` | セッション開始時にセッション ID を記録 |
-| `mcp` | MCP stdio サーバーを起動 |
+| API | コマンド | 説明 |
+|:---:|----------|------|
+| * | `feed` | セッションのトランスクリプトを処理し要約を生成 |
+| | `punch` | セッション開始時にセッション ID を記録 |
+| | `mcp` | MCP stdio サーバーを起動 |
 
 ### v5.0.0 で廃止されたコマンド
 

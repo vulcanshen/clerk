@@ -275,40 +275,42 @@ go install github.com/vulcanshen/clerk@latest
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `register` | Register clerk with Claude Code and verify environment |
-| `unregister` | Unregister clerk from Claude Code |
-| `config` | Show current configuration (alias for `config show`) |
-| `config show` | Show merged configuration and file paths |
-| `config show --json` | Output configuration in JSON format |
-| `config set <key> <value>` | Set project-level config value |
-| `config set -g <key> <value>` | Set global config value |
-| `status` | Show active feed processes and interrupted sessions |
-| `status --watch` | Live-refresh status every second |
-| `status --json` | Output status in JSON format |
-| `status retry <slug>` | Retry a specific interrupted session |
-| `status retry --all` | Retry all interrupted sessions |
-| `status kill <slug>` | Kill a specific active feed process |
-| `status kill --all` | Kill all active feed processes |
-| `export` | List available slugs and dates |
-| `export --summary <slug>` | Export merged summaries for a project (across all dates) |
-| `export --date <YYYYMMDD>` | Export merged summaries for a date (across all projects) |
-| `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
-| `report --days 7 -o weekly.md` | Weekly report across all projects |
-| `logs` | Show all logs for troubleshooting |
-| `logs --error` | Show error logs only |
-| `logs --no-mask` | Show raw logs without redacting personal info |
-| `data moveto <path>` | Move clerk data to a new directory and update config |
-| `version` | Show current version and check for updates |
+| API | Command | Description |
+|:---:|---------|-------------|
+| * | `register` | Register clerk with Claude Code and verify environment |
+| | `unregister` | Unregister clerk from Claude Code |
+| | `config` | Show current configuration (alias for `config show`) |
+| | `config show` | Show merged configuration and file paths |
+| | `config show --json` | Output configuration in JSON format |
+| | `config set <key> <value>` | Set project-level config value |
+| | `config set -g <key> <value>` | Set global config value |
+| | `status` | Show active feed processes and interrupted sessions |
+| | `status --watch` | Live-refresh status every second |
+| | `status --json` | Output status in JSON format |
+| * | `status retry <slug>` | Retry a specific interrupted session |
+| * | `status retry --all` | Retry all interrupted sessions |
+| | `status kill <slug>` | Kill a specific active feed process |
+| | `status kill --all` | Kill all active feed processes |
+| | `export` | List available slugs and dates |
+| | `export --summary <slug>` | Export merged summaries for a project (across all dates) |
+| | `export --date <YYYYMMDD>` | Export merged summaries for a date (across all projects) |
+| * | `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
+| * | `report --days 7 -o weekly.md` | Weekly report across all projects |
+| * | `logs` | Show all logs for troubleshooting |
+| * | `logs --error` | Show error logs only |
+| | `logs --no-mask` | Show raw logs without redacting personal info |
+| | `data moveto <path>` | Move clerk data to a new directory and update config |
+| | `version` | Show current version and check for updates |
+
+`*` = uses Claude API (consumes tokens)
 
 Internal commands (called by hooks, not by users):
 
-| Command | Description |
-|---------|-------------|
-| `feed` | Process session transcript and generate summary |
-| `punch` | Record session ID on session start |
-| `mcp` | Start MCP stdio server |
+| API | Command | Description |
+|:---:|---------|-------------|
+| * | `feed` | Process session transcript and generate summary |
+| | `punch` | Record session ID on session start |
+| | `mcp` | Start MCP stdio server |
 
 ### Dropped in v5.0.0
 

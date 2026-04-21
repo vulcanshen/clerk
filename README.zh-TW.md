@@ -274,40 +274,42 @@ go install github.com/vulcanshen/clerk@latest
 
 ## 指令
 
-| 指令 | 說明 |
-|------|------|
-| `register` | 將 clerk 註冊到 Claude Code 並驗證環境 |
-| `unregister` | 從 Claude Code 取消註冊 clerk |
-| `config` | 顯示目前的設定（等同 `config show`） |
-| `config show` | 顯示合併後的設定與檔案路徑 |
-| `config show --json` | 以 JSON 格式輸出設定 |
-| `config set <key> <value>` | 設定專案層級的配置值 |
-| `config set -g <key> <value>` | 設定全域配置值 |
-| `status` | 顯示進行中的 feed process 和中斷的 session |
-| `status --watch` | 即時重新整理狀態（每秒更新） |
-| `status --json` | 以 JSON 格式輸出狀態 |
-| `status retry <slug>` | 重試指定的中斷 session |
-| `status retry --all` | 重試所有中斷的 session |
-| `status kill <slug>` | 強制終止指定的 feed process |
-| `status kill --all` | 強制終止所有 feed process |
-| `export` | 列出可匯出的 slug 和日期 |
-| `export --summary <slug>` | 匯出指定專案的合併摘要（跨日期） |
-| `export --date <YYYYMMDD>` | 匯出指定日期的合併摘要（跨專案） |
-| `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
-| `report --days 7 -o weekly.md` | 產生跨專案週報 |
-| `logs` | 顯示所有日誌供排查 |
-| `logs --error` | 僅顯示錯誤日誌 |
-| `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |
-| `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
-| `version` | 顯示版本並檢查更新 |
+| API | 指令 | 說明 |
+|:---:|------|------|
+| * | `register` | 將 clerk 註冊到 Claude Code 並驗證環境 |
+| | `unregister` | 從 Claude Code 取消註冊 clerk |
+| | `config` | 顯示目前的設定（等同 `config show`） |
+| | `config show` | 顯示合併後的設定與檔案路徑 |
+| | `config show --json` | 以 JSON 格式輸出設定 |
+| | `config set <key> <value>` | 設定專案層級的配置值 |
+| | `config set -g <key> <value>` | 設定全域配置值 |
+| | `status` | 顯示進行中的 feed process 和中斷的 session |
+| | `status --watch` | 即時重新整理狀態（每秒更新） |
+| | `status --json` | 以 JSON 格式輸出狀態 |
+| * | `status retry <slug>` | 重試指定的中斷 session |
+| * | `status retry --all` | 重試所有中斷的 session |
+| | `status kill <slug>` | 強制終止指定的 feed process |
+| | `status kill --all` | 強制終止所有 feed process |
+| | `export` | 列出可匯出的 slug 和日期 |
+| | `export --summary <slug>` | 匯出指定專案的合併摘要（跨日期） |
+| | `export --date <YYYYMMDD>` | 匯出指定日期的合併摘要（跨專案） |
+| * | `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
+| * | `report --days 7 -o weekly.md` | 產生跨專案週報 |
+| * | `logs` | 顯示所有日誌供排查 |
+| * | `logs --error` | 僅顯示錯誤日誌 |
+| | `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |
+| | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
+| | `version` | 顯示版本並檢查更新 |
+
+`*` = 使用 Claude API（消耗 token）
 
 內部指令（由 hook 呼叫，非使用者直接使用）：
 
-| 指令 | 說明 |
-|------|------|
-| `feed` | 處理 session 對話記錄並產生摘要 |
-| `punch` | 在 session 開始時記錄 session ID |
-| `mcp` | 啟動 MCP stdio server |
+| API | 指令 | 說明 |
+|:---:|------|------|
+| * | `feed` | 處理 session 對話記錄並產生摘要 |
+| | `punch` | 在 session 開始時記錄 session ID |
+| | `mcp` | 啟動 MCP stdio server |
 
 ### v5.0.0 移除的指令
 
