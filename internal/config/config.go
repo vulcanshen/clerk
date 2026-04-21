@@ -144,10 +144,27 @@ func ValidKeys() []string {
 func applyKeyValue(cfg *Config, key, value string) error {
 	switch key {
 	case "output.dir":
+		if value == "" {
+			return fmt.Errorf("invalid value for output.dir: must not be empty")
+		}
 		cfg.Output.Dir = value
 	case "output.language":
 		cfg.Output.Language = value
 	case "summary.model":
+		if value != "" {
+			validAliases := []string{"sonnet", "opus", "haiku"}
+			valid := false
+			lower := strings.ToLower(value)
+			for _, alias := range validAliases {
+				if lower == alias || strings.Contains(lower, alias) {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				return fmt.Errorf("invalid value for summary.model: %s (use alias: sonnet, opus, haiku — or full name containing one)", value)
+			}
+		}
 		cfg.Summary.Model = value
 	case "summary.timeout":
 		d, err := time.ParseDuration(value)
@@ -214,6 +231,16 @@ func Set(key, value string, global bool) error {
 			section = make(map[string]interface{})
 		}
 		switch key {
+		case "output.dir":
+			if strings.HasPrefix(value, "~") || filepath.IsAbs(value) {
+				section[parts[1]] = value
+			} else {
+				abs, err := filepath.Abs(value)
+				if err != nil {
+					return fmt.Errorf("invalid value for output.dir: %s (%w)", value, err)
+				}
+				section[parts[1]] = abs
+			}
 		case "log.retention_days":
 			var days int
 			fmt.Sscanf(value, "%d", &days)

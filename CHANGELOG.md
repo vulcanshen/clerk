@@ -14,9 +14,17 @@ All notable changes to this project will be documented in this file.
 - `-o` flag overrides the default path; duplicate filenames get auto-incrementing suffix (`-1`, `-2`, ...)
 - `config show` non-JSON mode now displays key-value format instead of raw JSON
 - `unregister` output moved to stderr
+- Command table in all READMEs now shows API token usage per command
+
+### Bug Fixes
+- `config set output.dir` now converts relative paths to absolute (based on cwd)
+- `config set output.dir` preserves `~` prefix for portability
+- `config set output.dir` rejects empty string
+- `config set summary.model` validates against known aliases (sonnet, opus, haiku) or full names containing one
 
 ### Internal
 - `atomicWriteFile` shared helper for report and export output
+- `applyKeyValue` handles validation only; `Set` handles normalization — no redundant logic
 
 ## [v5.0.2] - 2026-04-21
 
