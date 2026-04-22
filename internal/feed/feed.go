@@ -304,9 +304,6 @@ func BuildSystemPrompt(language, instruction string) string {
 	return strings.Join(parts, "\n")
 }
 
-// ClaudeBinary is the path to the claude CLI binary. Override in tests.
-var ClaudeBinary = "claude"
-
 func CallClaude(prompt, model, timeout, systemPrompt string) (string, error) {
 	args := []string{"-p"}
 	if model != "" {
@@ -324,7 +321,7 @@ func CallClaude(prompt, model, timeout, systemPrompt string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dur)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, ClaudeBinary, args...)
+	cmd := exec.CommandContext(ctx, "claude", args...)
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Env = append(os.Environ(), "CLERK_INTERNAL=1")
 

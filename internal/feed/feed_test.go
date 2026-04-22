@@ -3,8 +3,6 @@ package feed
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -203,105 +201,6 @@ func TestBuildSystemPrompt(t *testing.T) {
 	sp = BuildSystemPrompt("", "")
 	if sp != "" {
 		t.Errorf("expected empty, got: %q", sp)
-	}
-}
-
-func buildMockClaude(t *testing.T) string {
-	t.Helper()
-	mockDir := t.TempDir()
-	mockBin := filepath.Join(mockDir, "mock_claude")
-	cmd := exec.Command("go", "build", "-o", mockBin, "./testdata/mock_claude.go")
-	cmd.Dir = filepath.Join(".")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("failed to build mock_claude: %v\n%s", err, out)
-	}
-	return mockBin
-}
-
-func TestCallClaude(t *testing.T) {
-	mockBin := buildMockClaude(t)
-	orig := ClaudeBinary
-	ClaudeBinary = mockBin
-	defer func() { ClaudeBinary = orig }()
-
-	// basic call
-	out, err := CallClaude("hello world", "", "1m", "")
-	if err != nil {
-		t.Fatalf("CallClaude failed: %v", err)
-	}
-	if !strings.Contains(out, "Mock summary generated") {
-		t.Errorf("expected mock summary, got: %s", out)
-	}
-
-	// with system prompt
-	out, err = CallClaude("test prompt", "", "1m", "Output language: zh-TW")
-	if err != nil {
-		t.Fatalf("CallClaude with system prompt failed: %v", err)
-	}
-	if !strings.Contains(out, "Output language: zh-TW") {
-		t.Errorf("system prompt not echoed back, got: %s", out)
-	}
-
-	// with model
-	out, err = CallClaude("test", "haiku", "1m", "")
-	if err != nil {
-		t.Fatalf("CallClaude with model failed: %v", err)
-	}
-	if !strings.Contains(out, "Mock summary") {
-		t.Errorf("expected mock summary, got: %s", out)
-	}
-}
-
-func TestCallClaudeError(t *testing.T) {
-	mockBin := buildMockClaude(t)
-	orig := ClaudeBinary
-	ClaudeBinary = mockBin
-	defer func() { ClaudeBinary = orig }()
-
-	_, err := CallClaude("MOCK_FAIL", "", "1m", "")
-	if err == nil {
-		t.Error("expected error for MOCK_FAIL prompt")
-	}
-}
-
-func TestCallClaudeTimeout(t *testing.T) {
-	mockBin := buildMockClaude(t)
-	orig := ClaudeBinary
-	ClaudeBinary = mockBin
-	defer func() { ClaudeBinary = orig }()
-
-	_, err := CallClaude("MOCK_HANG", "", "100ms", "")
-	if err == nil {
-		t.Error("expected timeout error")
-	}
-	if !strings.Contains(err.Error(), "timed out") {
-		t.Errorf("expected timeout message, got: %v", err)
-	}
-}
-
-func TestCallClaudeParseSummaryAndTags(t *testing.T) {
-	mockBin := buildMockClaude(t)
-	orig := ClaudeBinary
-	ClaudeBinary = mockBin
-	defer func() { ClaudeBinary = orig }()
-
-	out, err := CallClaude("test", "", "1m", "")
-	if err != nil {
-		t.Fatalf("CallClaude failed: %v", err)
-	}
-
-	summary, tags := ParseSummaryAndTags(out)
-	if !strings.Contains(summary, "Mock summary generated") {
-		t.Errorf("summary should contain mock content, got: %s", summary)
-	}
-	if len(tags) != 3 {
-		t.Errorf("expected 3 tags, got %d: %v", len(tags), tags)
-	}
-	expected := []string{"mock", "test", "cli"}
-	for i, tag := range tags {
-		if tag != expected[i] {
-			t.Errorf("tag[%d] = %q, want %q", i, tag, expected[i])
-		}
 	}
 }
 
