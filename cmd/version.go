@@ -13,8 +13,9 @@ import (
 )
 
 var updateCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Show current version and check for updates",
+	Use:               "version",
+	Short:             "Show current version and check for updates",
+	ValidArgsFunction: noFileComp,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Current version: %s\n", Version)
 

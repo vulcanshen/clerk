@@ -358,6 +358,7 @@ go install github.com/vulcanshen/clerk@latest
 | `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
 | `summary.timeout` | `5m` | `claude -p` のタイムアウト（例: 5m、2m30s、1h） |
 | `summary.instruction` | `""` | 要約プロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
+| `report.instruction` | `""` | レポートプロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
 | `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
 

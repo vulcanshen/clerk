@@ -13,8 +13,9 @@ import (
 )
 
 var punchCmd = &cobra.Command{
-	Use:   "punch",
-	Short: "Record a session start (called by SessionStart hook)",
+	Use:               "punch",
+	Short:             "Record a session start (called by SessionStart hook)",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if os.Getenv("CLERK_INTERNAL") == "1" {
 			return nil

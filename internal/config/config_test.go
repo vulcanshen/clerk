@@ -1,6 +1,9 @@
 package config
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -99,6 +102,137 @@ func TestDefaultConfig(t *testing.T) {
 	}
 	if !IsFeedEnabled(cfg) {
 		t.Error("feed should be enabled by default")
+	}
+}
+
+func TestSaveAndLoadConfig(t *testing.T) {
+	tmp := t.TempDir()
+	cfgPath := filepath.Join(tmp, ".clerk.json")
+
+	// Write a config file
+	raw := map[string]interface{}{
+		"output": map[string]interface{}{
+			"dir":      "~/custom/",
+			"language": "ja",
+		},
+		"summary": map[string]interface{}{
+			"model":   "haiku",
+			"timeout": "3m",
+		},
+	}
+	data, _ := json.MarshalIndent(raw, "", "  ")
+	os.WriteFile(cfgPath, data, 0644)
+
+	// Load it
+	cfg := DefaultConfig()
+	err := loadFile(cfgPath, &cfg)
+	if err != nil {
+		t.Fatalf("loadFile failed: %v", err)
+	}
+
+	if cfg.Output.Dir != "~/custom/" {
+		t.Errorf("output.dir = %q, want ~/custom/", cfg.Output.Dir)
+	}
+	if cfg.Output.Language != "ja" {
+		t.Errorf("output.language = %q, want ja", cfg.Output.Language)
+	}
+	if cfg.Summary.Model != "haiku" {
+		t.Errorf("summary.model = %q, want haiku", cfg.Summary.Model)
+	}
+	if cfg.Summary.Timeout != "3m" {
+		t.Errorf("summary.timeout = %q, want 3m", cfg.Summary.Timeout)
+	}
+	// Defaults should still be in place for unset fields
+	if cfg.Log.RetentionDays != 30 {
+		t.Errorf("log.retention_days = %d, want 30 (default)", cfg.Log.RetentionDays)
+	}
+}
+
+func TestSaveRawToPath(t *testing.T) {
+	tmp := t.TempDir()
+	cfgPath := filepath.Join(tmp, "subdir", ".clerk.json")
+
+	raw := map[string]interface{}{
+		"output": map[string]interface{}{
+			"dir": "~/test/",
+		},
+	}
+
+	err := saveRawToPath(cfgPath, raw)
+	if err != nil {
+		t.Fatalf("saveRawToPath failed: %v", err)
+	}
+
+	// Verify file exists and is valid JSON
+	data, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("reading saved config: %v", err)
+	}
+
+	var loaded map[string]interface{}
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		t.Fatalf("parsing saved config: %v", err)
+	}
+
+	output, _ := loaded["output"].(map[string]interface{})
+	if output["dir"] != "~/test/" {
+		t.Errorf("saved output.dir = %v, want ~/test/", output["dir"])
+	}
+}
+
+func TestLoadWithCwd(t *testing.T) {
+	tmp := t.TempDir()
+
+	// Create a project config
+	projCfg := map[string]interface{}{
+		"output": map[string]interface{}{
+			"language": "ko",
+		},
+		"feed": map[string]interface{}{
+			"enabled": false,
+		},
+	}
+	data, _ := json.MarshalIndent(projCfg, "", "  ")
+	os.WriteFile(filepath.Join(tmp, ".clerk.json"), data, 0644)
+
+	cfg, err := LoadWithCwd(tmp)
+	if err != nil {
+		t.Fatalf("LoadWithCwd failed: %v", err)
+	}
+
+	if cfg.Output.Language != "ko" {
+		t.Errorf("output.language = %q, want ko", cfg.Output.Language)
+	}
+	if IsFeedEnabled(cfg) {
+		t.Error("feed should be disabled")
+	}
+	// Defaults should remain for unset
+	if cfg.Output.Dir != "~/.clerk/" {
+		t.Errorf("output.dir = %q, want ~/.clerk/ (default)", cfg.Output.Dir)
+	}
+}
+
+func TestLoadFileNotExist(t *testing.T) {
+	cfg := DefaultConfig()
+	err := loadFile("/nonexistent/path/.clerk.json", &cfg)
+	if err != nil {
+		t.Error("loadFile should return nil for nonexistent file")
+	}
+	// Config should remain default
+	if cfg.Output.Dir != "~/.clerk/" {
+		t.Errorf("config should remain default, got dir=%q", cfg.Output.Dir)
+	}
+}
+
+func TestLoadFileInvalidJSON(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, ".clerk.json")
+	os.WriteFile(path, []byte("not json"), 0644)
+
+	cfg := DefaultConfig()
+	err := loadFile(path, &cfg)
+	if err == nil {
+		t.Error("loadFile should return error for invalid JSON")
 	}
 }
 

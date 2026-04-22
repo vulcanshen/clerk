@@ -23,8 +23,9 @@ var reportActive bool
 var reportOutput string
 
 var reportCmd = &cobra.Command{
-	Use:   "report",
-	Short: "Generate a report from recent summaries",
+	Use:               "report",
+	Short:             "Generate a report from recent summaries",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if os.Getenv("CLERK_INTERNAL") == "1" {
 			return nil
@@ -132,12 +133,13 @@ var reportCmd = &cobra.Command{
 		for _, e := range all {
 			fmt.Fprintf(&sb, "## [%s] %s\n\n%s\n\n", e.date, e.slug, strings.TrimSpace(e.content))
 		}
-		prompt := buildReportPrompt(sb.String(), startDate, endDate, cfg.Output.Language)
+		prompt := buildReportPrompt(sb.String(), startDate, endDate)
+		sysPrompt := feed.BuildSystemPrompt(cfg.Output.Language, cfg.Report.Instruction)
 		p.Done()
 
 		// Step 5: Call Claude
 		p.Start(fmt.Sprintf("Generating report (%d summaries, %s ~ %s)", len(all), formatDate(startDate), formatDate(endDate)))
-		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, "")
+		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
 		if err != nil {
 			p.Fail(err)
 			logger.Errorf(cfg, "report: claude -p failed: %v", err)
@@ -203,10 +205,9 @@ func formatDate(yyyymmdd string) string {
 	return t.Format("2006-01-02")
 }
 
-func buildReportPrompt(summaries string, startDate, endDate, language string) string {
+func buildReportPrompt(summaries string, startDate, endDate string) string {
 	return fmt.Sprintf(`You are generating a work report from Claude Code session summaries.
 
-Output language: %s
 Time range: %s ~ %s
 
 Organize the report into three sections:
@@ -232,12 +233,12 @@ Rules:
 - Be concise and factual
 - Prioritize by impact, not chronology
 - Omit routine or trivial items
-- Section titles and all content must be in the specified output language
+- Section titles and all content must be in the output language specified in system instructions
 
 ---
 Summaries:
 
-%s`, language, formatDate(startDate), formatDate(endDate), summaries)
+%s`, formatDate(startDate), formatDate(endDate), summaries)
 }
 
 func flushActiveSessions(cfg config.Config) {

@@ -15,8 +15,9 @@ import (
 )
 
 var unregisterCmd = &cobra.Command{
-	Use:   "unregister",
-	Short: "Unregister clerk from Claude Code",
+	Use:               "unregister",
+	Short:             "Unregister clerk from Claude Code",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr, "Unregistering clerk...")
 		if err := hook.Uninstall(); err != nil {

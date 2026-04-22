@@ -5,8 +5,9 @@ import (
 )
 
 var dataCmd = &cobra.Command{
-	Use:   "data",
-	Short: "Manage clerk data",
+	Use:               "data",
+	Short:             "Manage clerk data",
+	ValidArgsFunction: noFileComp,
 }
 
 func init() {

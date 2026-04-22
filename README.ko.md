@@ -358,6 +358,7 @@ go install github.com/vulcanshen/clerk@latest
 | `summary.model` | `""` (claude 기본값) | `claude -p`에서 사용할 모델 |
 | `summary.timeout` | `5m` | `claude -p` 타임아웃 (예: 5m, 2m30s, 1h) |
 | `summary.instruction` | `""` | 요약 프롬프트에 추가되는 사용자 지정 지시 (`--append-system-prompt` 사용) |
+| `report.instruction` | `""` | 보고서 프롬프트에 추가되는 사용자 지정 지시 (`--append-system-prompt` 사용) |
 | `log.retention_days` | `30` | 로그 및 커서 파일 보존 일수 |
 | `feed.enabled` | `true` | 이 프로젝트의 feed 활성화/비활성화 |
 

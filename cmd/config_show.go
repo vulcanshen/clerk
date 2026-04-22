@@ -13,8 +13,9 @@ import (
 var configShowJSON bool
 
 var configShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Show current configuration",
+	Use:               "show",
+	Short:             "Show current configuration",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -50,6 +51,7 @@ var configShowCmd = &cobra.Command{
 		printOrNotSet("summary.model", cfg.Summary.Model)
 		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
 		printOrNotSet("summary.instruction", cfg.Summary.Instruction)
+		printOrNotSet("report.instruction", cfg.Report.Instruction)
 		fmt.Printf("%-22s %d\n", "log.retention_days", cfg.Log.RetentionDays)
 		if cfg.Feed.Enabled != nil {
 			fmt.Printf("%-22s %v\n", "feed.enabled", *cfg.Feed.Enabled)

@@ -19,8 +19,9 @@ import (
 )
 
 var registerCmd = &cobra.Command{
-	Use:   "register",
-	Short: "Register clerk with Claude Code and verify environment",
+	Use:               "register",
+	Short:             "Register clerk with Claude Code and verify environment",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		issues := 0
 		fixed := 0

@@ -24,6 +24,10 @@ type LogConfig struct {
 	RetentionDays int `json:"retention_days"`
 }
 
+type ReportConfig struct {
+	Instruction string `json:"instruction"`
+}
+
 type FeedConfig struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
@@ -31,6 +35,7 @@ type FeedConfig struct {
 type Config struct {
 	Output  OutputConfig  `json:"output"`
 	Summary SummaryConfig `json:"summary"`
+	Report  ReportConfig  `json:"report"`
 	Log     LogConfig     `json:"log"`
 	Feed    FeedConfig    `json:"feed"`
 }
@@ -138,6 +143,7 @@ func ValidKeys() []string {
 		"summary.model",
 		"summary.timeout",
 		"summary.instruction",
+		"report.instruction",
 		"log.retention_days",
 		"feed.enabled",
 	}
@@ -170,6 +176,8 @@ func applyKeyValue(cfg *Config, key, value string) error {
 		cfg.Summary.Model = value
 	case "summary.instruction":
 		cfg.Summary.Instruction = value
+	case "report.instruction":
+		cfg.Report.Instruction = value
 	case "summary.timeout":
 		d, err := time.ParseDuration(value)
 		if err != nil {
@@ -341,6 +349,7 @@ func LoadSources() []ConfigSource {
 		{"summary.model", def.Summary.Model, global.Summary.Model, project.Summary.Model},
 		{"summary.timeout", def.Summary.Timeout, global.Summary.Timeout, project.Summary.Timeout},
 		{"summary.instruction", def.Summary.Instruction, global.Summary.Instruction, project.Summary.Instruction},
+		{"report.instruction", def.Report.Instruction, global.Report.Instruction, project.Report.Instruction},
 		{"log.retention_days", fmt.Sprintf("%d", def.Log.RetentionDays), fmt.Sprintf("%d", global.Log.RetentionDays), fmt.Sprintf("%d", project.Log.RetentionDays)},
 		{"feed.enabled", feedStr(def.Feed.Enabled), feedStr(global.Feed.Enabled), feedStr(project.Feed.Enabled)},
 	}

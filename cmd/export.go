@@ -16,8 +16,9 @@ var exportSummary string
 var exportDate string
 
 var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export summaries by project or date",
+	Use:               "export",
+	Short:             "Export summaries by project or date",
+	ValidArgsFunction: noFileComp,
 	Long: `Without flags, list available slugs and dates.
 With --summary <slug>, merge all dates for a project.
 With --date <YYYYMMDD>, merge all projects for a date.

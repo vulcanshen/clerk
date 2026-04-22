@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v5.1.1] - 2026-04-22
+
+### New Features
+- `report.instruction` config — custom instructions for report prompt (via `--append-system-prompt`)
+- Report output language now passed via `--append-system-prompt` (system-level) instead of in user prompt
+
+### Bug Fixes
+- Tab completion no longer suggests files/directories for commands that don't accept file arguments
+
 ## [v5.1.0] - 2026-04-21
 
 ### New Features

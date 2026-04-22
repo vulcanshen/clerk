@@ -32,6 +32,12 @@ func RootCmd() *cobra.Command {
 	return rootCmd
 }
 
+// noFileComp is a ValidArgsFunction that disables file/directory completion.
+var noFileComp = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return nil, cobra.ShellCompDirectiveNoFileComp
+}
+
 func init() {
 	rootCmd.Version = Version
+	rootCmd.ValidArgsFunction = noFileComp
 }

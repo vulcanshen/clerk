@@ -4,19 +4,6 @@
 
 ## 待辦
 
-### clerk upgrade — 自動升級
-新增 `clerk upgrade` 指令，偵測新版本後詢問是否升級，確認後自動執行。`clerk version` 偵測到新版本時會提示使用 `clerk upgrade`。支援 Homebrew、Scoop、go install、install script，涵蓋 macOS、Linux、Windows。
-
-### report.instruction 設定
-Report 專用的自訂 prompt，機制同 `summary.instruction`。讓使用者控制報告風格、語言或重點。
-
-```
-clerk config set report.instruction "加上 action items 和 blockers"
-```
-
-### 修正 tab completion 預設行為
-不接受檔案參數的指令不再顯示檔案/目錄建議。
-
 ### 舊指令相容
 指令更名或 deprecated 時，舊指令不再只印訊息，而是顯示遷移提示後繼續執行對應的新指令。例如 `clerk report` 改名為 `clerk summary` 後，輸入 `clerk report` 會提示「請使用 clerk summary」，但仍然正常執行。
 

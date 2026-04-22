@@ -20,8 +20,9 @@ var logsErrorOnly bool
 var logsNoMask bool
 
 var logsCmd = &cobra.Command{
-	Use:   "logs",
-	Short: "Show logs for troubleshooting",
+	Use:               "logs",
+	Short:             "Show logs for troubleshooting",
+	ValidArgsFunction: noFileComp,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if logsDays < 1 || logsDays > 180 {
 			return fmt.Errorf("--days must be between 1 and 180")
