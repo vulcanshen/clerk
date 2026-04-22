@@ -17,7 +17,7 @@ import (
 
 var logsDays int
 var logsErrorOnly bool
-var logsNoMask bool
+var logsMask bool
 
 var logsCmd = &cobra.Command{
 	Use:               "logs",
@@ -47,12 +47,12 @@ var logsCmd = &cobra.Command{
 			return nil
 		}
 
-		if logsNoMask {
+		if logsMask {
+			fmt.Println(maskOutput(lines, cfg))
+		} else {
 			for _, line := range lines {
 				fmt.Println(line)
 			}
-		} else {
-			fmt.Println(maskOutput(lines, cfg))
 		}
 
 		return nil
@@ -132,6 +132,6 @@ Output the redacted log lines only, no explanation.
 func init() {
 	logsCmd.Flags().IntVar(&logsDays, "days", 1, "Number of days to include (default: today only)")
 	logsCmd.Flags().BoolVar(&logsErrorOnly, "error", false, "Show only error logs")
-	logsCmd.Flags().BoolVar(&logsNoMask, "no-mask", false, "Show raw logs without redacting personal information")
+	logsCmd.Flags().BoolVar(&logsMask, "mask", false, "Redact personal information via Claude API (uses tokens)")
 	rootCmd.AddCommand(logsCmd)
 }

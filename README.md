@@ -291,14 +291,19 @@ go install github.com/vulcanshen/clerk@latest
 | * | `status retry --all` | Retry all interrupted sessions |
 | | `status kill <slug>` | Kill a specific active feed process |
 | | `status kill --all` | Kill all active feed processes |
-| | `export` | List available slugs and dates |
-| | `export --summary <slug>` | Export merged summaries for a project (across all dates) |
+| | `list` | List available slugs and dates |
+| | `export` | List available slugs and dates (alias for `list`) |
+| | `export --slug <slug>` | Export merged summaries for a project (across all dates) |
 | | `export --date <YYYYMMDD>` | Export merged summaries for a date (across all projects) |
+| | `enable <slug>` | Enable feed for a project |
+| | `disable <slug>` | Disable feed for a project |
+| | `delete <slug>` | Delete all data for a slug |
+| | `delete <slug> --date <YYYYMMDD>` | Delete only a specific date's summary |
 | * | `report` | Generate a report and auto-save to `reports/` (piped: stdout) |
 | * | `report --days 7 -o weekly.md` | Weekly report across all projects |
-| * | `logs` | Show all logs for troubleshooting |
-| * | `logs --error` | Show error logs only |
-| | `logs --no-mask` | Show raw logs without redacting personal info |
+| | `logs` | Show logs for troubleshooting |
+| | `logs --error` | Show error logs only |
+| * | `logs --mask` | Redact personal info via Claude API |
 | | `data moveto <path>` | Move clerk data to a new directory and update config |
 | | `version` | Show current version and check for updates |
 

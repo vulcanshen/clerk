@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### New Features
+- `clerk list` — list all available slugs and dates
+- `clerk enable <slug>` / `clerk disable <slug>` — enable or disable feed for a project by slug
+- Slug metadata files (`slug/<slug>.json`) now created during feed, storing the project's absolute path
+- `clerk delete <slug>` — delete all data for a slug (summary, cursor, sessions, index entries, slug metadata)
+- `clerk delete <slug> --date <YYYYMMDD>` — delete only a specific date's summary
+- `clerk export --slug` replaces `--summary` (`--summary` still works as hidden alias)
+
+### Changes
+- `clerk logs` now outputs raw logs by default; use `--mask` to redact PII via Claude API (was reversed)
+
 ## [v5.1.1] - 2026-04-22
 
 ### New Features

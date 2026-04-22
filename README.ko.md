@@ -291,14 +291,19 @@ go install github.com/vulcanshen/clerk@latest
 | * | `status retry --all` | 모든 중단 세션 재시도 |
 | | `status kill <slug>` | 지정한 활성 feed 프로세스 강제 종료 |
 | | `status kill --all` | 모든 활성 feed 프로세스 강제 종료 |
-| | `export` | 내보내기 가능한 slug과 날짜 목록 표시 |
-| | `export --summary <slug>` | 지정 프로젝트의 요약을 통합 내보내기 (전체 날짜) |
+| | `list` | 사용 가능한 slug과 날짜 목록 표시 |
+| | `export` | 내보내기 가능한 slug과 날짜 목록 표시 (`list`와 동일) |
+| | `export --slug <slug>` | 지정 프로젝트의 요약을 통합 내보내기 (전체 날짜) |
 | | `export --date <YYYYMMDD>` | 지정 날짜의 요약을 통합 내보내기 (전체 프로젝트) |
+| | `enable <slug>` | 지정 프로젝트의 feed 활성화 |
+| | `disable <slug>` | 지정 프로젝트의 feed 비활성화 |
+| | `delete <slug>` | 지정 slug의 모든 데이터 삭제 |
+| | `delete <slug> --date <YYYYMMDD>` | 지정 날짜의 요약만 삭제 |
 | * | `report` | 보고서를 생성하고 `reports/`에 자동 저장 (파이프 시: stdout) |
 | * | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
-| * | `logs` | 문제 해결을 위한 전체 로그 표시 |
-| * | `logs --error` | 오류 로그만 표시 |
-| | `logs --no-mask` | 개인정보 마스킹 없이 원본 로그 표시 |
+| | `logs` | 문제 해결을 위한 로그 표시 |
+| | `logs --error` | 오류 로그만 표시 |
+| * | `logs --mask` | Claude API로 개인정보 마스킹 |
 | | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
 | | `version` | 버전 표시 및 업데이트 확인 |
 

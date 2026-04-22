@@ -18,6 +18,7 @@ var feedInputFlag string
 var feedCmd = &cobra.Command{
 	Use:               "feed",
 	Short:             "Process a Claude Code session transcript and generate a summary",
+	Hidden:            true,
 	ValidArgsFunction: noFileComp,
 	Long:  "Reads SessionEnd hook JSON from stdin, extracts the conversation, and generates a summary using claude -p.",
 	RunE: func(cmd *cobra.Command, args []string) error {

@@ -9,6 +9,7 @@ import (
 var mcpCmd = &cobra.Command{
 	Use:               "mcp",
 	Short:             "Start MCP stdio server",
+	Hidden:            true,
 	ValidArgsFunction: noFileComp,
 	Long:  "Starts a Model Context Protocol server over stdio. Used by Claude Code to interact with clerk tools.",
 	RunE: func(cmd *cobra.Command, args []string) error {

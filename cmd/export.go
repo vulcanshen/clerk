@@ -12,7 +12,7 @@ import (
 )
 
 var exportOutput string
-var exportSummary string
+var exportSlug string
 var exportDate string
 
 var exportCmd = &cobra.Command{
@@ -20,7 +20,7 @@ var exportCmd = &cobra.Command{
 	Short:             "Export summaries by project or date",
 	ValidArgsFunction: noFileComp,
 	Long: `Without flags, list available slugs and dates.
-With --summary <slug>, merge all dates for a project.
+With --slug <slug>, merge all dates for a project.
 With --date <YYYYMMDD>, merge all projects for a date.
 With both flags, export a specific slug on a specific date.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -29,11 +29,11 @@ With both flags, export a specific slug on a specific date.`,
 			return fmt.Errorf("loading config: %w", err)
 		}
 
-		if exportSummary != "" && exportDate != "" {
-			return exportSingle(cfg, exportSummary, exportDate)
+		if exportSlug != "" && exportDate != "" {
+			return exportSingle(cfg, exportSlug, exportDate)
 		}
-		if exportSummary != "" {
-			return exportBySlug(cfg, exportSummary)
+		if exportSlug != "" {
+			return exportBySlug(cfg, exportSlug)
 		}
 		if exportDate != "" {
 			return exportByDate(cfg, exportDate)
@@ -315,12 +315,14 @@ func atomicWriteFile(path, content string) error {
 }
 
 func init() {
-	exportCmd.Flags().StringVar(&exportSummary, "summary", "", "Export merged summaries for a slug (across all dates)")
+	exportCmd.Flags().StringVar(&exportSlug, "slug", "", "Export merged summaries for a slug (across all dates)")
+	exportCmd.Flags().StringVar(&exportSlug, "summary", "", "Alias for --slug (deprecated)")
+	exportCmd.Flags().MarkHidden("summary")
 	exportCmd.Flags().StringVar(&exportDate, "date", "", "Export merged summaries for a date (across all slugs)")
 	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Save to specific file")
 	exportCmd.MarkFlagFilename("output", "md")
 
-	exportCmd.RegisterFlagCompletionFunc("summary", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	exportCmd.RegisterFlagCompletionFunc("slug", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		cfg, err := config.Load()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp

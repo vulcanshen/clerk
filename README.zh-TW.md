@@ -290,14 +290,19 @@ go install github.com/vulcanshen/clerk@latest
 | * | `status retry --all` | 重試所有中斷的 session |
 | | `status kill <slug>` | 強制終止指定的 feed process |
 | | `status kill --all` | 強制終止所有 feed process |
-| | `export` | 列出可匯出的 slug 和日期 |
-| | `export --summary <slug>` | 匯出指定專案的合併摘要（跨日期） |
+| | `list` | 列出所有可用的 slug 和日期 |
+| | `export` | 列出可匯出的 slug 和日期（同 `list`） |
+| | `export --slug <slug>` | 匯出指定專案的合併摘要（跨日期） |
 | | `export --date <YYYYMMDD>` | 匯出指定日期的合併摘要（跨專案） |
+| | `enable <slug>` | 啟用指定專案的 feed |
+| | `disable <slug>` | 停用指定專案的 feed |
+| | `delete <slug>` | 刪除指定 slug 的所有資料 |
+| | `delete <slug> --date <YYYYMMDD>` | 僅刪除指定日期的摘要 |
 | * | `report` | 產生報告並自動存到 `reports/`（pipe 時輸出到 stdout） |
 | * | `report --days 7 -o weekly.md` | 產生跨專案週報 |
-| * | `logs` | 顯示所有日誌供排查 |
-| * | `logs --error` | 僅顯示錯誤日誌 |
-| | `logs --no-mask` | 顯示原始日誌，不遮蔽個資 |
+| | `logs` | 顯示日誌供排查 |
+| | `logs --error` | 僅顯示錯誤日誌 |
+| * | `logs --mask` | 透過 Claude API 遮蔽個資 |
 | | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
 | | `version` | 顯示版本並檢查更新 |
 

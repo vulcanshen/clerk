@@ -534,7 +534,48 @@ func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
-	return saveSummaryToPath(summaryPath(cfg, cwd), cwd, summary, tags)
+	if err := saveSummaryToPath(summaryPath(cfg, cwd), cwd, summary, tags); err != nil {
+		return err
+	}
+	saveSlugMeta(cfg, cwd)
+	return nil
+}
+
+func saveSlugMeta(cfg config.Config, cwd string) {
+	slug := CwdToSlug(cwd)
+	dir := filepath.Join(config.ExpandPath(cfg.Output.Dir), "slug")
+	os.MkdirAll(dir, 0755)
+
+	path := filepath.Join(dir, slug+".json")
+	data := fmt.Sprintf("{\"cwd\": %q}\n", cwd)
+
+	tmp, err := os.CreateTemp(dir, ".clerk-slug-*.tmp")
+	if err != nil {
+		return
+	}
+	tmpPath := tmp.Name()
+	tmp.WriteString(data)
+	tmp.Close()
+	os.Rename(tmpPath, path)
+}
+
+// LoadSlugMeta reads the cwd for a given slug from its metadata file.
+func LoadSlugMeta(cfg config.Config, slug string) (string, error) {
+	path := filepath.Join(config.ExpandPath(cfg.Output.Dir), "slug", slug+".json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("no path info for slug %q — trigger a feed or run clerk register to rebuild", slug)
+	}
+	var meta struct {
+		Cwd string `json:"cwd"`
+	}
+	if err := json.Unmarshal(raw, &meta); err != nil {
+		return "", fmt.Errorf("invalid slug metadata for %q: %w", slug, err)
+	}
+	if meta.Cwd == "" {
+		return "", fmt.Errorf("empty cwd in slug metadata for %q", slug)
+	}
+	return meta.Cwd, nil
 }
 
 func saveSummaryToPath(path string, cwd string, summary string, tags []string) error {
