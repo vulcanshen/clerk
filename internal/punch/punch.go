@@ -26,6 +26,8 @@ func Run(data []byte, cfg config.Config) error {
 	}
 
 	slug := feed.CwdToSlug(input.Cwd)
+	feed.SaveSlugMeta(cfg, input.Cwd)
+
 	dir := sessionsDir(cfg)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("creating sessions directory: %w", err)

@@ -534,14 +534,11 @@ func saveIndexTerm(dir, term, mdLink string, fileExists func(string) bool) {
 }
 
 func SaveSummary(cfg config.Config, cwd string, summary string, tags []string) error {
-	if err := saveSummaryToPath(summaryPath(cfg, cwd), cwd, summary, tags); err != nil {
-		return err
-	}
-	saveSlugMeta(cfg, cwd)
-	return nil
+	return saveSummaryToPath(summaryPath(cfg, cwd), cwd, summary, tags)
 }
 
-func saveSlugMeta(cfg config.Config, cwd string) {
+// SaveSlugMeta writes the slug → cwd mapping to slug/<slug>.json.
+func SaveSlugMeta(cfg config.Config, cwd string) {
 	slug := CwdToSlug(cwd)
 	dir := filepath.Join(config.ExpandPath(cfg.Output.Dir), "slug")
 	os.MkdirAll(dir, 0755)

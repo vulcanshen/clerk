@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v5.1.3] - 2026-04-22
+
+### Bug Fixes
+- Slug metadata (`slug/<slug>.json`) now created on every feed run, not only when new content exists
+
 ## [v5.1.2] - 2026-04-22
 
 ### New Features
