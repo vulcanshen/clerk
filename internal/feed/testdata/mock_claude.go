@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -24,9 +25,10 @@ func main() {
 		}
 	}
 
-	// If prompt contains "MOCK_HANG", sleep forever (for timeout tests)
+	// If prompt contains "MOCK_HANG", sleep long enough to trigger timeout
 	if strings.Contains(prompt, "MOCK_HANG") {
-		select {}
+		time.Sleep(10 * time.Minute)
+		os.Exit(0)
 	}
 
 	// If prompt contains "MOCK_FAIL", simulate an error
