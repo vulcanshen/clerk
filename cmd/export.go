@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
+	"github.com/vulcanshen/clerk/internal/feed"
 )
 
 var exportOutput string
@@ -55,6 +56,9 @@ func listExportTargets(cfg config.Config) error {
 		fmt.Fprintln(os.Stderr, "Slugs:")
 		for _, s := range slugs {
 			fmt.Printf("  %s\n", s)
+			if cwd, err := feed.LoadSlugMeta(cfg, s); err == nil {
+				fmt.Printf("    └ %s\n", cwd)
+			}
 		}
 	}
 	if len(dates) > 0 {
