@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/logger"
 	"github.com/vulcanshen/clerk/internal/platform"
+	"github.com/vulcanshen/clerk/internal/provider"
 )
 
 type HookInput struct {
@@ -302,40 +302,6 @@ func BuildSystemPrompt(language, instruction string) string {
 		parts = append(parts, instruction)
 	}
 	return strings.Join(parts, "\n")
-}
-
-func CallClaude(prompt, model, timeout, systemPrompt string) (string, error) {
-	args := []string{"-p"}
-	if model != "" {
-		args = append(args, "--model", model)
-	}
-	if systemPrompt != "" {
-		args = append(args, "--append-system-prompt", systemPrompt)
-	}
-
-	dur, err := time.ParseDuration(timeout)
-	if err != nil {
-		dur = 5 * time.Minute
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), dur)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "claude", args...)
-	cmd.Stdin = strings.NewReader(prompt)
-	cmd.Env = append(os.Environ(), "CLERK_INTERNAL=1")
-
-	out, err := cmd.Output()
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("claude -p timed out after %s", timeout)
-		}
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("claude exited with error: %s", string(exitErr.Stderr))
-		}
-		return "", fmt.Errorf("running claude: %w", err)
-	}
-	return strings.TrimSpace(string(out)), nil
 }
 
 func summaryPath(cfg config.Config, cwd string) string {
@@ -822,12 +788,21 @@ func Run(inputData []byte, cfg config.Config) error {
 		logger.Info(cfg, "found prior summary, will merge")
 	}
 
-	logger.Info(cfg, "calling claude -p for summary...")
+	logger.Info(cfg, "calling provider for summary...")
 	prompt := BuildPrompt(conversation, priorSummary)
 	sysPrompt := BuildSystemPrompt(cfg.Output.Language, cfg.Summary.Instruction)
-	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
+
+	dur, _ := time.ParseDuration(cfg.Summary.Timeout)
+	if dur <= 0 {
+		dur = 5 * time.Minute
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), dur)
+	defer cancel()
+
+	p := provider.ResolveForSummary(cfg)
+	output, err := p.Complete(ctx, prompt, sysPrompt)
 	if err != nil {
-		logger.Errorf(cfg, "claude -p failed: %v", err)
+		logger.Errorf(cfg, "provider failed: %v", err)
 		return err
 	}
 	logger.Info(cfg, "summary generated successfully")
@@ -863,9 +838,18 @@ func Retry(orphan OrphanState, cfg config.Config) error {
 	priorSummary := ReadExistingSummary(cfg, orphan.State.Cwd)
 	prompt := BuildPrompt(orphan.State.Conversation, priorSummary)
 	sysPrompt := BuildSystemPrompt(cfg.Output.Language, cfg.Summary.Instruction)
-	output, err := CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
+
+	dur, _ := time.ParseDuration(cfg.Summary.Timeout)
+	if dur <= 0 {
+		dur = 5 * time.Minute
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), dur)
+	defer cancel()
+
+	p := provider.ResolveForSummary(cfg)
+	output, err := p.Complete(ctx, prompt, sysPrompt)
 	if err != nil {
-		logger.Errorf(cfg, "retry claude -p failed for %s: %v", orphan.State.Slug, err)
+		logger.Errorf(cfg, "retry provider failed for %s: %v", orphan.State.Slug, err)
 		return err
 	}
 

@@ -48,9 +48,16 @@ var configShowCmd = &cobra.Command{
 
 		printOrNotSet("output.dir", cfg.Output.Dir)
 		printOrNotSet("output.language", cfg.Output.Language)
+		printOrNotSet("summary.provider", cfg.Summary.Provider)
 		printOrNotSet("summary.model", cfg.Summary.Model)
 		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
+		printOrNotSet("summary.endpoint", cfg.Summary.Endpoint)
+		printOrNotSet("summary.api_key", cfg.Summary.APIKey)
 		printOrNotSet("summary.instruction", cfg.Summary.Instruction)
+		printOrNotSet("report.provider", cfg.Report.Provider)
+		printOrNotSet("report.model", cfg.Report.Model)
+		printOrNotSet("report.endpoint", cfg.Report.Endpoint)
+		printOrNotSet("report.api_key", cfg.Report.APIKey)
 		printOrNotSet("report.instruction", cfg.Report.Instruction)
 		fmt.Printf("%-22s %d\n", "log.retention_days", cfg.Log.RetentionDays)
 		if cfg.Feed.Enabled != nil {

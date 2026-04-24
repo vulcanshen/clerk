@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"context"
+	"time"
+
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/commands"
 	"github.com/vulcanshen/clerk/internal/config"
@@ -16,6 +19,7 @@ import (
 	"github.com/vulcanshen/clerk/internal/logger"
 	mcpinstall "github.com/vulcanshen/clerk/internal/mcp"
 	"github.com/vulcanshen/clerk/internal/progress"
+	"github.com/vulcanshen/clerk/internal/provider"
 )
 
 var registerCmd = &cobra.Command{
@@ -211,10 +215,15 @@ var registerCmd = &cobra.Command{
 		// Claude API test
 		fmt.Fprintln(w)
 		p := progress.New()
-		p.Start("Claude API test")
+		p.Start("Provider API test")
 		testConv := "[User]\nHello, this is a test.\n\n[Assistant]\nHi! How can I help?\n"
 		testPrompt := feed.BuildPrompt(testConv, "")
-		testOut, err := feed.CallClaude(testPrompt, "", "1m", "")
+
+		testCfg, _ := config.Load()
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
+		prov := provider.ResolveForSummary(testCfg)
+		testOut, err := prov.Complete(ctx, testPrompt, "")
 		if err != nil {
 			p.Fail(err)
 			issues++

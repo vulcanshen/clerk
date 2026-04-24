@@ -15,8 +15,11 @@ type OutputConfig struct {
 }
 
 type SummaryConfig struct {
+	Provider    string `json:"provider"`
 	Model       string `json:"model"`
 	Timeout     string `json:"timeout"`
+	Endpoint    string `json:"endpoint"`
+	APIKey      string `json:"api_key"`
 	Instruction string `json:"instruction"`
 }
 
@@ -25,6 +28,10 @@ type LogConfig struct {
 }
 
 type ReportConfig struct {
+	Provider    string `json:"provider"`
+	Model       string `json:"model"`
+	Endpoint    string `json:"endpoint"`
+	APIKey      string `json:"api_key"`
 	Instruction string `json:"instruction"`
 }
 
@@ -140,13 +147,24 @@ func ValidKeys() []string {
 	return []string{
 		"output.dir",
 		"output.language",
+		"summary.provider",
 		"summary.model",
 		"summary.timeout",
+		"summary.endpoint",
+		"summary.api_key",
 		"summary.instruction",
+		"report.provider",
+		"report.model",
+		"report.endpoint",
+		"report.api_key",
 		"report.instruction",
 		"log.retention_days",
 		"feed.enabled",
 	}
+}
+
+func isClaudeProvider(p string) bool {
+	return p == "" || strings.ToLower(p) == "claude"
 }
 
 func applyKeyValue(cfg *Config, key, value string) error {
@@ -158,8 +176,10 @@ func applyKeyValue(cfg *Config, key, value string) error {
 		cfg.Output.Dir = value
 	case "output.language":
 		cfg.Output.Language = value
+	case "summary.provider":
+		cfg.Summary.Provider = value
 	case "summary.model":
-		if value != "" {
+		if value != "" && isClaudeProvider(cfg.Summary.Provider) {
 			validAliases := []string{"sonnet", "opus", "haiku"}
 			valid := false
 			lower := strings.ToLower(value)
@@ -174,8 +194,20 @@ func applyKeyValue(cfg *Config, key, value string) error {
 			}
 		}
 		cfg.Summary.Model = value
+	case "summary.endpoint":
+		cfg.Summary.Endpoint = value
+	case "summary.api_key":
+		cfg.Summary.APIKey = value
 	case "summary.instruction":
 		cfg.Summary.Instruction = value
+	case "report.provider":
+		cfg.Report.Provider = value
+	case "report.model":
+		cfg.Report.Model = value
+	case "report.endpoint":
+		cfg.Report.Endpoint = value
+	case "report.api_key":
+		cfg.Report.APIKey = value
 	case "report.instruction":
 		cfg.Report.Instruction = value
 	case "summary.timeout":
@@ -346,9 +378,16 @@ func LoadSources() []ConfigSource {
 	entries := []entry{
 		{"output.dir", def.Output.Dir, global.Output.Dir, project.Output.Dir},
 		{"output.language", def.Output.Language, global.Output.Language, project.Output.Language},
+		{"summary.provider", def.Summary.Provider, global.Summary.Provider, project.Summary.Provider},
 		{"summary.model", def.Summary.Model, global.Summary.Model, project.Summary.Model},
 		{"summary.timeout", def.Summary.Timeout, global.Summary.Timeout, project.Summary.Timeout},
+		{"summary.endpoint", def.Summary.Endpoint, global.Summary.Endpoint, project.Summary.Endpoint},
+		{"summary.api_key", def.Summary.APIKey, global.Summary.APIKey, project.Summary.APIKey},
 		{"summary.instruction", def.Summary.Instruction, global.Summary.Instruction, project.Summary.Instruction},
+		{"report.provider", def.Report.Provider, global.Report.Provider, project.Report.Provider},
+		{"report.model", def.Report.Model, global.Report.Model, project.Report.Model},
+		{"report.endpoint", def.Report.Endpoint, global.Report.Endpoint, project.Report.Endpoint},
+		{"report.api_key", def.Report.APIKey, global.Report.APIKey, project.Report.APIKey},
 		{"report.instruction", def.Report.Instruction, global.Report.Instruction, project.Report.Instruction},
 		{"log.retention_days", fmt.Sprintf("%d", def.Log.RetentionDays), fmt.Sprintf("%d", global.Log.RetentionDays), fmt.Sprintf("%d", project.Log.RetentionDays)},
 		{"feed.enabled", feedStr(def.Feed.Enabled), feedStr(global.Feed.Enabled), feedStr(project.Feed.Enabled)},
