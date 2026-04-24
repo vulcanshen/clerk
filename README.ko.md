@@ -39,7 +39,7 @@ clerk register
 
 끝입니다. clerk는 완전히 로컬에서 실행됩니다 — 원격 서비스 연결 없음, 계정 불필요, 데이터가 컴퓨터 밖으로 나가지 않습니다.
 
-> **토큰 소비에 대해:** clerk는 인증된 Claude Code(`claude -p`)를 사용하여 요약과 보고서를 생성합니다. 세션 종료 시 요약을 위한 API 호출이 1회, `clerk report` 실행마다 추가 1회 발생합니다. 요약은 커서 트래킹으로 새로운 대화 내용만 처리하며, 전체 기록을 다시 읽지 않습니다. 쿼터가 걱정된다면 `summary.model`을 `haiku`로 설정하거나 프로젝트별로 feed를 비활성화할 수 있습니다(`clerk config set feed.enabled false`).
+> **토큰 소비에 대해:** clerk는 AI를 사용하여 요약과 보고서를 생성합니다. 기본적으로 Claude Code(`claude -p`)를 사용하지만, OpenAI-compatible provider(Groq, Gemini, OpenAI, Ollama 등)로 전환할 수 있습니다(`clerk config set summary.provider.name <provider>`). 세션 종료 시 요약 API 호출 1회, `clerk report` 실행마다 1회 발생합니다. 요약은 커서 트래킹으로 새 내용만 처리합니다. `clerk provider`로 지원 provider와 설정 방법을 확인하세요.
 
 등록 후, clerk는 백그라운드에서 조용히 작동합니다:
 
@@ -303,10 +303,12 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
 | | `logs` | 문제 해결을 위한 로그 표시 |
 | | `logs --error` | 오류 로그만 표시 |
+| | `provider` | 지원되는 AI provider 및 기본 설정 목록 |
+| | `provider models <name>` | 지정 provider의 사용 가능한 모델 목록 |
 | | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
 | | `version` | 버전 표시 및 업데이트 확인 |
 
-`*` = Claude API 사용 (토큰 소비)
+`*` = AI provider 사용 (토큰 소비 — 기본 Claude, 변경 가능)
 
 내부 명령어 (훅에서 호출되며, 사용자가 직접 사용하지 않음):
 
@@ -359,16 +361,16 @@ go install github.com/vulcanshen/clerk@latest
 |-----------|--------|------|
 | `output.dir` | `~/.clerk/` | 요약 저장 루트 디렉토리 |
 | `output.language` | `en` | 요약 출력 언어 |
-| `summary.provider` | `""` (claude) | 요약 provider: 빈 값 또는 `"claude"`는 Claude CLI, 기타 값은 OpenAI-compatible API |
-| `summary.model` | `""` | 모델 이름 (claude: sonnet/opus/haiku, 기타: 임의 모델명) |
+| `summary.provider.name` | `""` (claude) | Provider: 빈 값 또는 `"claude"`는 Claude CLI, 기타는 OpenAI-compatible API |
+| `summary.provider.model` | `""` | 모델 이름 (claude: sonnet/opus/haiku, 기타: 임의) |
+| `summary.provider.endpoint` | `""` | OpenAI-compatible API 엔드포인트 (알려진 provider는 자동 설정) |
+| `summary.provider.api_key` | `""` | API 키 |
 | `summary.timeout` | `5m` | API 호출 타임아웃 (예: 5m, 2m30s, 1h) |
-| `summary.endpoint` | `""` | OpenAI-compatible API 엔드포인트 (예: `https://api.openai.com`) |
-| `summary.api_key` | `""` | API 키 |
 | `summary.instruction` | `""` | 요약 프롬프트에 추가되는 사용자 지정 지시 |
-| `report.provider` | `""` | 보고서 provider (summary.provider로 폴백) |
-| `report.model` | `""` | 보고서 모델 (summary.model로 폴백) |
-| `report.endpoint` | `""` | 보고서 엔드포인트 (summary.endpoint로 폴백) |
-| `report.api_key` | `""` | 보고서 API 키 (summary.api_key로 폴백) |
+| `report.provider.name` | `""` | 보고서 provider (summary로 폴백) |
+| `report.provider.model` | `""` | 보고서 모델 (summary로 폴백) |
+| `report.provider.endpoint` | `""` | 보고서 엔드포인트 (summary로 폴백) |
+| `report.provider.api_key` | `""` | 보고서 API 키 (summary로 폴백) |
 | `report.instruction` | `""` | 보고서 프롬프트에 추가되는 사용자 지정 지시 |
 | `log.retention_days` | `30` | 로그 및 커서 파일 보존 일수 |
 | `feed.enabled` | `true` | 이 프로젝트의 feed 활성화/비활성화 |
@@ -381,7 +383,11 @@ cd /path/to/unimportant-project
 clerk config set feed.enabled false
 
 # 전역으로 더 저렴한 모델 사용
-clerk config set -g summary.model haiku
+clerk config set -g summary.provider.model haiku
+
+# Groq로 전환 (무료 플랜)
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
 
 # 전역으로 출력 언어 변경
 clerk config set -g output.language en

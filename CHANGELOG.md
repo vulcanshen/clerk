@@ -6,10 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 - **Open Summary Provider** — support any OpenAI-compatible API backend for summaries and reports
-- Config: `summary.provider`, `summary.endpoint`, `summary.api_key` for summary generation
-- Config: `report.provider`, `report.model`, `report.endpoint`, `report.api_key` for report generation
-- Fallback chain: report settings → summary settings → `claude -p` (default)
-- `summary.model` validation relaxed for non-claude providers (accepts any model name)
+- Config: `summary.provider.name/model/endpoint/api_key` for summary generation
+- Config: `report.provider.name/model/endpoint/api_key` for report generation (falls back to summary settings)
+- Built-in presets for groq, gemini, openai, ollama — only `provider.name` + `api_key` needed
+- `clerk provider` — list all supported providers with default endpoints and models
+- `clerk provider models <name>` — query available models from a provider's API
+- API key masked in all display output (`config show`, `config set`, `register`)
+- `summary.provider.model` validation relaxed for non-claude providers (accepts any model name)
 
 ### Changes
 - `logs --mask` removed — logs always output raw (users edit output themselves)

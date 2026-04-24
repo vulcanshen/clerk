@@ -39,7 +39,7 @@ clerk register
 
 That's it. clerk runs entirely on your machine — no remote services, no accounts, no data leaving your laptop.
 
-> **About token usage:** clerk uses your authenticated Claude Code (`claude -p`) to generate summaries and reports. Each session end triggers one API call for the summary, and each `clerk report` invocation is another call. Summaries only process new transcript content (cursor tracking), not the entire history. If you're on a tight quota, set `summary.model` to `haiku` or disable feed per-project (`clerk config set feed.enabled false`).
+> **About token usage:** clerk uses AI to generate summaries and reports. By default it uses Claude Code (`claude -p`), but you can switch to any OpenAI-compatible provider (Groq, Gemini, OpenAI, Ollama, etc.) via `clerk config set summary.provider.name <provider>`. Each session end triggers one API call for the summary, and each `clerk report` invocation is another call. Summaries only process new transcript content (cursor tracking), not the entire history. Run `clerk provider` to see available providers and setup instructions.
 
 After registering, clerk works silently in the background:
 
@@ -303,10 +303,12 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | Weekly report across all projects |
 | | `logs` | Show logs for troubleshooting |
 | | `logs --error` | Show error logs only |
+| | `provider` | List supported AI providers with default settings |
+| | `provider models <name>` | List available models for a provider |
 | | `data moveto <path>` | Move clerk data to a new directory and update config |
 | | `version` | Show current version and check for updates |
 
-`*` = uses Claude API (consumes tokens)
+`*` = uses AI provider (consumes tokens — Claude by default, configurable)
 
 Internal commands (called by hooks, not by users):
 
@@ -359,16 +361,16 @@ Internal commands (called by hooks, not by users):
 |-----|---------|-------------|
 | `output.dir` | `~/.clerk/` | Root directory for summaries |
 | `output.language` | `en` | Summary output language |
-| `summary.provider` | `""` (claude) | Provider for summaries: `""` or `"claude"` uses Claude CLI, any other value uses OpenAI-compatible API |
-| `summary.model` | `""` | Model name (claude: sonnet/opus/haiku; other providers: any model name) |
+| `summary.provider.name` | `""` (claude) | Provider: `""` or `"claude"` uses Claude CLI, others use OpenAI-compatible API |
+| `summary.provider.model` | `""` | Model name (claude: sonnet/opus/haiku; others: any) |
+| `summary.provider.endpoint` | `""` | OpenAI-compatible API endpoint (auto-filled for known providers) |
+| `summary.provider.api_key` | `""` | API key for the endpoint |
 | `summary.timeout` | `5m` | Timeout for API calls (e.g. 5m, 2m30s, 1h) |
-| `summary.endpoint` | `""` | OpenAI-compatible API endpoint (e.g. `https://api.openai.com`) |
-| `summary.api_key` | `""` | API key for the endpoint |
 | `summary.instruction` | `""` | Custom instruction appended to summary prompt |
-| `report.provider` | `""` | Provider for reports (falls back to summary.provider) |
-| `report.model` | `""` | Model for reports (falls back to summary.model) |
-| `report.endpoint` | `""` | Endpoint for reports (falls back to summary.endpoint) |
-| `report.api_key` | `""` | API key for reports (falls back to summary.api_key) |
+| `report.provider.name` | `""` | Provider for reports (falls back to summary) |
+| `report.provider.model` | `""` | Model for reports (falls back to summary) |
+| `report.provider.endpoint` | `""` | Endpoint for reports (falls back to summary) |
+| `report.provider.api_key` | `""` | API key for reports (falls back to summary) |
 | `report.instruction` | `""` | Custom instruction appended to report prompt |
 | `log.retention_days` | `30` | Days to keep log and cursor files |
 | `feed.enabled` | `true` | Enable/disable feed for this project |
@@ -380,8 +382,12 @@ Internal commands (called by hooks, not by users):
 cd /path/to/unimportant-project
 clerk config set feed.enabled false
 
-# Use a cheaper model globally
-clerk config set -g summary.model haiku
+# Use a cheaper model globally (claude provider)
+clerk config set -g summary.provider.model haiku
+
+# Switch to Groq (free tier)
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
 
 # Change output language globally
 clerk config set -g output.language en
