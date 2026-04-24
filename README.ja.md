@@ -303,7 +303,6 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
 | | `logs` | トラブルシューティング用のログを表示 |
 | | `logs --error` | エラーログのみ表示 |
-| * | `logs --mask` | Claude API で個人情報をマスク |
 | | `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
 | | `version` | バージョン表示とアップデート確認 |
 
@@ -360,10 +359,17 @@ go install github.com/vulcanshen/clerk@latest
 |----------|-------------|------|
 | `output.dir` | `~/.clerk/` | 要約の保存ルートディレクトリ |
 | `output.language` | `en` | 要約の出力言語 |
-| `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
-| `summary.timeout` | `5m` | `claude -p` のタイムアウト（例: 5m、2m30s、1h） |
-| `summary.instruction` | `""` | 要約プロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
-| `report.instruction` | `""` | レポートプロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
+| `summary.provider` | `""`（claude） | 要約の provider：空値または `"claude"` は Claude CLI、その他は OpenAI-compatible API |
+| `summary.model` | `""` | モデル名（claude: sonnet/opus/haiku、その他: 任意） |
+| `summary.timeout` | `5m` | API コールのタイムアウト（例: 5m、2m30s、1h） |
+| `summary.endpoint` | `""` | OpenAI-compatible API エンドポイント（例: `https://api.openai.com`） |
+| `summary.api_key` | `""` | API キー |
+| `summary.instruction` | `""` | 要約プロンプトに追加するカスタム指示 |
+| `report.provider` | `""` | レポートの provider（summary.provider にフォールバック） |
+| `report.model` | `""` | レポートのモデル（summary.model にフォールバック） |
+| `report.endpoint` | `""` | レポートのエンドポイント（summary.endpoint にフォールバック） |
+| `report.api_key` | `""` | レポートの API キー（summary.api_key にフォールバック） |
+| `report.instruction` | `""` | レポートプロンプトに追加するカスタム指示 |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
 | `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
 

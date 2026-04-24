@@ -303,7 +303,6 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | Weekly report across all projects |
 | | `logs` | Show logs for troubleshooting |
 | | `logs --error` | Show error logs only |
-| * | `logs --mask` | Redact personal info via Claude API |
 | | `data moveto <path>` | Move clerk data to a new directory and update config |
 | | `version` | Show current version and check for updates |
 
@@ -360,10 +359,17 @@ Internal commands (called by hooks, not by users):
 |-----|---------|-------------|
 | `output.dir` | `~/.clerk/` | Root directory for summaries |
 | `output.language` | `en` | Summary output language |
-| `summary.model` | `""` (claude default) | Model to use for `claude -p` |
-| `summary.timeout` | `5m` | Timeout for `claude -p` calls (e.g. 5m, 2m30s, 1h) |
-| `summary.instruction` | `""` | Custom instruction appended to summary prompt (via `--append-system-prompt`) |
-| `report.instruction` | `""` | Custom instruction appended to report prompt (via `--append-system-prompt`) |
+| `summary.provider` | `""` (claude) | Provider for summaries: `""` or `"claude"` uses Claude CLI, any other value uses OpenAI-compatible API |
+| `summary.model` | `""` | Model name (claude: sonnet/opus/haiku; other providers: any model name) |
+| `summary.timeout` | `5m` | Timeout for API calls (e.g. 5m, 2m30s, 1h) |
+| `summary.endpoint` | `""` | OpenAI-compatible API endpoint (e.g. `https://api.openai.com`) |
+| `summary.api_key` | `""` | API key for the endpoint |
+| `summary.instruction` | `""` | Custom instruction appended to summary prompt |
+| `report.provider` | `""` | Provider for reports (falls back to summary.provider) |
+| `report.model` | `""` | Model for reports (falls back to summary.model) |
+| `report.endpoint` | `""` | Endpoint for reports (falls back to summary.endpoint) |
+| `report.api_key` | `""` | API key for reports (falls back to summary.api_key) |
+| `report.instruction` | `""` | Custom instruction appended to report prompt |
 | `log.retention_days` | `30` | Days to keep log and cursor files |
 | `feed.enabled` | `true` | Enable/disable feed for this project |
 

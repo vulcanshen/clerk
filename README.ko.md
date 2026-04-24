@@ -303,7 +303,6 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | 프로젝트 간 주간 보고서 |
 | | `logs` | 문제 해결을 위한 로그 표시 |
 | | `logs --error` | 오류 로그만 표시 |
-| * | `logs --mask` | Claude API로 개인정보 마스킹 |
 | | `data moveto <path>` | clerk 데이터를 새 디렉토리로 이동하고 설정 업데이트 |
 | | `version` | 버전 표시 및 업데이트 확인 |
 
@@ -360,10 +359,17 @@ go install github.com/vulcanshen/clerk@latest
 |-----------|--------|------|
 | `output.dir` | `~/.clerk/` | 요약 저장 루트 디렉토리 |
 | `output.language` | `en` | 요약 출력 언어 |
-| `summary.model` | `""` (claude 기본값) | `claude -p`에서 사용할 모델 |
-| `summary.timeout` | `5m` | `claude -p` 타임아웃 (예: 5m, 2m30s, 1h) |
-| `summary.instruction` | `""` | 요약 프롬프트에 추가되는 사용자 지정 지시 (`--append-system-prompt` 사용) |
-| `report.instruction` | `""` | 보고서 프롬프트에 추가되는 사용자 지정 지시 (`--append-system-prompt` 사용) |
+| `summary.provider` | `""` (claude) | 요약 provider: 빈 값 또는 `"claude"`는 Claude CLI, 기타 값은 OpenAI-compatible API |
+| `summary.model` | `""` | 모델 이름 (claude: sonnet/opus/haiku, 기타: 임의 모델명) |
+| `summary.timeout` | `5m` | API 호출 타임아웃 (예: 5m, 2m30s, 1h) |
+| `summary.endpoint` | `""` | OpenAI-compatible API 엔드포인트 (예: `https://api.openai.com`) |
+| `summary.api_key` | `""` | API 키 |
+| `summary.instruction` | `""` | 요약 프롬프트에 추가되는 사용자 지정 지시 |
+| `report.provider` | `""` | 보고서 provider (summary.provider로 폴백) |
+| `report.model` | `""` | 보고서 모델 (summary.model로 폴백) |
+| `report.endpoint` | `""` | 보고서 엔드포인트 (summary.endpoint로 폴백) |
+| `report.api_key` | `""` | 보고서 API 키 (summary.api_key로 폴백) |
+| `report.instruction` | `""` | 보고서 프롬프트에 추가되는 사용자 지정 지시 |
 | `log.retention_days` | `30` | 로그 및 커서 파일 보존 일수 |
 | `feed.enabled` | `true` | 이 프로젝트의 feed 활성화/비활성화 |
 

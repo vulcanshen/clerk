@@ -302,7 +302,6 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | | `logs` | 顯示日誌供排查 |
 | | `logs --error` | 僅顯示錯誤日誌 |
-| * | `logs --mask` | 透過 Claude API 遮蔽個資 |
 | | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
 | | `version` | 顯示版本並檢查更新 |
 
@@ -359,10 +358,17 @@ go install github.com/vulcanshen/clerk@latest
 |--------|--------|------|
 | `output.dir` | `~/.clerk/` | 摘要存放根目錄 |
 | `output.language` | `en` | 摘要輸出語言 |
-| `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
-| `summary.timeout` | `5m` | `claude -p` 的逾時時間（如 5m、2m30s、1h） |
-| `summary.instruction` | `""` | 附加到摘要 prompt 的自訂指令（透過 `--append-system-prompt`） |
-| `report.instruction` | `""` | 附加到報告 prompt 的自訂指令（透過 `--append-system-prompt`） |
+| `summary.provider` | `""`（claude） | 摘要使用的 provider：空值或 `"claude"` 使用 Claude CLI，其他值使用 OpenAI-compatible API |
+| `summary.model` | `""` | 模型名稱（claude: sonnet/opus/haiku；其他 provider: 任意模型名） |
+| `summary.timeout` | `5m` | API 呼叫逾時時間（如 5m、2m30s、1h） |
+| `summary.endpoint` | `""` | OpenAI-compatible API endpoint（如 `https://api.openai.com`） |
+| `summary.api_key` | `""` | API 金鑰 |
+| `summary.instruction` | `""` | 附加到摘要 prompt 的自訂指令 |
+| `report.provider` | `""` | 報告使用的 provider（fallback 到 summary.provider） |
+| `report.model` | `""` | 報告使用的模型（fallback 到 summary.model） |
+| `report.endpoint` | `""` | 報告的 endpoint（fallback 到 summary.endpoint） |
+| `report.api_key` | `""` | 報告的 API 金鑰（fallback 到 summary.api_key） |
+| `report.instruction` | `""` | 附加到報告 prompt 的自訂指令 |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
 | `feed.enabled` | `true` | 啟用/停用此專案的 feed |
 

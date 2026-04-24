@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### New Features
+- **Open Summary Provider** — support any OpenAI-compatible API backend for summaries and reports
+- Config: `summary.provider`, `summary.endpoint`, `summary.api_key` for summary generation
+- Config: `report.provider`, `report.model`, `report.endpoint`, `report.api_key` for report generation
+- Fallback chain: report settings → summary settings → `claude -p` (default)
+- `summary.model` validation relaxed for non-claude providers (accepts any model name)
+
+### Changes
+- `logs --mask` removed — logs always output raw (users edit output themselves)
+- `register` API test now uses the configured summary provider instead of hardcoded `claude -p`
+
 ## [v5.1.3] - 2026-04-22
 
 ### Bug Fixes
