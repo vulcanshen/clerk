@@ -10,7 +10,20 @@ func isClaudeProvider(p string) bool {
 	return p == "" || strings.ToLower(p) == "claude"
 }
 
+func applyPreset(pc config.ProviderConfig) config.ProviderConfig {
+	if preset := FindPreset(strings.ToLower(pc.Name)); preset != nil {
+		if pc.Endpoint == "" {
+			pc.Endpoint = preset.Endpoint
+		}
+		if pc.Model == "" {
+			pc.Model = preset.DefaultModel
+		}
+	}
+	return pc
+}
+
 func resolveFromConfig(pc config.ProviderConfig) Provider {
+	pc = applyPreset(pc)
 	if isClaudeProvider(pc.Name) {
 		return &ClaudeCliProvider{Model: pc.Model}
 	}
