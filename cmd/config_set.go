@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
@@ -28,7 +29,11 @@ var configSetCmd = &cobra.Command{
 		if configSetGlobalFlag {
 			scope = "global"
 		}
-		fmt.Printf("Set %s = %s (%s)\n", key, value, scope)
+		displayValue := value
+		if strings.HasSuffix(key, ".api_key") {
+			displayValue = maskKey(value)
+		}
+		fmt.Printf("Set %s = %s (%s)\n", key, displayValue, scope)
 		return nil
 	},
 }

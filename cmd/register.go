@@ -204,10 +204,14 @@ var registerCmd = &cobra.Command{
 			fmt.Fprintln(w)
 			fmt.Fprintf(w, "Config values:\n")
 			for _, s := range config.LoadSources() {
-				if s.Value == "" {
+				val := s.Value
+				if strings.HasSuffix(s.Key, ".api_key") {
+					val = maskKey(val)
+				}
+				if val == "" {
 					fmt.Fprintf(w, "  %-20s (not set)\n", s.Key)
 				} else {
-					fmt.Fprintf(w, "  %-20s %s  ← %s\n", s.Key, s.Value, s.Source)
+					fmt.Fprintf(w, "  %-20s %s  ← %s\n", s.Key, val, s.Source)
 				}
 			}
 		}

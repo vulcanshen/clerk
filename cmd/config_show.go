@@ -23,6 +23,8 @@ var configShowCmd = &cobra.Command{
 		}
 
 		if configShowJSON {
+			cfg.Summary.APIKey = maskKey(cfg.Summary.APIKey)
+			cfg.Report.APIKey = maskKey(cfg.Report.APIKey)
 			data, err := json.MarshalIndent(cfg, "", "  ")
 			if err != nil {
 				return err
@@ -52,12 +54,12 @@ var configShowCmd = &cobra.Command{
 		printOrNotSet("summary.model", cfg.Summary.Model)
 		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
 		printOrNotSet("summary.endpoint", cfg.Summary.Endpoint)
-		printOrNotSet("summary.api_key", cfg.Summary.APIKey)
+		printOrNotSet("summary.api_key", maskKey(cfg.Summary.APIKey))
 		printOrNotSet("summary.instruction", cfg.Summary.Instruction)
 		printOrNotSet("report.provider", cfg.Report.Provider)
 		printOrNotSet("report.model", cfg.Report.Model)
 		printOrNotSet("report.endpoint", cfg.Report.Endpoint)
-		printOrNotSet("report.api_key", cfg.Report.APIKey)
+		printOrNotSet("report.api_key", maskKey(cfg.Report.APIKey))
 		printOrNotSet("report.instruction", cfg.Report.Instruction)
 		fmt.Printf("%-22s %d\n", "log.retention_days", cfg.Log.RetentionDays)
 		if cfg.Feed.Enabled != nil {
@@ -67,6 +69,16 @@ var configShowCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func maskKey(key string) string {
+	if key == "" {
+		return ""
+	}
+	if len(key) <= 8 {
+		return "****"
+	}
+	return key[:4] + "****" + key[len(key)-4:]
 }
 
 func init() {
