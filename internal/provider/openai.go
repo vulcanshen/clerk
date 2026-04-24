@@ -56,7 +56,7 @@ func (o *OpenAIProvider) Complete(ctx context.Context, prompt, systemPrompt stri
 	}
 
 	endpoint := strings.TrimRight(o.Endpoint, "/")
-	url := endpoint + "/v1/chat/completions"
+	url := endpoint + "/chat/completions"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {

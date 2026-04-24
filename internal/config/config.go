@@ -261,8 +261,8 @@ func Set(key, value string, global bool) error {
 		json.Unmarshal(data, &raw)
 	}
 
-	// validate key and value
-	var tmp Config
+	// validate key and value using loaded config (so provider context is available)
+	tmp, _ := Load()
 	if err := applyKeyValue(&tmp, key, value); err != nil {
 		return err
 	}

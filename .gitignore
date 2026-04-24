@@ -2,6 +2,9 @@
 clerk
 clerk.exe
 
+# Secrets
+.secret
+
 # IDE
 .idea/
 .vscode/
