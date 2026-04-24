@@ -14,13 +14,17 @@ type OutputConfig struct {
 	Language string `json:"language"`
 }
 
+type ProviderConfig struct {
+	Name     string `json:"name"`
+	Model    string `json:"model"`
+	Endpoint string `json:"endpoint"`
+	APIKey   string `json:"api_key"`
+}
+
 type SummaryConfig struct {
-	Provider    string `json:"provider"`
-	Model       string `json:"model"`
-	Timeout     string `json:"timeout"`
-	Endpoint    string `json:"endpoint"`
-	APIKey      string `json:"api_key"`
-	Instruction string `json:"instruction"`
+	Provider    ProviderConfig `json:"provider"`
+	Timeout     string         `json:"timeout"`
+	Instruction string         `json:"instruction"`
 }
 
 type LogConfig struct {
@@ -28,11 +32,8 @@ type LogConfig struct {
 }
 
 type ReportConfig struct {
-	Provider    string `json:"provider"`
-	Model       string `json:"model"`
-	Endpoint    string `json:"endpoint"`
-	APIKey      string `json:"api_key"`
-	Instruction string `json:"instruction"`
+	Provider    ProviderConfig `json:"provider"`
+	Instruction string         `json:"instruction"`
 }
 
 type FeedConfig struct {
@@ -58,7 +59,6 @@ func DefaultConfig() Config {
 			Language: "en",
 		},
 		Summary: SummaryConfig{
-			Model:   "",
 			Timeout: "5m",
 		},
 		Log: LogConfig{
@@ -147,16 +147,16 @@ func ValidKeys() []string {
 	return []string{
 		"output.dir",
 		"output.language",
-		"summary.provider",
-		"summary.model",
+		"summary.provider.name",
+		"summary.provider.model",
+		"summary.provider.endpoint",
+		"summary.provider.api_key",
 		"summary.timeout",
-		"summary.endpoint",
-		"summary.api_key",
 		"summary.instruction",
-		"report.provider",
-		"report.model",
-		"report.endpoint",
-		"report.api_key",
+		"report.provider.name",
+		"report.provider.model",
+		"report.provider.endpoint",
+		"report.provider.api_key",
 		"report.instruction",
 		"log.retention_days",
 		"feed.enabled",
@@ -176,10 +176,10 @@ func applyKeyValue(cfg *Config, key, value string) error {
 		cfg.Output.Dir = value
 	case "output.language":
 		cfg.Output.Language = value
-	case "summary.provider":
-		cfg.Summary.Provider = value
-	case "summary.model":
-		if value != "" && isClaudeProvider(cfg.Summary.Provider) {
+	case "summary.provider.name":
+		cfg.Summary.Provider.Name = value
+	case "summary.provider.model":
+		if value != "" && isClaudeProvider(cfg.Summary.Provider.Name) {
 			validAliases := []string{"sonnet", "opus", "haiku"}
 			valid := false
 			lower := strings.ToLower(value)
@@ -190,24 +190,24 @@ func applyKeyValue(cfg *Config, key, value string) error {
 				}
 			}
 			if !valid {
-				return fmt.Errorf("invalid value for summary.model: %s (use alias: sonnet, opus, haiku — or full name containing one)", value)
+				return fmt.Errorf("invalid value for summary.provider.model: %s (use alias: sonnet, opus, haiku — or full name containing one)", value)
 			}
 		}
-		cfg.Summary.Model = value
-	case "summary.endpoint":
-		cfg.Summary.Endpoint = value
-	case "summary.api_key":
-		cfg.Summary.APIKey = value
+		cfg.Summary.Provider.Model = value
+	case "summary.provider.endpoint":
+		cfg.Summary.Provider.Endpoint = value
+	case "summary.provider.api_key":
+		cfg.Summary.Provider.APIKey = value
 	case "summary.instruction":
 		cfg.Summary.Instruction = value
-	case "report.provider":
-		cfg.Report.Provider = value
-	case "report.model":
-		cfg.Report.Model = value
-	case "report.endpoint":
-		cfg.Report.Endpoint = value
-	case "report.api_key":
-		cfg.Report.APIKey = value
+	case "report.provider.name":
+		cfg.Report.Provider.Name = value
+	case "report.provider.model":
+		cfg.Report.Provider.Model = value
+	case "report.provider.endpoint":
+		cfg.Report.Provider.Endpoint = value
+	case "report.provider.api_key":
+		cfg.Report.Provider.APIKey = value
 	case "report.instruction":
 		cfg.Report.Instruction = value
 	case "summary.timeout":
@@ -267,33 +267,46 @@ func Set(key, value string, global bool) error {
 		return err
 	}
 
-	// set the value in the raw map
-	parts := strings.SplitN(key, ".", 2)
+	// set the value in the raw map (supports 2-level and 3-level keys)
+	parts := strings.Split(key, ".")
+
+	// Determine the typed value to store
+	var typedValue interface{} = value
+	switch key {
+	case "output.dir":
+		if !strings.HasPrefix(value, "~") && !filepath.IsAbs(value) {
+			abs, err := filepath.Abs(value)
+			if err != nil {
+				return fmt.Errorf("invalid value for output.dir: %s (%w)", value, err)
+			}
+			typedValue = abs
+		}
+	case "log.retention_days":
+		var days int
+		fmt.Sscanf(value, "%d", &days)
+		typedValue = days
+	case "feed.enabled":
+		typedValue = strings.ToLower(value) == "true" || value == "1"
+	}
+
 	if len(parts) == 2 {
 		section, _ := raw[parts[0]].(map[string]interface{})
 		if section == nil {
 			section = make(map[string]interface{})
 		}
-		switch key {
-		case "output.dir":
-			if strings.HasPrefix(value, "~") || filepath.IsAbs(value) {
-				section[parts[1]] = value
-			} else {
-				abs, err := filepath.Abs(value)
-				if err != nil {
-					return fmt.Errorf("invalid value for output.dir: %s (%w)", value, err)
-				}
-				section[parts[1]] = abs
-			}
-		case "log.retention_days":
-			var days int
-			fmt.Sscanf(value, "%d", &days)
-			section[parts[1]] = days
-		case "feed.enabled":
-			section[parts[1]] = strings.ToLower(value) == "true" || value == "1"
-		default:
-			section[parts[1]] = value
+		section[parts[1]] = typedValue
+		raw[parts[0]] = section
+	} else if len(parts) == 3 {
+		section, _ := raw[parts[0]].(map[string]interface{})
+		if section == nil {
+			section = make(map[string]interface{})
 		}
+		sub, _ := section[parts[1]].(map[string]interface{})
+		if sub == nil {
+			sub = make(map[string]interface{})
+		}
+		sub[parts[2]] = typedValue
+		section[parts[1]] = sub
 		raw[parts[0]] = section
 	}
 
@@ -378,16 +391,16 @@ func LoadSources() []ConfigSource {
 	entries := []entry{
 		{"output.dir", def.Output.Dir, global.Output.Dir, project.Output.Dir},
 		{"output.language", def.Output.Language, global.Output.Language, project.Output.Language},
-		{"summary.provider", def.Summary.Provider, global.Summary.Provider, project.Summary.Provider},
-		{"summary.model", def.Summary.Model, global.Summary.Model, project.Summary.Model},
+		{"summary.provider.name", def.Summary.Provider.Name, global.Summary.Provider.Name, project.Summary.Provider.Name},
+		{"summary.provider.model", def.Summary.Provider.Model, global.Summary.Provider.Model, project.Summary.Provider.Model},
+		{"summary.provider.endpoint", def.Summary.Provider.Endpoint, global.Summary.Provider.Endpoint, project.Summary.Provider.Endpoint},
+		{"summary.provider.api_key", def.Summary.Provider.APIKey, global.Summary.Provider.APIKey, project.Summary.Provider.APIKey},
 		{"summary.timeout", def.Summary.Timeout, global.Summary.Timeout, project.Summary.Timeout},
-		{"summary.endpoint", def.Summary.Endpoint, global.Summary.Endpoint, project.Summary.Endpoint},
-		{"summary.api_key", def.Summary.APIKey, global.Summary.APIKey, project.Summary.APIKey},
 		{"summary.instruction", def.Summary.Instruction, global.Summary.Instruction, project.Summary.Instruction},
-		{"report.provider", def.Report.Provider, global.Report.Provider, project.Report.Provider},
-		{"report.model", def.Report.Model, global.Report.Model, project.Report.Model},
-		{"report.endpoint", def.Report.Endpoint, global.Report.Endpoint, project.Report.Endpoint},
-		{"report.api_key", def.Report.APIKey, global.Report.APIKey, project.Report.APIKey},
+		{"report.provider.name", def.Report.Provider.Name, global.Report.Provider.Name, project.Report.Provider.Name},
+		{"report.provider.model", def.Report.Provider.Model, global.Report.Provider.Model, project.Report.Provider.Model},
+		{"report.provider.endpoint", def.Report.Provider.Endpoint, global.Report.Provider.Endpoint, project.Report.Provider.Endpoint},
+		{"report.provider.api_key", def.Report.Provider.APIKey, global.Report.Provider.APIKey, project.Report.Provider.APIKey},
 		{"report.instruction", def.Report.Instruction, global.Report.Instruction, project.Report.Instruction},
 		{"log.retention_days", fmt.Sprintf("%d", def.Log.RetentionDays), fmt.Sprintf("%d", global.Log.RetentionDays), fmt.Sprintf("%d", project.Log.RetentionDays)},
 		{"feed.enabled", feedStr(def.Feed.Enabled), feedStr(global.Feed.Enabled), feedStr(project.Feed.Enabled)},
