@@ -41,7 +41,7 @@ func TestApplyKeyValue(t *testing.T) {
 	}{
 		{"output.dir", "output.dir", "~/test/", false},
 		{"output.language", "output.language", "zh-TW", false},
-		{"summary.model", "summary.model", "haiku", false},
+		{"summary.provider.model", "summary.provider.model", "haiku", false},
 		{"log.retention_days valid", "log.retention_days", "30", false},
 		{"log.retention_days invalid", "log.retention_days", "abc", true},
 		{"feed.enabled true", "feed.enabled", "true", false},
@@ -116,7 +116,9 @@ func TestSaveAndLoadConfig(t *testing.T) {
 			"language": "ja",
 		},
 		"summary": map[string]interface{}{
-			"model":   "haiku",
+			"provider": map[string]interface{}{
+				"model": "haiku",
+			},
 			"timeout": "3m",
 		},
 	}
@@ -136,8 +138,8 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	if cfg.Output.Language != "ja" {
 		t.Errorf("output.language = %q, want ja", cfg.Output.Language)
 	}
-	if cfg.Summary.Model != "haiku" {
-		t.Errorf("summary.model = %q, want haiku", cfg.Summary.Model)
+	if cfg.Summary.Provider.Model != "haiku" {
+		t.Errorf("summary.provider.model = %q, want haiku", cfg.Summary.Provider.Model)
 	}
 	if cfg.Summary.Timeout != "3m" {
 		t.Errorf("summary.timeout = %q, want 3m", cfg.Summary.Timeout)
@@ -242,7 +244,7 @@ func TestValidKeys(t *testing.T) {
 		t.Error("ValidKeys should not be empty")
 	}
 
-	expected := []string{"output.dir", "output.language", "summary.model", "summary.timeout", "log.retention_days", "feed.enabled"}
+	expected := []string{"output.dir", "output.language", "summary.provider.model", "summary.timeout", "log.retention_days", "feed.enabled"}
 	for _, e := range expected {
 		found := false
 		for _, k := range keys {

@@ -39,7 +39,7 @@ clerk register
 
 以上です。clerk は完全にローカルで動作します — リモートサービスへの接続なし、アカウント不要、データがマシンの外に出ることはありません。
 
-> **トークン消費について：** clerk は認証済みの Claude Code（`claude -p`）を使って要約とレポートを生成します。セッション終了時に要約の API コールが1回、`clerk report` 実行ごとにもう1回発生します。要約はカーソルトラッキングにより新しい会話内容のみを処理し、履歴全体を再読み込みすることはありません。クォータが気になる場合は、`summary.model` を `haiku` に設定するか、プロジェクト単位で feed を無効化できます（`clerk config set feed.enabled false`）。
+> **トークン消費について：** clerk は AI を使って要約とレポートを生成します。デフォルトは Claude Code（`claude -p`）ですが、OpenAI-compatible provider（Groq、Gemini、OpenAI、Ollama など）に切り替え可能です（`clerk config set summary.provider.name <provider>`）。セッション終了時に要約の API コールが1回、`clerk report` ごとにもう1回発生します。要約はカーソルトラッキングにより新しい内容のみ処理します。`clerk provider` でサポート済み provider と設定方法を確認できます。
 
 登録後、clerk はバックグラウンドで静かに動作します：
 
@@ -303,11 +303,12 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | プロジェクト横断の週次レポート |
 | | `logs` | トラブルシューティング用のログを表示 |
 | | `logs --error` | エラーログのみ表示 |
-| * | `logs --mask` | Claude API で個人情報をマスク |
+| | `provider` | サポートされている AI provider と設定を一覧表示 |
+| | `provider models <name>` | 指定 provider の利用可能なモデルを一覧表示 |
 | | `data moveto <path>` | clerk データを新しいディレクトリに移動し設定を更新 |
 | | `version` | バージョン表示とアップデート確認 |
 
-`*` = Claude APIを使用（トークンを消費）
+`*` = AI provider を使用（トークンを消費 — デフォルト Claude、変更可能）
 
 内部コマンド（フックから呼び出されるもので、ユーザーが直接使用するものではありません）：
 
@@ -360,10 +361,17 @@ go install github.com/vulcanshen/clerk@latest
 |----------|-------------|------|
 | `output.dir` | `~/.clerk/` | 要約の保存ルートディレクトリ |
 | `output.language` | `en` | 要約の出力言語 |
-| `summary.model` | `""`（claude デフォルト） | `claude -p` で使用するモデル |
-| `summary.timeout` | `5m` | `claude -p` のタイムアウト（例: 5m、2m30s、1h） |
-| `summary.instruction` | `""` | 要約プロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
-| `report.instruction` | `""` | レポートプロンプトに追加するカスタム指示（`--append-system-prompt` 経由） |
+| `summary.provider.name` | `""`（claude） | Provider：空値または `"claude"` は Claude CLI、その他は OpenAI-compatible API |
+| `summary.provider.model` | `""` | モデル名（claude: sonnet/opus/haiku、その他: 任意） |
+| `summary.provider.endpoint` | `""` | OpenAI-compatible API エンドポイント（既知 provider は自動設定） |
+| `summary.provider.api_key` | `""` | API キー |
+| `summary.timeout` | `5m` | API コールのタイムアウト（例: 5m、2m30s、1h） |
+| `summary.instruction` | `""` | 要約プロンプトに追加するカスタム指示 |
+| `report.provider.name` | `""` | レポートの provider（summary にフォールバック） |
+| `report.provider.model` | `""` | レポートのモデル（summary にフォールバック） |
+| `report.provider.endpoint` | `""` | レポートのエンドポイント（summary にフォールバック） |
+| `report.provider.api_key` | `""` | レポートの API キー（summary にフォールバック） |
+| `report.instruction` | `""` | レポートプロンプトに追加するカスタム指示 |
 | `log.retention_days` | `30` | ログとカーソルファイルの保持日数 |
 | `feed.enabled` | `true` | このプロジェクトの feed を有効/無効にする |
 
@@ -375,11 +383,45 @@ cd /path/to/unimportant-project
 clerk config set feed.enabled false
 
 # グローバルでより安価なモデルを使用
-clerk config set -g summary.model haiku
+clerk config set -g summary.provider.model haiku
+
+# Groq に切り替え（無料枠）
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
 
 # グローバルで出力言語を変更
 clerk config set -g output.language en
 ```
+
+## サポート済み Provider
+
+デフォルトでは Claude Code（`claude -p`）で要約とレポートを生成します。OpenAI-compatible provider に切り替え可能：
+
+| Provider | Endpoint | デフォルトモデル | API Key |
+|----------|----------|-----------------|---------|
+| `claude` | （CLI、endpoint 不要） | （Claude デフォルト） | 不要（Claude Code 認証を使用） |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [キー取得](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [キー取得](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [キー取得](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | 不要（ローカル） |
+
+**クイックセットアップ** — 既知 provider は2行のみ：
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+カスタムエンドポイント：
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+`clerk provider` でサポート済み provider を確認、`clerk provider models <name>` で利用可能なモデルを確認できます。
 
 ## MCP ツール
 

@@ -11,13 +11,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
-	"github.com/vulcanshen/clerk/internal/feed"
-	"github.com/vulcanshen/clerk/internal/progress"
 )
 
 var logsDays int
 var logsErrorOnly bool
-var logsMask bool
 
 var logsCmd = &cobra.Command{
 	Use:               "logs",
@@ -47,12 +44,8 @@ var logsCmd = &cobra.Command{
 			return nil
 		}
 
-		if logsMask {
-			fmt.Println(maskOutput(lines, cfg))
-		} else {
-			for _, line := range lines {
-				fmt.Println(line)
-			}
+		for _, line := range lines {
+			fmt.Println(line)
 		}
 
 		return nil
@@ -104,34 +97,8 @@ func collectLogLines(cfg config.Config, days int, errorOnly bool) ([]string, err
 	return lines, nil
 }
 
-func maskOutput(lines []string, cfg config.Config) string {
-	raw := strings.Join(lines, "\n")
-
-	prompt := fmt.Sprintf(`You are a log redaction tool. Replace any personally identifiable information in the following log lines with # symbols. This includes:
-- Usernames in file paths (e.g. /Users/john/ → /Users/####/)
-- Home directory names
-- Any personal names, emails, or identifiers
-
-Keep the log structure, timestamps, log levels, and error messages intact. Only mask the personal parts.
-Output the redacted log lines only, no explanation.
-
-%s`, raw)
-
-	p := progress.New()
-	p.Start("Redacting personal information")
-	output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, "")
-	if err != nil {
-		p.Fail(err)
-		fmt.Fprintln(os.Stderr, "Raw output suppressed to protect personal information.")
-		return ""
-	}
-	p.Done()
-	return output
-}
-
 func init() {
 	logsCmd.Flags().IntVar(&logsDays, "days", 1, "Number of days to include (default: today only)")
 	logsCmd.Flags().BoolVar(&logsErrorOnly, "error", false, "Show only error logs")
-	logsCmd.Flags().BoolVar(&logsMask, "mask", false, "Redact personal information via Claude API (uses tokens)")
 	rootCmd.AddCommand(logsCmd)
 }

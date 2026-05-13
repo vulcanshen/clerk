@@ -10,12 +10,15 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/vulcanshen/clerk/internal/config"
 	"github.com/vulcanshen/clerk/internal/feed"
 	"github.com/vulcanshen/clerk/internal/logger"
 	"github.com/vulcanshen/clerk/internal/mcpserver"
 	"github.com/vulcanshen/clerk/internal/progress"
+	"github.com/vulcanshen/clerk/internal/provider"
 )
 
 var reportDays int
@@ -137,13 +140,22 @@ var reportCmd = &cobra.Command{
 		sysPrompt := feed.BuildSystemPrompt(cfg.Output.Language, cfg.Report.Instruction)
 		p.Done()
 
-		// Step 5: Call Claude
+		// Step 5: Call provider
 		p.Start(fmt.Sprintf("Generating report (%d summaries, %s ~ %s)", len(all), formatDate(startDate), formatDate(endDate)))
-		output, err := feed.CallClaude(prompt, cfg.Summary.Model, cfg.Summary.Timeout, sysPrompt)
+
+		dur, _ := time.ParseDuration(cfg.Summary.Timeout)
+		if dur <= 0 {
+			dur = 5 * time.Minute
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), dur)
+		defer cancel()
+
+		prov := provider.ResolveForReport(cfg)
+		output, err := prov.Complete(ctx, prompt, sysPrompt)
 		if err != nil {
 			p.Fail(err)
-			logger.Errorf(cfg, "report: claude -p failed: %v", err)
-			return fmt.Errorf("claude -p failed: %w", err)
+			logger.Errorf(cfg, "report: provider failed: %v", err)
+			return fmt.Errorf("provider failed: %w", err)
 		}
 		p.Done()
 

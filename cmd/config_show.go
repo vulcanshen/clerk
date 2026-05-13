@@ -23,6 +23,8 @@ var configShowCmd = &cobra.Command{
 		}
 
 		if configShowJSON {
+			cfg.Summary.Provider.APIKey = maskKey(cfg.Summary.Provider.APIKey)
+			cfg.Report.Provider.APIKey = maskKey(cfg.Report.Provider.APIKey)
 			data, err := json.MarshalIndent(cfg, "", "  ")
 			if err != nil {
 				return err
@@ -40,26 +42,43 @@ var configShowCmd = &cobra.Command{
 
 		printOrNotSet := func(key, val string) {
 			if val == "" {
-				fmt.Printf("%-22s (not set)\n", key)
+				fmt.Printf("%-28s (not set)\n", key)
 			} else {
-				fmt.Printf("%-22s %s\n", key, val)
+				fmt.Printf("%-28s %s\n", key, val)
 			}
 		}
 
 		printOrNotSet("output.dir", cfg.Output.Dir)
 		printOrNotSet("output.language", cfg.Output.Language)
-		printOrNotSet("summary.model", cfg.Summary.Model)
+		printOrNotSet("summary.provider.name", cfg.Summary.Provider.Name)
+		printOrNotSet("summary.provider.model", cfg.Summary.Provider.Model)
+		printOrNotSet("summary.provider.endpoint", cfg.Summary.Provider.Endpoint)
+		printOrNotSet("summary.provider.api_key", maskKey(cfg.Summary.Provider.APIKey))
 		printOrNotSet("summary.timeout", cfg.Summary.Timeout)
 		printOrNotSet("summary.instruction", cfg.Summary.Instruction)
+		printOrNotSet("report.provider.name", cfg.Report.Provider.Name)
+		printOrNotSet("report.provider.model", cfg.Report.Provider.Model)
+		printOrNotSet("report.provider.endpoint", cfg.Report.Provider.Endpoint)
+		printOrNotSet("report.provider.api_key", maskKey(cfg.Report.Provider.APIKey))
 		printOrNotSet("report.instruction", cfg.Report.Instruction)
-		fmt.Printf("%-22s %d\n", "log.retention_days", cfg.Log.RetentionDays)
+		fmt.Printf("%-28s %d\n", "log.retention_days", cfg.Log.RetentionDays)
 		if cfg.Feed.Enabled != nil {
-			fmt.Printf("%-22s %v\n", "feed.enabled", *cfg.Feed.Enabled)
+			fmt.Printf("%-28s %v\n", "feed.enabled", *cfg.Feed.Enabled)
 		} else {
-			fmt.Printf("%-22s true (default)\n", "feed.enabled")
+			fmt.Printf("%-28s true (default)\n", "feed.enabled")
 		}
 		return nil
 	},
+}
+
+func maskKey(key string) string {
+	if key == "" {
+		return ""
+	}
+	if len(key) <= 8 {
+		return "****"
+	}
+	return key[:4] + "****" + key[len(key)-4:]
 }
 
 func init() {

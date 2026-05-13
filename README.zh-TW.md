@@ -39,7 +39,7 @@ clerk register
 
 就這樣。clerk 完全在本地執行 — 不連任何遠端服務、不需要帳號、資料不會離開你的電腦。
 
-> **關於 token 消耗：** clerk 使用你已登入的 Claude Code 來產生摘要和報告（透過 `claude -p`）。每個 session 結束時會消耗一次 API 額度產生摘要，每次執行 `clerk report` 也會消耗一次。摘要只處理新增的對話內容（cursor tracking），不會重複讀取舊資料。如果你在意額度，可以設定 `summary.model` 為 `haiku` 或在特定專案中停用 feed（`clerk config set feed.enabled false`）。
+> **關於 token 消耗：** clerk 使用 AI 產生摘要和報告。預設使用 Claude Code（`claude -p`），也可切換到任何 OpenAI-compatible provider（Groq、Gemini、OpenAI、Ollama 等），透過 `clerk config set summary.provider.name <provider>` 設定。每個 session 結束時消耗一次 API 額度產生摘要，每次 `clerk report` 也消耗一次。摘要只處理新增的對話內容（cursor tracking）。執行 `clerk provider` 查看可用 provider 及設定方式。
 
 註冊後，clerk 會在背景安靜地運作：
 
@@ -302,11 +302,12 @@ go install github.com/vulcanshen/clerk@latest
 | * | `report --days 7 -o weekly.md` | 產生跨專案週報 |
 | | `logs` | 顯示日誌供排查 |
 | | `logs --error` | 僅顯示錯誤日誌 |
-| * | `logs --mask` | 透過 Claude API 遮蔽個資 |
+| | `provider` | 列出支援的 AI provider 及預設設定 |
+| | `provider models <name>` | 列出指定 provider 的可用模型 |
 | | `data moveto <path>` | 搬遷 clerk 資料到新目錄並更新設定 |
 | | `version` | 顯示版本並檢查更新 |
 
-`*` = 使用 Claude API（消耗 token）
+`*` = 使用 AI provider（消耗 token — 預設 Claude，可切換）
 
 內部指令（由 hook 呼叫，非使用者直接使用）：
 
@@ -359,10 +360,17 @@ go install github.com/vulcanshen/clerk@latest
 |--------|--------|------|
 | `output.dir` | `~/.clerk/` | 摘要存放根目錄 |
 | `output.language` | `en` | 摘要輸出語言 |
-| `summary.model` | `""`（使用 claude 預設） | `claude -p` 使用的模型 |
-| `summary.timeout` | `5m` | `claude -p` 的逾時時間（如 5m、2m30s、1h） |
-| `summary.instruction` | `""` | 附加到摘要 prompt 的自訂指令（透過 `--append-system-prompt`） |
-| `report.instruction` | `""` | 附加到報告 prompt 的自訂指令（透過 `--append-system-prompt`） |
+| `summary.provider.name` | `""`（claude） | Provider：空值或 `"claude"` 使用 Claude CLI，其他使用 OpenAI-compatible API |
+| `summary.provider.model` | `""` | 模型名稱（claude: sonnet/opus/haiku；其他: 任意） |
+| `summary.provider.endpoint` | `""` | OpenAI-compatible API endpoint（已知 provider 自動填入） |
+| `summary.provider.api_key` | `""` | API 金鑰 |
+| `summary.timeout` | `5m` | API 呼叫逾時時間（如 5m、2m30s、1h） |
+| `summary.instruction` | `""` | 附加到摘要 prompt 的自訂指令 |
+| `report.provider.name` | `""` | 報告的 provider（fallback 到 summary） |
+| `report.provider.model` | `""` | 報告的模型（fallback 到 summary） |
+| `report.provider.endpoint` | `""` | 報告的 endpoint（fallback 到 summary） |
+| `report.provider.api_key` | `""` | 報告的 API 金鑰（fallback 到 summary） |
+| `report.instruction` | `""` | 附加到報告 prompt 的自訂指令 |
 | `log.retention_days` | `30` | Log 和 cursor 檔案保留天數 |
 | `feed.enabled` | `true` | 啟用/停用此專案的 feed |
 
@@ -374,11 +382,45 @@ cd /path/to/unimportant-project
 clerk config set feed.enabled false
 
 # 全域使用較便宜的模型
-clerk config set -g summary.model haiku
+clerk config set -g summary.provider.model haiku
+
+# 切換到 Groq（免費方案）
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
 
 # 全域變更輸出語言
 clerk config set -g output.language en
 ```
+
+## 支援的 Provider
+
+預設使用 Claude Code（`claude -p`）產生摘要和報告。可切換到任何 OpenAI-compatible provider：
+
+| Provider | Endpoint | 預設模型 | API Key |
+|----------|----------|----------|---------|
+| `claude` | （CLI，不需 endpoint） | （Claude 預設） | 不需要（使用 Claude Code 驗證） |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [取得金鑰](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [取得金鑰](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [取得金鑰](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | 不需要（本地） |
+
+**快速設定** — 已知 provider 只需 2 行：
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+自訂 endpoint：
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+執行 `clerk provider` 查看所有 provider，或 `clerk provider models <name>` 查詢可用模型。
 
 ## MCP 工具
 
