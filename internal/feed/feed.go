@@ -227,6 +227,7 @@ func CwdToSlug(cwd string) string {
 	}
 	rel = strings.ToLower(rel)
 	rel = strings.Trim(rel, "/\\")
+	rel = strings.ReplaceAll(rel, ":", "")
 	rel = strings.ReplaceAll(rel, "/", "-")
 	rel = strings.ReplaceAll(rel, "\\", "-")
 	if rel == "" {

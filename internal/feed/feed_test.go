@@ -15,9 +15,10 @@ func TestCwdToSlug(t *testing.T) {
 	}{
 		{"unix path", "/Users/vulcan/Documents/sideproj/clerk", "documents-sideproj-clerk"},
 		{"root home", "/Users/vulcan", "root"},
-		{"windows backslash", `C:\Users\test\Desktop\Project`, "c:-users-test-desktop-project"},
-		{"windows forward slash", "C:/Users/test/code", "c:-users-test-code"},
-		{"windows chinese username", `C:\Users\劉茵淇\Desktop\Project`, "c:-users-劉茵淇-desktop-project"},
+		{"windows backslash", `C:\Users\test\Desktop\Project`, "c-users-test-desktop-project"},
+		{"windows forward slash", "C:/Users/test/code", "c-users-test-code"},
+		{"windows drive root", `D:\clerk`, "d-clerk"},
+		{"windows chinese username", `C:\Users\劉茵淇\Desktop\Project`, "c-users-劉茵淇-desktop-project"},
 		{"empty after trim", "/", "root"},
 		{"linux path", "/home/user/projects/app", "home-user-projects-app"},
 	}
@@ -48,8 +49,8 @@ func TestCwdToSlugNoBackslashes(t *testing.T) {
 	for _, input := range inputs {
 		slug := CwdToSlug(input)
 		for _, c := range slug {
-			if c == '\\' || c == '/' {
-				t.Errorf("CwdToSlug(%q) = %q, contains path separator", input, slug)
+			if c == '\\' || c == '/' || c == ':' {
+				t.Errorf("CwdToSlug(%q) = %q, contains illegal filename char", input, slug)
 			}
 		}
 	}
