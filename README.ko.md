@@ -393,6 +393,36 @@ clerk config set summary.provider.api_key <your-key>
 clerk config set -g output.language en
 ```
 
+## 지원 Provider
+
+기본적으로 Claude Code(`claude -p`)를 사용하여 요약과 보고서를 생성합니다. OpenAI-compatible provider로 전환 가능：
+
+| Provider | Endpoint | 기본 모델 | API Key |
+|----------|----------|----------|---------|
+| `claude` | (CLI, endpoint 불필요) | (Claude 기본값) | 불필요 (Claude Code 인증 사용) |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [키 발급](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [키 발급](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [키 발급](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | 불필요 (로컬) |
+
+**빠른 설정** — 알려진 provider는 2줄만 필요：
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+커스텀 엔드포인트：
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+`clerk provider`로 지원 provider 확인, `clerk provider models <name>`으로 사용 가능한 모델을 확인하세요.
+
 ## MCP 도구
 
 등록 후 사용 가능 (`clerk register`). Claude Code가 스킬을 통해 호출하므로 직접 사용할 필요 없습니다:

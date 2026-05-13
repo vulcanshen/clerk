@@ -393,6 +393,36 @@ clerk config set summary.provider.api_key <your-key>
 clerk config set -g output.language en
 ```
 
+## Supported Providers
+
+By default, clerk uses Claude Code (`claude -p`) for summaries and reports. You can switch to any OpenAI-compatible provider:
+
+| Provider | Endpoint | Default Model | API Key |
+|----------|----------|---------------|---------|
+| `claude` | (CLI, no endpoint needed) | (Claude default) | Not required (uses Claude Code auth) |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [Get key](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [Get key](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [Get key](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | Not required (local) |
+
+**Quick setup** — only 2 commands needed for known providers:
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+For custom/self-hosted endpoints:
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+Run `clerk provider` to see all providers, or `clerk provider models <name>` to list available models.
+
 ## MCP Tools
 
 Available when registered (`clerk register`). These are called by Claude Code through skills — you don't need to invoke them directly.

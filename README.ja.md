@@ -393,6 +393,36 @@ clerk config set summary.provider.api_key <your-key>
 clerk config set -g output.language en
 ```
 
+## サポート済み Provider
+
+デフォルトでは Claude Code（`claude -p`）で要約とレポートを生成します。OpenAI-compatible provider に切り替え可能：
+
+| Provider | Endpoint | デフォルトモデル | API Key |
+|----------|----------|-----------------|---------|
+| `claude` | （CLI、endpoint 不要） | （Claude デフォルト） | 不要（Claude Code 認証を使用） |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [キー取得](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [キー取得](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [キー取得](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | 不要（ローカル） |
+
+**クイックセットアップ** — 既知 provider は2行のみ：
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+カスタムエンドポイント：
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+`clerk provider` でサポート済み provider を確認、`clerk provider models <name>` で利用可能なモデルを確認できます。
+
 ## MCP ツール
 
 登録後に利用可能（`clerk register`）。これらは Claude Code がスキルを通じて呼び出すもので、直接使用する必要はありません：

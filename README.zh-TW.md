@@ -392,6 +392,36 @@ clerk config set summary.provider.api_key <your-key>
 clerk config set -g output.language en
 ```
 
+## 支援的 Provider
+
+預設使用 Claude Code（`claude -p`）產生摘要和報告。可切換到任何 OpenAI-compatible provider：
+
+| Provider | Endpoint | 預設模型 | API Key |
+|----------|----------|----------|---------|
+| `claude` | （CLI，不需 endpoint） | （Claude 預設） | 不需要（使用 Claude Code 驗證） |
+| `groq` | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile | [取得金鑰](https://console.groq.com/keys) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` | gemini-2.0-flash | [取得金鑰](https://aistudio.google.com/apikey) |
+| `openai` | `https://api.openai.com/v1` | gpt-4o-mini | [取得金鑰](https://platform.openai.com/api-keys) |
+| `ollama` | `http://localhost:11434/v1` | llama3 | 不需要（本地） |
+
+**快速設定** — 已知 provider 只需 2 行：
+
+```bash
+clerk config set summary.provider.name groq
+clerk config set summary.provider.api_key <your-key>
+```
+
+自訂 endpoint：
+
+```bash
+clerk config set summary.provider.name custom
+clerk config set summary.provider.endpoint https://your-endpoint/v1
+clerk config set summary.provider.model your-model
+clerk config set summary.provider.api_key <your-key>
+```
+
+執行 `clerk provider` 查看所有 provider，或 `clerk provider models <name>` 查詢可用模型。
+
 ## MCP 工具
 
 註冊後可用（`clerk register`）。這些由 Claude Code 透過 skill 呼叫，不需要直接使用：
