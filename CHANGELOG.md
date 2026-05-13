@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v5.2.0] - 2026-05-13
 
 ### New Features
 - **Open Summary Provider** — support any OpenAI-compatible API backend for summaries and reports
@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file.
 ### Changes
 - `logs --mask` removed — logs always output raw (users edit output themselves)
 - `register` API test now uses the configured summary provider instead of hardcoded `claude -p`
+
+### Bug Fixes
+- Windows: strip colon from drive letter in slug — `D:\clerk` → `d-clerk` (was `d:-clerk`, illegal filename) ([#1](https://github.com/vulcanshen/clerk/issues/1))
 
 ## [v5.1.3] - 2026-04-22
 
