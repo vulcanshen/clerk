@@ -22,6 +22,10 @@ func (c *ClaudeCliProvider) Complete(ctx context.Context, prompt, systemPrompt s
 		args = append(args, "--append-system-prompt", systemPrompt)
 	}
 
+	if _, err := exec.LookPath("claude"); err != nil {
+		return "", fmt.Errorf("claude CLI not found — install Claude Code or switch to a different provider (clerk provider)")
+	}
+
 	cmd := exec.CommandContext(ctx, "claude", args...)
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Env = append(os.Environ(), "CLERK_INTERNAL=1")

@@ -8,13 +8,15 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // OpenAIProvider calls any OpenAI-compatible /v1/chat/completions endpoint.
 type OpenAIProvider struct {
-	Endpoint string
-	Model    string
-	APIKey   string
+	Endpoint     string
+	Model        string
+	APIKey       string
+	InitBackoff  time.Duration // for testing; 0 = default (2s)
 }
 
 type chatMessage struct {
@@ -58,45 +60,74 @@ func (o *OpenAIProvider) Complete(ctx context.Context, prompt, systemPrompt stri
 	endpoint := strings.TrimRight(o.Endpoint, "/")
 	url := endpoint + "/chat/completions"
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
-	if err != nil {
-		return "", fmt.Errorf("creating request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if o.APIKey != "" {
-		req.Header.Set("Authorization", "Bearer "+o.APIKey)
+	maxRetries := 3
+	backoff := o.InitBackoff
+	if backoff <= 0 {
+		backoff = 2 * time.Second
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("request timed out")
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return "", fmt.Errorf("request timed out")
+			case <-time.After(backoff):
+				backoff *= 2
+			}
 		}
-		return "", fmt.Errorf("sending request: %w", err)
-	}
-	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("reading response: %w", err)
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+		if err != nil {
+			return "", fmt.Errorf("creating request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if o.APIKey != "" {
+			req.Header.Set("Authorization", "Bearer "+o.APIKey)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			if ctx.Err() != nil {
+				return "", fmt.Errorf("request timed out")
+			}
+			return "", fmt.Errorf("sending request: %w", err)
+		}
+
+		respBody, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return "", fmt.Errorf("reading response: %w", err)
+		}
+
+		if resp.StatusCode == 429 || resp.StatusCode >= 500 {
+			if attempt < maxRetries {
+				continue
+			}
+			if resp.StatusCode == 429 {
+				return "", fmt.Errorf("rate limited (HTTP 429) after %d retries — check your API quota or try again later", maxRetries+1)
+			}
+			return "", fmt.Errorf("server error (HTTP %d) after %d retries: %s", resp.StatusCode, maxRetries+1, strings.TrimSpace(string(respBody)))
+		}
+
+		if resp.StatusCode != 200 {
+			return "", fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+		}
+
+		var chatResp chatResponse
+		if err := json.Unmarshal(respBody, &chatResp); err != nil {
+			return "", fmt.Errorf("parsing response: %w", err)
+		}
+
+		if chatResp.Error != nil {
+			return "", fmt.Errorf("API error: %s", chatResp.Error.Message)
+		}
+
+		if len(chatResp.Choices) == 0 {
+			return "", fmt.Errorf("API returned no choices")
+		}
+
+		return strings.TrimSpace(chatResp.Choices[0].Message.Content), nil
 	}
 
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
-	}
-
-	var chatResp chatResponse
-	if err := json.Unmarshal(respBody, &chatResp); err != nil {
-		return "", fmt.Errorf("parsing response: %w", err)
-	}
-
-	if chatResp.Error != nil {
-		return "", fmt.Errorf("API error: %s", chatResp.Error.Message)
-	}
-
-	if len(chatResp.Choices) == 0 {
-		return "", fmt.Errorf("API returned no choices")
-	}
-
-	return strings.TrimSpace(chatResp.Choices[0].Message.Content), nil
+	return "", fmt.Errorf("unexpected retry loop exit")
 }
